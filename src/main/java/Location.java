@@ -1,0 +1,17 @@
+import org.antlr.v4.runtime.Token;
+
+public class Location {
+	int line, column;
+	public Location(int l, int c) {
+		line = l;
+		column = c;
+	}
+	public Location(Token t) {
+		line = t.getLine();
+		column = t.getCharPositionInLine();
+	}
+	public String toString() {
+		return "Line " + line + ", Column " + column;
+	}
+}
+
