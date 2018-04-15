@@ -48,7 +48,7 @@ classBody
 
 	'{'
 	(
-		(varDefStatement | functionDefinition)* constructionFunction? (varDefStatement | functionDefinition)*
+		(varDefStatementWithoutInit | functionDefinition)* constructionFunction? (varDefStatementWithoutInit | functionDefinition)*
 	)
 	'}'
 ;
@@ -149,9 +149,19 @@ varDefStatement
     variableDefinition ';'
 ;
 
+varDefStatementWithoutInit
+:
+    variableDefinitionWithoutInit ';'
+;
+
 variableDefinition
 :
 	typeId varDef (',' varDef)*
+;
+
+variableDefinitionWithoutInit
+:
+    typeId variableId (',' variableId)*
 ;
 
 varDef
