@@ -1,8 +1,10 @@
 import java.lang.reflect.Array;
 
-public class TypeRef {
+public abstract class TypeRef {
 	String typeId;
 	int dimension;
+	abstract TypeRef copy();
+
 	static TypeRef buildTypeRef(String typeId) {
 		if (typeId.contains("[")) {
 			int dim = 0;
@@ -24,8 +26,13 @@ public class TypeRef {
 			else return new ClassTypeRef(typeId);
 		}
 	}
-	boolean equals(TypeRef other) {
-		return typeId.equals(other.typeId) && dimension == other.dimension;
+	public boolean equals(Object other) {
+		if (this == other) return true;
+		if (other instanceof TypeRef) {
+			TypeRef other2 = (TypeRef) other;
+			return typeId.equals(other2.typeId) && dimension == other2.dimension;
+		}
+		return false;
 	}
 }
 class IntTypeRef extends TypeRef {
@@ -33,11 +40,17 @@ class IntTypeRef extends TypeRef {
 		typeId = "int";
 		dimension = 1;
 	}
+	IntTypeRef copy() {
+		return new IntTypeRef();
+	}
 }
 class BoolTypeRef extends TypeRef {
 	BoolTypeRef() {
 		typeId = "bool";
 		dimension = 1;
+	}
+	BoolTypeRef copy() {
+		return new BoolTypeRef();
 	}
 }
 class StringTypeRef extends TypeRef {
@@ -45,17 +58,26 @@ class StringTypeRef extends TypeRef {
 		typeId = "string";
 		dimension = 1;
 	}
+	StringTypeRef copy() {
+		return new StringTypeRef();
+	}
 }
 class VoidTypeRef extends TypeRef {
 	VoidTypeRef() {
 		typeId = "void";
 		dimension = 1;
 	}
+	VoidTypeRef copy() {
+		return new VoidTypeRef();
+	}
 }
 class ClassTypeRef extends TypeRef {
 	ClassTypeRef(String className) {
 		typeId = className;
 		dimension = 1;
+	}
+	ClassTypeRef copy() {
+		return new ClassTypeRef(typeId);
 	}
 }
 class ArrayTypeRef extends TypeRef {
@@ -76,5 +98,8 @@ class ArrayTypeRef extends TypeRef {
 	ArrayTypeRef(String type, int dim) {
 		typeId = type;
 		dimension = dim;
+	}
+	ArrayTypeRef copy() {
+		return new ArrayTypeRef(typeId, dimension);
 	}
 }

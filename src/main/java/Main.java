@@ -4,8 +4,8 @@ import org.antlr.v4.runtime.tree.*;
 import java.io.*;
 
 public class Main {
-    public static void main (String[] args) throws IOException {
-        InputStream is = new FileInputStream ("example/test2.cpp");
+    public static void main (String[] args) throws IOException, SyntaxError {
+        InputStream is = new FileInputStream ("example/helloWorld.cpp");
         ANTLRInputStream input = new ANTLRInputStream (is);
         MxStarLexer lexer = new MxStarLexer (input);
         CommonTokenStream tokens = new CommonTokenStream (lexer);
@@ -23,8 +23,12 @@ public class Main {
         Node root = buildByVisitor.visit(tree);
         TempTestAst tester = new TempTestAst();
         tester.dfs(root, "");
+        Resolver resolver = new Resolver();
+	    tester.dfs(root, "");
+        resolver.codeResolver(root);
+        System.out.println(resolver.genScope.entities.size());
         System.out.println();
-
+		Scope.dfs(resolver.genScope, "");
 //        System.out.println("Listener:");
 //        ParseTreeWalker walker = new ParseTreeWalker();
 //        Evaluator evalByListener = new Evaluator();

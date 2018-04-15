@@ -44,7 +44,7 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 	}
 	@Override public ClassDefNode visitClassBody(MxStarParser.ClassBodyContext ctx) {
 		ClassDefNode res = new ClassDefNode();
-		for (MxStarParser.VarDefStatementContext data : ctx.varDefStatement()) {
+		for (MxStarParser.VarDefStatementWithoutInitContext data : ctx.varDefStatementWithoutInit()) {
 			res.sons.add(visit(data));
 		}
 		for (MxStarParser.FunctionDefinitionContext data : ctx.functionDefinition()) {
@@ -71,8 +71,8 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 		res.loc = new Location(ctx.start);
 		return res;
 	}
-	@Override public VarDefStatNode visitParameter(MxStarParser.ParameterContext ctx) {
-		VarDefStatNode res = new VarDefStatNode();
+	@Override public VarDefNode visitParameter(MxStarParser.ParameterContext ctx) {
+		VarDefNode res = new VarDefNode();
 		res.id = ctx.variableId().getText();
 		res.type = TypeRef.buildTypeRef(ctx.typeId().getText());
 		res.loc = new Location(ctx.start);
@@ -164,12 +164,29 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 	@Override public Node visitVarDefStatement(MxStarParser.VarDefStatementContext ctx) {
 		return visit(ctx.variableDefinition());
 	}
+	@Override public Node visitVarDefStatementWithoutInit(MxStarParser.VarDefStatementWithoutInitContext ctx) {
+		return visit(ctx.variableDefinitionWithoutInit());
+	}
 	@Override public VarDefStatNode visitVariableDefinition(MxStarParser.VariableDefinitionContext ctx) {
 		TypeRef type = TypeRef.buildTypeRef(ctx.typeId().getText());
 		VarDefStatNode res = new VarDefStatNode();
 		for (int i = 0; i < ctx.varDef().size(); ++i) {
 			Node tmp = visit(ctx.varDef(i));
 			tmp.type = type;
+			res.sons.add(tmp);
+		}
+		res.loc = new Location(ctx.start);
+		return res;
+	}
+	@Override public VarDefStatNode visitVariableDefinitionWithoutInit(MxStarParser.VariableDefinitionWithoutInitContext ctx) {
+		TypeRef type = TypeRef.buildTypeRef(ctx.typeId().getText());
+		VarDefStatNode res = new VarDefStatNode();
+		for (int i = 0; i < ctx.variableId().size(); ++i) {
+			VarDefNode tmp = new VarDefNode();
+			MxStarParser.VariableIdContext varContext = ctx.variableId(i);
+			tmp.id = varContext.getText();
+			tmp.type = type;
+			tmp.loc = new Location(varContext.start);
 			res.sons.add(tmp);
 		}
 		res.loc = new Location(ctx.start);

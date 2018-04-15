@@ -202,11 +202,23 @@ public interface MxStarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitVarDefStatement(MxStarParser.VarDefStatementContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link MxStarParser#varDefStatementWithoutInit}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitVarDefStatementWithoutInit(MxStarParser.VarDefStatementWithoutInitContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link MxStarParser#variableDefinition}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitVariableDefinition(MxStarParser.VariableDefinitionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MxStarParser#variableDefinitionWithoutInit}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitVariableDefinitionWithoutInit(MxStarParser.VariableDefinitionWithoutInitContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code varWithoutInit}
 	 * labeled alternative in {@link MxStarParser#varDef}.

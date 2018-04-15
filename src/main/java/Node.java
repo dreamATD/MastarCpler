@@ -6,6 +6,7 @@ public class Node {
 	TypeRef type;
 	Location loc;
 	List<Node> sons;
+	Scope belongTo;
 	Node() {
 		sons = new ArrayList<Node>();
 		type = TypeRef.buildTypeRef("void");
@@ -20,6 +21,7 @@ public class Node {
 class CodeNode extends Node {
 //	List<ClassDefNode> classDefList;
 //	List<FuncDefNode> funcDefList;
+//	List<VarDefStatNode> varDefList;
 	CodeNode() {
 		super();
 	}

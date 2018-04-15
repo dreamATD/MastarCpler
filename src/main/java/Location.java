@@ -6,6 +6,10 @@ public class Location {
 		line = l;
 		column = c;
 	}
+	public Location(Location other) {
+		line = other.line;
+		column = other.column;
+	}
 	public Location(Token t) {
 		line = t.getLine();
 		column = t.getCharPositionInLine();

@@ -375,6 +375,18 @@ public class MxStarBaseListener implements MxStarListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterVarDefStatementWithoutInit(MxStarParser.VarDefStatementWithoutInitContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitVarDefStatementWithoutInit(MxStarParser.VarDefStatementWithoutInitContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterVariableDefinition(MxStarParser.VariableDefinitionContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -382,6 +394,18 @@ public class MxStarBaseListener implements MxStarListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitVariableDefinition(MxStarParser.VariableDefinitionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterVariableDefinitionWithoutInit(MxStarParser.VariableDefinitionWithoutInitContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitVariableDefinitionWithoutInit(MxStarParser.VariableDefinitionWithoutInitContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

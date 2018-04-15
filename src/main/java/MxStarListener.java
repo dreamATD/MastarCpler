@@ -331,6 +331,16 @@ public interface MxStarListener extends ParseTreeListener {
 	 */
 	void exitVarDefStatement(MxStarParser.VarDefStatementContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link MxStarParser#varDefStatementWithoutInit}.
+	 * @param ctx the parse tree
+	 */
+	void enterVarDefStatementWithoutInit(MxStarParser.VarDefStatementWithoutInitContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MxStarParser#varDefStatementWithoutInit}.
+	 * @param ctx the parse tree
+	 */
+	void exitVarDefStatementWithoutInit(MxStarParser.VarDefStatementWithoutInitContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link MxStarParser#variableDefinition}.
 	 * @param ctx the parse tree
 	 */
@@ -340,6 +350,16 @@ public interface MxStarListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitVariableDefinition(MxStarParser.VariableDefinitionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link MxStarParser#variableDefinitionWithoutInit}.
+	 * @param ctx the parse tree
+	 */
+	void enterVariableDefinitionWithoutInit(MxStarParser.VariableDefinitionWithoutInitContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MxStarParser#variableDefinitionWithoutInit}.
+	 * @param ctx the parse tree
+	 */
+	void exitVariableDefinitionWithoutInit(MxStarParser.VariableDefinitionWithoutInitContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code varWithoutInit}
 	 * labeled alternative in {@link MxStarParser#varDef}.
