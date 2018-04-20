@@ -54,7 +54,7 @@ public class MxStarParser extends Parser {
 	};
 
 	private static final String[] _LITERAL_NAMES = {
-		null, "';'", "'{'", "'}'", "'('", "')'", "','", "'='", "'.'", "'['", "']'", 
+		null, "';'", "'{'", "'}'", "'('", "')'", "','", "'='", "'['", "']'", "'.'", 
 		"'++'", "'--'", "'~'", "'!'", "'-'", "'+'", "'*'", "'/'", "'%'", "'<<'", 
 		"'>>'", "'<'", "'>'", "'<='", "'>='", "'=='", "'!='", "'&'", "'^'", "'|'", 
 		"'&&'", "'||'", null, null, "'true'", "'false'", null, "'null'", "'bool'", 
@@ -2316,11 +2316,11 @@ public class MxStarParser extends Parser {
 						_localctx = new ObjAccPrimExprContext(new PrimaryExprContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_primaryExpr);
 						setState(297);
-						if (!(precpred(_ctx, 3))) throw new FailedPredicateException(this, "precpred(_ctx, 3)");
+						if (!(precpred(_ctx, 2))) throw new FailedPredicateException(this, "precpred(_ctx, 2)");
 						setState(298);
-						match(T__7);
+						match(T__9);
 						setState(299);
-						primaryExpr(4);
+						primaryExpr(3);
 						}
 						break;
 					case 2:
@@ -2328,13 +2328,13 @@ public class MxStarParser extends Parser {
 						_localctx = new ArrPrimExprContext(new PrimaryExprContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_primaryExpr);
 						setState(300);
-						if (!(precpred(_ctx, 2))) throw new FailedPredicateException(this, "precpred(_ctx, 2)");
+						if (!(precpred(_ctx, 3))) throw new FailedPredicateException(this, "precpred(_ctx, 3)");
 						setState(301);
-						match(T__8);
+						match(T__7);
 						setState(302);
 						expression();
 						setState(303);
-						match(T__9);
+						match(T__8);
 						}
 						break;
 					}
@@ -2806,9 +2806,9 @@ public class MxStarParser extends Parser {
 						{
 						{
 						setState(349);
-						match(T__8);
+						match(T__7);
 						setState(350);
-						match(T__9);
+						match(T__8);
 						}
 						}
 						break;
@@ -2832,11 +2832,11 @@ public class MxStarParser extends Parser {
 						{
 						{
 						setState(355);
-						match(T__8);
+						match(T__7);
 						setState(356);
 						expression();
 						setState(357);
-						match(T__9);
+						match(T__8);
 						}
 						}
 						break;
@@ -2855,9 +2855,9 @@ public class MxStarParser extends Parser {
 						{
 						{
 						setState(363);
-						match(T__8);
+						match(T__7);
 						setState(364);
-						match(T__9);
+						match(T__8);
 						}
 						} 
 					}
@@ -4346,13 +4346,13 @@ public class MxStarParser extends Parser {
 			setState(521);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==T__8) {
+			while (_la==T__7) {
 				{
 				{
 				setState(517);
-				match(T__8);
+				match(T__7);
 				setState(518);
-				match(T__9);
+				match(T__8);
 				}
 				}
 				setState(523);
@@ -4689,9 +4689,9 @@ public class MxStarParser extends Parser {
 	private boolean primaryExpr_sempred(PrimaryExprContext _localctx, int predIndex) {
 		switch (predIndex) {
 		case 0:
-			return precpred(_ctx, 3);
-		case 1:
 			return precpred(_ctx, 2);
+		case 1:
+			return precpred(_ctx, 3);
 		}
 		return true;
 	}
@@ -4900,9 +4900,9 @@ public class MxStarParser extends Parser {
 		"\u0121\b\35\1\2\u0121\u012a\5\66\34\2\u0122\u0123\5\20\t\2\u0123\u0125"+
 		"\7\6\2\2\u0124\u0126\5:\36\2\u0125\u0124\3\2\2\2\u0125\u0126\3\2\2\2\u0126"+
 		"\u0127\3\2\2\2\u0127\u0128\7\7\2\2\u0128\u012a\3\2\2\2\u0129\u0120\3\2"+
-		"\2\2\u0129\u0122\3\2\2\2\u012a\u0135\3\2\2\2\u012b\u012c\f\5\2\2\u012c"+
-		"\u012d\7\n\2\2\u012d\u0134\58\35\6\u012e\u012f\f\4\2\2\u012f\u0130\7\13"+
-		"\2\2\u0130\u0131\5\64\33\2\u0131\u0132\7\f\2\2\u0132\u0134\3\2\2\2\u0133"+
+		"\2\2\u0129\u0122\3\2\2\2\u012a\u0135\3\2\2\2\u012b\u012c\f\4\2\2\u012c"+
+		"\u012d\7\f\2\2\u012d\u0134\58\35\5\u012e\u012f\f\5\2\2\u012f\u0130\7\n"+
+		"\2\2\u0130\u0131\5\64\33\2\u0131\u0132\7\13\2\2\u0132\u0134\3\2\2\2\u0133"+
 		"\u012b\3\2\2\2\u0133\u012e\3\2\2\2\u0134\u0137\3\2\2\2\u0135\u0133\3\2"+
 		"\2\2\u0135\u0136\3\2\2\2\u01369\3\2\2\2\u0137\u0135\3\2\2\2\u0138\u013d"+
 		"\5\64\33\2\u0139\u013a\7\b\2\2\u013a\u013c\5\64\33\2\u013b\u0139\3\2\2"+
@@ -4918,12 +4918,12 @@ public class MxStarParser extends Parser {
 		"\3\2\2\2\u0159\u014d\3\2\2\2\u0159\u014f\3\2\2\2\u0159\u0151\3\2\2\2\u0159"+
 		"\u0153\3\2\2\2\u0159\u0155\3\2\2\2\u0159\u0157\3\2\2\2\u015a?\3\2\2\2"+
 		"\u015b\u015e\5\n\6\2\u015c\u015e\5\\/\2\u015d\u015b\3\2\2\2\u015d\u015c"+
-		"\3\2\2\2\u015e\u0174\3\2\2\2\u015f\u0160\7\13\2\2\u0160\u0162\7\f\2\2"+
+		"\3\2\2\2\u015e\u0174\3\2\2\2\u015f\u0160\7\n\2\2\u0160\u0162\7\13\2\2"+
 		"\u0161\u015f\3\2\2\2\u0162\u0163\3\2\2\2\u0163\u0161\3\2\2\2\u0163\u0164"+
-		"\3\2\2\2\u0164\u0175\3\2\2\2\u0165\u0166\7\13\2\2\u0166\u0167\5\64\33"+
-		"\2\u0167\u0168\7\f\2\2\u0168\u016a\3\2\2\2\u0169\u0165\3\2\2\2\u016a\u016b"+
+		"\3\2\2\2\u0164\u0175\3\2\2\2\u0165\u0166\7\n\2\2\u0166\u0167\5\64\33\2"+
+		"\u0167\u0168\7\13\2\2\u0168\u016a\3\2\2\2\u0169\u0165\3\2\2\2\u016a\u016b"+
 		"\3\2\2\2\u016b\u0169\3\2\2\2\u016b\u016c\3\2\2\2\u016c\u0171\3\2\2\2\u016d"+
-		"\u016e\7\13\2\2\u016e\u0170\7\f\2\2\u016f\u016d\3\2\2\2\u0170\u0173\3"+
+		"\u016e\7\n\2\2\u016e\u0170\7\13\2\2\u016f\u016d\3\2\2\2\u0170\u0173\3"+
 		"\2\2\2\u0171\u016f\3\2\2\2\u0171\u0172\3\2\2\2\u0172\u0175\3\2\2\2\u0173"+
 		"\u0171\3\2\2\2\u0174\u0161\3\2\2\2\u0174\u0169\3\2\2\2\u0175A\3\2\2\2"+
 		"\u0176\u0177\b\"\1\2\u0177\u0178\5> \2\u0178\u0184\3\2\2\2\u0179\u017a"+
@@ -4971,7 +4971,7 @@ public class MxStarParser extends Parser {
 		"\u01ff\7\t\2\2\u01ff\u0200\5V,\2\u0200\u0202\3\2\2\2\u0201\u01fc\3\2\2"+
 		"\2\u0201\u01fd\3\2\2\2\u0202W\3\2\2\2\u0203\u0206\5\n\6\2\u0204\u0206"+
 		"\5\\/\2\u0205\u0203\3\2\2\2\u0205\u0204\3\2\2\2\u0206\u020b\3\2\2\2\u0207"+
-		"\u0208\7\13\2\2\u0208\u020a\7\f\2\2\u0209\u0207\3\2\2\2\u020a\u020d\3"+
+		"\u0208\7\n\2\2\u0208\u020a\7\13\2\2\u0209\u0207\3\2\2\2\u020a\u020d\3"+
 		"\2\2\2\u020b\u0209\3\2\2\2\u020b\u020c\3\2\2\2\u020cY\3\2\2\2\u020d\u020b"+
 		"\3\2\2\2\u020e\u020f\7\67\2\2\u020f[\3\2\2\2\u0210\u0211\t\3\2\2\u0211"+
 		"]\3\2\2\2\u0212\u0217\7\'\2\2\u0213\u0217\5`\61\2\u0214\u0217\7$\2\2\u0215"+

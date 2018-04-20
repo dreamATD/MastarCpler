@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class DefinedEntity {
+public abstract class DefinedEntity {
 	String id;
 	TypeDef type;
 	Location loc;
@@ -14,6 +14,26 @@ public class DefinedEntity {
 		id = str;
 		type = tp;
 		loc = l;
+	}
+	abstract DefinedEntity copy();
+	/* for variable and object access and function */
+	static void matchForm(Node node, DefinedEntity entity) throws SyntaxError {
+		if (node instanceof VarExprNode) {
+			if (entity instanceof DefinedVariable) {
+				node.type = entity.type.typeName;
+				return;
+			}
+			throw new DisMatchedFormError(node.loc);
+		} else if (node instanceof ObjAccExprNode) {
+			if (entity instanceof DefinedVariable) {
+				Node tmp = node.sons.get(1);
+				matchForm(tmp, entity.type.searchObj(tmp.id, tmp.loc));
+				node.type = tmp.type;
+			} else throw new DisMatchedFormError(node.loc);
+		} else if (node instanceof FuncExprNode) {
+			if ((entity instanceof DefinedFunc) && entity.type.matchParamType(node.sons));
+			else throw new DisMatchedFormError(node.loc);
+		}
 	}
 }
 class DefinedFunc extends DefinedEntity {
@@ -30,6 +50,9 @@ class DefinedFunc extends DefinedEntity {
 		}
 		type = new TypeDef(node.type, obj);
 		loc = node.loc;
+	}
+	@Override DefinedFunc copy() {
+		return new DefinedFunc(this.id, new TypeDef(this.type), this.loc);
 	}
 }
 class DefinedClass extends DefinedEntity {
@@ -48,11 +71,18 @@ class DefinedClass extends DefinedEntity {
 				obj.add(new DefinedFunc((FuncDefNode) node.sons.get(i)));
 			}
 		}
-		type = new TypeDef(node.type, obj);
+		type = new TypeDef(new ClassTypeRef(node.id), obj);
 		loc = node.loc;
+		System.out.println("buildClass: " + id + " " + type.getDim());
+	}
+	@Override DefinedClass copy() {
+		return new DefinedClass(this.id, new TypeDef(this.type), this.loc);
 	}
 }
 class DefinedVariable extends DefinedEntity {
+	/* only if the type is int or string, the value has meanings */
+	String value;
+	int dimension;
 	DefinedVariable(String str, Location l) {
 		super(str, l);
 	}
@@ -61,7 +91,13 @@ class DefinedVariable extends DefinedEntity {
 	}
 	DefinedVariable(VarDefNode node) {
 		id = node.id;
-		type = new TypeDef(node.type);
+		if (node.type instanceof ArrayTypeRef) {
+			type = new TypeDef((((ArrayTypeRef) node.type).getSimpleRef()));
+			dimension = node.type.dimension;
+		} else {
+			type = new TypeDef(node.type);
+			dimension = 0;
+		}
 		loc = node.loc;
 	}
 	static List<DefinedVariable> splitAndConstr(VarDefStatNode node) {
@@ -70,5 +106,8 @@ class DefinedVariable extends DefinedEntity {
 			obj.add(new DefinedVariable((VarDefNode) node.sons.get(i)));
 		}
 		return obj;
+	}
+	@Override DefinedVariable copy() {
+		return new DefinedVariable(this.id, new TypeDef(this.type), this.loc);
 	}
 }

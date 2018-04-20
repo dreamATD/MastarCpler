@@ -12,23 +12,34 @@ public class Main {
         MxStarParser parser = new MxStarParser (tokens);
         ParseTree tree = parser.code();
 
-        System.out.println(System.getProperty("user.id"));
-
         System.out.println("LISP:");
         System.out.println(tree.toStringTree(parser));
         System.out.println();
 
+        // build an AST
         System.out.println("Visitor:");
         BuildAstVisitor buildByVisitor = new BuildAstVisitor();
         Node root = buildByVisitor.visit(tree);
+
+        // print the AST
         TempTestAst tester = new TempTestAst();
         tester.dfs(root, "");
-        Resolver resolver = new Resolver();
-	    tester.dfs(root, "");
-        resolver.codeResolver(root);
-        System.out.println(resolver.genScope.entities.size());
+
+        // build the scopes
+        ScopeBuilder scopeBuilder = new ScopeBuilder();
+        scopeBuilder.codeResolver(root);
         System.out.println();
-		Scope.dfs(resolver.genScope, "");
+
+        // print the scopes
+		Scope.dfs(scopeBuilder.genScope, "");
+        // Check Semantic Error;
+        SemanticChecker checker = new SemanticChecker(scopeBuilder.genScope);
+        try {
+            checker.visit(root);
+        } catch (SyntaxError e) {
+            System.out.println(e.toString() + " on Line: " + e.loc.line + ",  Column: " + e.loc.column);
+            throw e;
+        }
 //        System.out.println("Listener:");
 //        ParseTreeWalker walker = new ParseTreeWalker();
 //        Evaluator evalByListener = new Evaluator();

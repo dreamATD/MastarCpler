@@ -34,11 +34,14 @@ public abstract class TypeRef {
 		}
 		return false;
 	}
+	public boolean equalsSingleType(String typeId) {
+		return (!(this instanceof ArrayTypeRef) && this.typeId.equals(typeId));
+	}
 }
 class IntTypeRef extends TypeRef {
 	IntTypeRef() {
 		typeId = "int";
-		dimension = 1;
+		dimension = 0;
 	}
 	IntTypeRef copy() {
 		return new IntTypeRef();
@@ -47,7 +50,7 @@ class IntTypeRef extends TypeRef {
 class BoolTypeRef extends TypeRef {
 	BoolTypeRef() {
 		typeId = "bool";
-		dimension = 1;
+		dimension = 0;
 	}
 	BoolTypeRef copy() {
 		return new BoolTypeRef();
@@ -56,7 +59,7 @@ class BoolTypeRef extends TypeRef {
 class StringTypeRef extends TypeRef {
 	StringTypeRef() {
 		typeId = "string";
-		dimension = 1;
+		dimension = 0;
 	}
 	StringTypeRef copy() {
 		return new StringTypeRef();
@@ -65,7 +68,7 @@ class StringTypeRef extends TypeRef {
 class VoidTypeRef extends TypeRef {
 	VoidTypeRef() {
 		typeId = "void";
-		dimension = 1;
+		dimension = 0;
 	}
 	VoidTypeRef copy() {
 		return new VoidTypeRef();
@@ -74,7 +77,7 @@ class VoidTypeRef extends TypeRef {
 class ClassTypeRef extends TypeRef {
 	ClassTypeRef(String className) {
 		typeId = className;
-		dimension = 1;
+		dimension = 0;
 	}
 	ClassTypeRef copy() {
 		return new ClassTypeRef(typeId);
@@ -101,5 +104,12 @@ class ArrayTypeRef extends TypeRef {
 	}
 	ArrayTypeRef copy() {
 		return new ArrayTypeRef(typeId, dimension);
+	}
+	TypeRef getSimpleRef() {
+		if (typeId.equals("int")) return new IntTypeRef();
+		if (typeId.equals("bool")) return new BoolTypeRef();
+		if (typeId.equals("string")) return new StringTypeRef();
+		if (typeId.equals("void")) return new VoidTypeRef();
+		return new ClassTypeRef(typeId);
 	}
 }

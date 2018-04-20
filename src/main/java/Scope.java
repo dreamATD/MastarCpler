@@ -61,6 +61,23 @@ public class Scope {
 			dfs(sonScope, indentation + "    ");
 		}
 	}
+	DefinedEntity matchVarName(String name, Location loc, GeneralScope genScope) throws SyntaxError {
+		Scope p = this;
+		while (true) {
+			if (p instanceof GeneralScope) {
+				if (((GeneralScope) p).entities.containsKey(name)) {
+					return ((GeneralScope) p).entities.get(name);
+				}
+			} else if (p instanceof LocalScope){
+				if (((LocalScope) p).variables.containsKey(name)) {
+					return ((LocalScope) p).variables.get(name);
+				}
+			}
+			if (p == genScope) break;
+			p = p.parent;
+		}
+		throw new NoDefinedVarError(loc);
+	}
 }
 class GeneralScope extends Scope {
 	Map<String, DefinedEntity> entities;
@@ -70,7 +87,7 @@ class GeneralScope extends Scope {
 		parent = pnt;
 	}
 	void insert(String str, DefinedEntity ent) throws SyntaxError {
-		if (entities.containsKey(str)) throw new ReDefineError(ent.loc);
+		if (entities.containsKey(str)) throw new ReDefinedError(ent.loc);
 		entities.put(str, ent);
 	}
 	DefinedEntity check(String str) {
@@ -90,10 +107,7 @@ class LocalScope extends Scope {
 		parent = pnt;
 	}
 	void insert(String str, DefinedVariable ent) throws SyntaxError {
-		if (variables.containsKey(str)) throw new ReDefineError(ent.loc);
+		if (variables.containsKey(str)) throw new ReDefinedError(ent.loc);
 		variables.put(str, ent);
-	}
-	DefinedVariable check(String str) {
-		return variables.get(str);
 	}
 }

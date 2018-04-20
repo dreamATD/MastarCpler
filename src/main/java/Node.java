@@ -1,12 +1,13 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class Node {
+public abstract class Node {
 	String id;
 	TypeRef type;
 	Location loc;
 	List<Node> sons;
 	Scope belongTo;
+	DefinedEntity entity;
 	Node() {
 		sons = new ArrayList<Node>();
 		type = TypeRef.buildTypeRef("void");
@@ -17,6 +18,9 @@ public class Node {
 		sons = new ArrayList<Node>();
 	}
 	void print(String indentation) {}
+	void accept(AstVisitor visitor) throws SyntaxError {
+		visitor.visit(this);
+	}
 }
 class CodeNode extends Node {
 //	List<ClassDefNode> classDefList;
@@ -29,7 +33,7 @@ class CodeNode extends Node {
 		System.out.println(indentation + "<CodeNode> id: " + id + " type: " + type.typeId);
 	}
 }
-class VarDefNode extends Node{
+class VarDefNode extends Node {
 //	ExprNode initVal;
 	VarDefNode() {
 		super();
@@ -38,7 +42,7 @@ class VarDefNode extends Node{
 		System.out.println(indentation + "<VarDefNode> id: " + id + " type: " + type.typeId);
 	}
 }
-class ClassDefNode extends Node{
+class ClassDefNode extends Node {
 //	List<FuncDefNode> funcObjList;
 //	List<VarDefNode> varObjList;
 //	ConsFuncDefNode consFunc;
@@ -49,7 +53,7 @@ class ClassDefNode extends Node{
 		System.out.println(indentation + "<ClassDefNode> id: " + id + " type: " + type.typeId);
 	}
 }
-class FuncDefNode extends Node{
+class FuncDefNode extends Node {
 //	List<VarDefNode> paramList;
 //	CompStatNode funcBody;
 	FuncDefNode() {
@@ -68,7 +72,7 @@ class ConsFuncDefNode extends FuncDefNode {
 	}
 }
 
-class StatNode extends Node {
+abstract class StatNode extends Node {
 	StatNode(){
 		super();
 	}
@@ -94,7 +98,7 @@ class ExprStatNode extends StatNode {
 		System.out.println(indentation + "<ExprStatNode> id: " + id + " type: " + type.typeId);
 	}
 }
-class CondStatNode extends StatNode {
+abstract class CondStatNode extends StatNode {
 	CondStatNode() {
 		super();
 	}
@@ -123,7 +127,7 @@ class IfElseStatNode extends CondStatNode {
 		System.out.println(indentation + "<IfElseStatNode> id: " + id + " type: " + type.typeId);
 	}
 }
-class IterStatNode extends StatNode {
+abstract class IterStatNode extends StatNode {
 	IterStatNode() {
 		super();
 	}
@@ -153,7 +157,7 @@ class WhileStatNode extends IterStatNode {
 		System.out.println(indentation + "<WhileStatNode> id: " + id + " type: " + type.typeId);
 	}
 }
-class JumpStatNode extends StatNode {
+abstract class JumpStatNode extends StatNode {
 	JumpStatNode() {
 		super();
 	}
@@ -203,7 +207,7 @@ class VarDefStatNode extends StatNode {
 		System.out.println(indentation + "<VarDefStatNode> id: " + id + " type: " + type.typeId);
 	}
 }
-class ExprNode extends Node {
+abstract class ExprNode extends Node {
 	ExprNode() {
 		super();
 	}
@@ -211,7 +215,7 @@ class ExprNode extends Node {
 		System.out.println(indentation + "<IfStatNode> id: " + id + " type: " + type.typeId);
 	}
 }
-class EmptyExprNode extends ExprNode{
+class EmptyExprNode extends ExprNode {
 	EmptyExprNode() {
 		super();
 	}
@@ -265,7 +269,7 @@ class NewExprNode extends ExprNode {
 		System.out.println(indentation + "<NewExprNode> id: " + id + " type: " + type.typeId);
 	}
 }
-class PrimExprNode extends ExprNode {
+abstract class PrimExprNode extends ExprNode {
 	PrimExprNode() {
 		super();
 	}
@@ -310,7 +314,7 @@ class VarExprNode extends PrimExprNode {
 		System.out.println(indentation + "<VarExprNode> id: " + id + " type: " + type.typeId);
 	}
 }
-class LiteralNode extends ExprNode {
+abstract class LiteralNode extends ExprNode {
 	LiteralNode() {
 		super();
 	}

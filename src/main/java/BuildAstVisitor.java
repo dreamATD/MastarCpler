@@ -208,13 +208,8 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 	@Override public Node visitExpression(MxStarParser.ExpressionContext ctx) {
 		return visit(ctx.assignmentExpr());
 	}
-	@Override public LiteralNode visitLiteralElemExpr(MxStarParser.LiteralElemExprContext ctx) {
-		LiteralNode res = new LiteralNode();
-		Node tmp = visit(ctx.literal());
-		res.id = ctx.literal().getText();
-		res.type = tmp.type;
-		res.loc = new Location(ctx.start);
-		return res;
+	@Override public Node visitLiteralElemExpr(MxStarParser.LiteralElemExprContext ctx) {
+		return visit(ctx.literal());
 	}
 	@Override public VarExprNode visitVarElemExpr(MxStarParser.VarElemExprContext ctx) {
 		VarExprNode res = new VarExprNode();
@@ -245,10 +240,16 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 		return res;
 	}
 	@Override public ArrExprNode visitArrPrimExpr(MxStarParser.ArrPrimExprContext ctx) {
-		ArrExprNode res = new ArrExprNode();
-		res.sons.add(visit(ctx.primaryExpr()));
+		ArrExprNode res;
+		Node tmp = visit(ctx.primaryExpr());
+		if (tmp instanceof ArrExprNode) res = (ArrExprNode) tmp;
+		else {
+			res = new ArrExprNode();
+			res.sons.add(tmp);
+			res.id = tmp.id;
+			res.loc = new Location(ctx.start);
+		}
 		res.sons.add(visit(ctx.expression()));
-		res.loc = new Location(ctx.start);
 		return res;
 	}
 	@Override public FuncExprNode visitArgumentList(MxStarParser.ArgumentListContext ctx) {

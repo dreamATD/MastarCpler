@@ -3,7 +3,7 @@ import jdk.nashorn.internal.runtime.regexp.joni.ast.StateNode;
 import java.lang.instrument.ClassDefinition;
 import java.util.List;
 
-public class Resolver {
+public class ScopeBuilder {
 	GeneralScope genScope = new GeneralScope(null);
 	void initInternalType() throws SyntaxError {
 		// build string class
@@ -48,14 +48,15 @@ public class Resolver {
 		}
 		genScope.insert("toString", new DefinedFunc("toString", toStringFunc, new Location(0, 0)));
 	}
-	void codeResolver(Node astRoot) throws SyntaxError {
+	public void codeResolver(Node astRoot) throws SyntaxError {
 		initInternalType();
 		generalResolver(genScope, astRoot);
+		updateType(genScope);
 	}
 	/*
 	* for the whole code or class
 	* */
-	public void generalResolver(GeneralScope curScope, Node curNode) throws SyntaxError {
+	void generalResolver(GeneralScope curScope, Node curNode) throws SyntaxError {
 		curNode.belongTo = curScope;
 		for (int i = 0; i < curNode.sons.size(); ++i) {
 			Node node = curNode.sons.get(i);
@@ -89,12 +90,16 @@ public class Resolver {
 			}
 		}
 	}
-	public void localResolver(LocalScope curScope, Node curNode) throws SyntaxError {
+	/*
+	* for the others
+	* */
+	void localResolver(LocalScope curScope, Node curNode) throws SyntaxError {
 		boolean forceNewScope = false;
 		if (curNode instanceof ForStatNode
 				|| curNode instanceof WhileStatNode
 				|| curNode instanceof IfStatNode
 				) forceNewScope = true;
+		curNode.belongTo = curScope;
 		for (int i = 0; i < curNode.sons.size(); ++i) {
 			Node node = curNode.sons.get(i);
 			if (node instanceof CompStatNode) {
@@ -108,6 +113,7 @@ public class Resolver {
 					DefinedVariable var = obj.get(j);
 					curScope.insert(var.id, var);
 				}
+				localResolver(curScope, tmpNode);
 			} else if (forceNewScope && (node instanceof StatNode)
 					|| (curNode instanceof IfElseStatNode) && (i == curNode.sons.size() - 1)) {
 				LocalScope sonScope = Scope.newLocalScope(curScope);
@@ -117,4 +123,42 @@ public class Resolver {
 			}
 		}
 	}
+	boolean checkTypeEntity(TypeRef type) {
+		if (type instanceof ArrayTypeRef) type = ((ArrayTypeRef) type).getSimpleRef();
+		if (type instanceof ClassTypeRef && !genScope.entities.containsKey(type.typeId)) return false;
+		return true;
+	}
+	/* update the type */
+	void updateType(Scope curScope) {
+		for (int i = 0; i < curScope.sonScopes.size(); ++i) {
+			updateType(curScope.sonScopes.get(i));
+		}
+		if (curScope instanceof GeneralScope) {
+			for (String i: ((GeneralScope) curScope).entities.keySet()) {
+				DefinedEntity entity = ((GeneralScope) curScope).entities.get(i);
+				if (entity.type.typeName instanceof ClassTypeRef) {
+					if (entity instanceof DefinedClass) continue;
+					if (checkTypeEntity(entity.type.typeName)) {
+						entity.type.update(genScope.entities.get(entity.type.typeName.typeId).type);
+					}
+				}
+			}
+		} else {
+			for (String i: ((LocalScope) curScope).variables.keySet()) {
+				DefinedVariable entity = ((LocalScope) curScope).variables.get(i);
+				if (entity.type.typeName instanceof ClassTypeRef) {
+					if (checkTypeEntity(entity.type.typeName)) {
+						entity.type.update(genScope.entities.get(entity.type.typeName.typeId).type);
+					}
+				}
+			}
+		}
+	}
+
+	/*
+	* There is three things to do:
+	* Matching the name of each var to their definition.
+	* Matching the type of each var to their definition.
+	* Check the validity of expressions
+	* */
 }
