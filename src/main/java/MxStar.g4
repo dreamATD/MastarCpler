@@ -16,7 +16,7 @@ code
 
 classDefinition
 :
-	Class classId classBody ';'
+	Class classId classBody
 ;
 
 functionDefinition
@@ -228,7 +228,7 @@ unaryExpr
 
 newCreator
 :
-    (classId | simpleTypeId) (('['']')+ | ('['expression']')+ ('['']')*)
+    (classId | simpleTypeId) (('['']')* | ('['expression']')+ ('['']')*)
 ;
 
 multiplicativeExpr
@@ -350,7 +350,7 @@ logicalLiteral
 
 StringLiteral
 :
-	'"' .*? '"'
+	'"' (ESC | .)*? '"'
 ;
 
 True
@@ -507,9 +507,7 @@ ALPHABET
 ;
 
 fragment
-ESCAPESEQUENCE
+ESC
 :
-	'\\n'
-	'\\\\'
-	'\\"'
+    '\\' [btnr"\\]
 ;

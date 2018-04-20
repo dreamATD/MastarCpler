@@ -9,7 +9,12 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 	@Override public ClassDefNode visitClassDefinition(MxStarParser.ClassDefinitionContext ctx) {
 		ClassDefNode res = new ClassDefNode();
 		res.sons.addAll(visit(ctx.classBody()).sons);
-		res.id = ctx.classId().getText();
+		String className = ctx.classId().getText();
+		for (int i = 0; i < res.sons.size(); ++i) {
+			Node son = res.sons.get(i);
+			if (son instanceof ConsFuncDefNode) son.id = className;
+		}
+		res.id = className;
 		res.loc = new Location(ctx.classId().start);
 		return res;
 	}
@@ -51,7 +56,13 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 			res.sons.add(visit(data));
 		}
 		if (ctx.constructionFunction() != null) res.sons.add(visit(ctx.constructionFunction()));
-		else res.sons.add(new ConsFuncDefNode());
+		else {
+			ConsFuncDefNode son = new ConsFuncDefNode();
+			son.type = TypeRef.buildTypeRef("void");
+			son.id = null;
+			son.sons.add(new NullStatNode());
+			res.sons.add(son);
+		}
 		res.loc = new Location(ctx.start);
 		return res;
 	}
@@ -135,7 +146,7 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 		if (ctx.condExpr == null) res.sons.add(new EmptyExprNode());
 		else res.sons.add(visit(ctx.condExpr));
 		if (ctx.loopExpr == null) res.sons.add(new EmptyExprNode());
-		res.sons.add(visit(ctx.loopExpr));
+		else res.sons.add(visit(ctx.loopExpr));
 		res.sons.add(visit(ctx.statement()));
 		res.loc = new Location(ctx.start);
 		return res;
@@ -290,8 +301,14 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 		for (int i = 0; i < text.length(); ++i) {
 			if (text.charAt(i) == '[') ++dimension;
 		}
-		if (ctx.simpleTypeId() != null) res.type = new ArrayTypeRef(ctx.simpleTypeId().getText(), dimension);
-		else res.type = new ArrayTypeRef(ctx.classId().getText(), dimension);
+		if (ctx.simpleTypeId() != null) {
+			if (dimension > 0) res.type = new ArrayTypeRef(ctx.simpleTypeId().getText(), dimension);
+			else res.type = TypeRef.buildTypeRef(ctx.simpleTypeId().getText());
+		}
+		else {
+			if (dimension > 0) res.type = new ArrayTypeRef(ctx.classId().getText(), dimension);
+			else res.type = TypeRef.buildTypeRef(ctx.classId().getText());
+		}
 		for (int i = 0; i < ctx.expression().size(); ++i) {
 			res.sons.add(visit(ctx.expression(i)));
 		}

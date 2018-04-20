@@ -104,13 +104,13 @@ public class SemanticChecker extends AstVisitor {
 		visitChild(nod);
 		ExprNode expr = (ExprNode) nod.sons.get(0);
 		if (!checkLeftValue(expr)) throw new NotLeftValue(expr.loc);
-		if (!(expr.type instanceof IntTypeRef)) throw new NoCastExpr(nod.loc);
+		if (!(expr.type instanceof IntTypeRef) && !(expr.type instanceof BoolTypeRef)) throw new NoCastExpr(nod.loc);
 	}
 	@Override void visit(RightUnaryExprNode nod) throws SyntaxError {
 		visitChild(nod);
 		ExprNode expr = (ExprNode) nod.sons.get(0);
 		if (!checkLeftValue(expr)) throw new NotLeftValue(expr.loc);
-		if (!(expr.type instanceof IntTypeRef)) throw new NoCastExpr(nod.loc);
+		if (!(expr.type instanceof IntTypeRef) && !(expr.type instanceof BoolTypeRef)) throw new NoCastExpr(nod.loc);
 	}
 	@Override void visit(NewExprNode nod) throws SyntaxError {
 //		System.out.println(nod.type.typeId + " " + nod.type.dimension);

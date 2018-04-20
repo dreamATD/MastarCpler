@@ -62,7 +62,7 @@ public class ScopeBuilder {
 				}
 				curScope.insert(tmpNode.id, func);
 				// insert the function body
-				localResolver(sonScope, tmpNode.sons.get(node.sons.size() - 1)); // function body
+				localResolver(sonScope, tmpNode.sons.get(tmpNode.sons.size() - 1)); // function body
 			} else if (node instanceof VarDefStatNode) {
 				VarDefStatNode tmpNode = (VarDefStatNode) node;
 				tmpNode.belongTo = curScope;

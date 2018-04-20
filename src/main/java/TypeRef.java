@@ -59,7 +59,7 @@ class BoolTypeRef extends SingleTypeRef {
 		return (other instanceof BoolTypeRef);
 	}
 }
-class StringTypeRef extends SingleTypeRef {
+class StringTypeRef extends ClassTypeRef {
 	StringTypeRef() {
 		typeId = "string";
 	}
@@ -82,6 +82,7 @@ class VoidTypeRef extends SingleTypeRef {
 	}
 }
 class ClassTypeRef extends SingleTypeRef {
+	ClassTypeRef(){}
 	ClassTypeRef(String className) {
 		typeId = className;
 	}
@@ -153,7 +154,8 @@ class FuncTypeRef extends TypeRef {
 	boolean matchForm(FuncExprNode nod) {
 		if (nod.sons.size() != params.size()) return false;
 		for (int i = 0; i < params.size(); ++i) {
-			if (!nod.sons.get(i).type.equals(params.get(i))) return false;
+			Node son = nod.sons.get(i);
+			if (!son.type.equalsSingleType("void") && !son.type.equals(params.get(i))) return false;
 		}
 		return true;
 	}
@@ -192,7 +194,6 @@ class ClassDefTypeRef extends TypeRef {
 			return new ArrayTypeRef(((ArrayTypeRef) type).getSimpleRef().typeId, dim);
 		} else {
 			if (!(type instanceof VarTypeRef)) throw new NoDefinedVarError(nod.loc);
-			if (!type.equals(nod.type)) throw new NoDefinedVarError(nod.loc);
 			return type;
 		}
 	}
