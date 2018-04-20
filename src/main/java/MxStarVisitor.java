@@ -240,6 +240,34 @@ public interface MxStarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitExpression(MxStarParser.ExpressionContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code arithmeticIntLiteral}
+	 * labeled alternative in {@link MxStarParser#literal}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArithmeticIntLiteral(MxStarParser.ArithmeticIntLiteralContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code arithmeticLogicalLiteral}
+	 * labeled alternative in {@link MxStarParser#literal}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArithmeticLogicalLiteral(MxStarParser.ArithmeticLogicalLiteralContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code unarithmeticStringLiteral}
+	 * labeled alternative in {@link MxStarParser#literal}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUnarithmeticStringLiteral(MxStarParser.UnarithmeticStringLiteralContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code unarithmeticNullLiteral}
+	 * labeled alternative in {@link MxStarParser#literal}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUnarithmeticNullLiteral(MxStarParser.UnarithmeticNullLiteralContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code literalElemExpr}
 	 * labeled alternative in {@link MxStarParser#elementExpr}.
 	 * @param ctx the parse tree
@@ -507,34 +535,6 @@ public interface MxStarVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitSimpleTypeId(MxStarParser.SimpleTypeIdContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code arithmeticIntLiteral}
-	 * labeled alternative in {@link MxStarParser#literal}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArithmeticIntLiteral(MxStarParser.ArithmeticIntLiteralContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code arithmeticLogicalLiteral}
-	 * labeled alternative in {@link MxStarParser#literal}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArithmeticLogicalLiteral(MxStarParser.ArithmeticLogicalLiteralContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code unarithmeticStringLiteral}
-	 * labeled alternative in {@link MxStarParser#literal}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitUnarithmeticStringLiteral(MxStarParser.UnarithmeticStringLiteralContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code unarithmeticNullLiteral}
-	 * labeled alternative in {@link MxStarParser#literal}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitUnarithmeticNullLiteral(MxStarParser.UnarithmeticNullLiteralContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MxStarParser#logicalLiteral}.
 	 * @param ctx the parse tree

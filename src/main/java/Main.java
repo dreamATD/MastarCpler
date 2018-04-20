@@ -5,7 +5,7 @@ import java.io.*;
 
 public class Main {
     public static void main (String[] args) throws IOException, SyntaxError {
-        InputStream is = new FileInputStream ("example/helloworld.txt");
+        InputStream is = new FileInputStream ("example/program.txt");
         ANTLRInputStream input = new ANTLRInputStream (is);
         MxStarLexer lexer = new MxStarLexer (input);
         CommonTokenStream tokens = new CommonTokenStream (lexer);

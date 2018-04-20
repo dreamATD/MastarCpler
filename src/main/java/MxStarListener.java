@@ -395,6 +395,54 @@ public interface MxStarListener extends ParseTreeListener {
 	 */
 	void exitExpression(MxStarParser.ExpressionContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code arithmeticIntLiteral}
+	 * labeled alternative in {@link MxStarParser#literal}.
+	 * @param ctx the parse tree
+	 */
+	void enterArithmeticIntLiteral(MxStarParser.ArithmeticIntLiteralContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code arithmeticIntLiteral}
+	 * labeled alternative in {@link MxStarParser#literal}.
+	 * @param ctx the parse tree
+	 */
+	void exitArithmeticIntLiteral(MxStarParser.ArithmeticIntLiteralContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code arithmeticLogicalLiteral}
+	 * labeled alternative in {@link MxStarParser#literal}.
+	 * @param ctx the parse tree
+	 */
+	void enterArithmeticLogicalLiteral(MxStarParser.ArithmeticLogicalLiteralContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code arithmeticLogicalLiteral}
+	 * labeled alternative in {@link MxStarParser#literal}.
+	 * @param ctx the parse tree
+	 */
+	void exitArithmeticLogicalLiteral(MxStarParser.ArithmeticLogicalLiteralContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code unarithmeticStringLiteral}
+	 * labeled alternative in {@link MxStarParser#literal}.
+	 * @param ctx the parse tree
+	 */
+	void enterUnarithmeticStringLiteral(MxStarParser.UnarithmeticStringLiteralContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code unarithmeticStringLiteral}
+	 * labeled alternative in {@link MxStarParser#literal}.
+	 * @param ctx the parse tree
+	 */
+	void exitUnarithmeticStringLiteral(MxStarParser.UnarithmeticStringLiteralContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code unarithmeticNullLiteral}
+	 * labeled alternative in {@link MxStarParser#literal}.
+	 * @param ctx the parse tree
+	 */
+	void enterUnarithmeticNullLiteral(MxStarParser.UnarithmeticNullLiteralContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code unarithmeticNullLiteral}
+	 * labeled alternative in {@link MxStarParser#literal}.
+	 * @param ctx the parse tree
+	 */
+	void exitUnarithmeticNullLiteral(MxStarParser.UnarithmeticNullLiteralContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code literalElemExpr}
 	 * labeled alternative in {@link MxStarParser#elementExpr}.
 	 * @param ctx the parse tree
@@ -852,54 +900,6 @@ public interface MxStarListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitSimpleTypeId(MxStarParser.SimpleTypeIdContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code arithmeticIntLiteral}
-	 * labeled alternative in {@link MxStarParser#literal}.
-	 * @param ctx the parse tree
-	 */
-	void enterArithmeticIntLiteral(MxStarParser.ArithmeticIntLiteralContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code arithmeticIntLiteral}
-	 * labeled alternative in {@link MxStarParser#literal}.
-	 * @param ctx the parse tree
-	 */
-	void exitArithmeticIntLiteral(MxStarParser.ArithmeticIntLiteralContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code arithmeticLogicalLiteral}
-	 * labeled alternative in {@link MxStarParser#literal}.
-	 * @param ctx the parse tree
-	 */
-	void enterArithmeticLogicalLiteral(MxStarParser.ArithmeticLogicalLiteralContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code arithmeticLogicalLiteral}
-	 * labeled alternative in {@link MxStarParser#literal}.
-	 * @param ctx the parse tree
-	 */
-	void exitArithmeticLogicalLiteral(MxStarParser.ArithmeticLogicalLiteralContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code unarithmeticStringLiteral}
-	 * labeled alternative in {@link MxStarParser#literal}.
-	 * @param ctx the parse tree
-	 */
-	void enterUnarithmeticStringLiteral(MxStarParser.UnarithmeticStringLiteralContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code unarithmeticStringLiteral}
-	 * labeled alternative in {@link MxStarParser#literal}.
-	 * @param ctx the parse tree
-	 */
-	void exitUnarithmeticStringLiteral(MxStarParser.UnarithmeticStringLiteralContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code unarithmeticNullLiteral}
-	 * labeled alternative in {@link MxStarParser#literal}.
-	 * @param ctx the parse tree
-	 */
-	void enterUnarithmeticNullLiteral(MxStarParser.UnarithmeticNullLiteralContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code unarithmeticNullLiteral}
-	 * labeled alternative in {@link MxStarParser#literal}.
-	 * @param ctx the parse tree
-	 */
-	void exitUnarithmeticNullLiteral(MxStarParser.UnarithmeticNullLiteralContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MxStarParser#logicalLiteral}.
 	 * @param ctx the parse tree

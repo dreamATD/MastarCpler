@@ -132,6 +132,7 @@ class FuncTypeRef extends TypeRef {
 		params = new ArrayList<VarTypeRef>();
 	}
 	FuncTypeRef(VarTypeRef ret, VarTypeRef... paramList) {
+		retType = ret;
 		params = new ArrayList<VarTypeRef>();
 		for (int i = 0; i < paramList.length; ++i) {
 			params.add(paramList[i]);

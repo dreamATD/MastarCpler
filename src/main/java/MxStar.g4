@@ -179,6 +179,14 @@ expression
 	assignmentExpr
 ;
 
+literal
+:
+	IntLiteral #arithmeticIntLiteral
+	| logicalLiteral #arithmeticLogicalLiteral
+	| StringLiteral #unarithmeticStringLiteral
+	| NullLiteral #unarithmeticNullLiteral
+;
+
 elementExpr
 :
 	literal #literalElemExpr
@@ -335,14 +343,6 @@ LineCommentary
 	literal identifier
 */
 
-literal
-:
-	IntLiteral #arithmeticIntLiteral
-	| logicalLiteral #arithmeticLogicalLiteral
-	| StringLiteral #unarithmeticStringLiteral
-	| NullLiteral #unarithmeticNullLiteral
-;
-
 logicalLiteral
 :
     True | False
@@ -365,7 +365,7 @@ False
 
 IntLiteral
 :
-	'-'? (DIGIT | NONZERODIGIT DIGIT+)
+	(DIGIT | NONZERODIGIT DIGIT+)
 ;
 
 NullLiteral
