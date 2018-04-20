@@ -2,56 +2,38 @@ import jdk.nashorn.internal.runtime.regexp.joni.ast.StateNode;
 
 import java.lang.instrument.ClassDefinition;
 import java.util.List;
+import java.util.Map;
 
 public class ScopeBuilder {
 	GeneralScope genScope = new GeneralScope(null);
+	Map<TypeRef, DefinedEntity> typeTable;
 	void initInternalType() throws SyntaxError {
 		// build string class
-		TypeDef stringType = new TypeDef(new StringTypeRef());
-		stringType.insertObj("length", new DefinedFunc("length", new TypeDef(new IntTypeRef()), new Location(0, 0)));
-		{
-			DefinedVariable varLeft = new DefinedVariable("left", new TypeDef(new IntTypeRef()), new Location(0, 0));
-			DefinedVariable varRight = new DefinedVariable("right", new TypeDef(new IntTypeRef()), new Location(0, 0));
-			stringType.insertObj("substring", new DefinedFunc("substring", new TypeDef(new StringTypeRef(), varLeft, varRight), new Location(0, 0)));
-		}
-		stringType.insertObj("parseInt", new DefinedFunc("parseInt", new TypeDef( new IntTypeRef() ), new Location(0, 0)));
-		{
-			DefinedVariable varPos = new DefinedVariable("pos", new TypeDef(new IntTypeRef()), new Location(0, 0));
-			stringType.insertObj("ord", new DefinedFunc("ord", new TypeDef(new IntTypeRef(), varPos), new Location(0, 0)));
-		}
-		genScope.insert("string", new DefinedClass("string", stringType, new Location(0, 0)));
+		ClassDefTypeRef stringType = new ClassDefTypeRef();
+		stringType.insertObj("length", new FuncTypeRef(new IntTypeRef()));
+		stringType.insertObj("substring", new FuncTypeRef(new StringTypeRef(), new IntTypeRef(), new IntTypeRef()));
+		stringType.insertObj("parseInt", new FuncTypeRef(new IntTypeRef()));
+		stringType.insertObj("ord", new FuncTypeRef(new IntTypeRef(), new IntTypeRef()));
+		genScope.insert("string", stringType);
 		// build void print(string str);
-		TypeDef printFunc = new TypeDef(new VoidTypeRef());
-		{
-			DefinedVariable str = new DefinedVariable("str", new TypeDef(new StringTypeRef()), new Location(0, 0));
-			printFunc.insertObj("str", str);
-		}
-		genScope.insert("print", new DefinedFunc("print", printFunc, new Location(0, 0)));
+		FuncTypeRef printRef = new FuncTypeRef(new VoidTypeRef(), new StringTypeRef());
+		genScope.insert("print", printRef);
 		// build void println(string str);
-		TypeDef printlnFunc = new TypeDef(new VoidTypeRef());
-		{
-			DefinedVariable str = new DefinedVariable("str", new TypeDef(new StringTypeRef()), new Location(0, 0));
-			printlnFunc.insertObj("str", str);
-		}
-		genScope.insert("println", new DefinedFunc("println", printlnFunc, new Location(0, 0)));
+		FuncTypeRef printlnRef = new FuncTypeRef(new VoidTypeRef(), new StringTypeRef());
+		genScope.insert("println", printlnRef);
 		// build string getString();
-		TypeDef getStringFunc = new TypeDef(new StringTypeRef());
-		genScope.insert("getString", new DefinedFunc("getString", getStringFunc, new Location(0, 0)));
+		FuncTypeRef getStringFunc = new FuncTypeRef(new StringTypeRef());
+		genScope.insert("getString", getStringFunc);
 		// build int getInt();
-		TypeDef getIntFunc = new TypeDef(new IntTypeRef());
-		genScope.insert("getInt", new DefinedFunc("getInt", getIntFunc, new Location(0, 0)));
+		FuncTypeRef getIntFunc = new FuncTypeRef(new IntTypeRef());
+		genScope.insert("getInt", getIntFunc);
 		// build string toString(int i)
-		TypeDef toStringFunc = new TypeDef(new StringTypeRef());
-		{
-			DefinedVariable i = new DefinedVariable("i", new TypeDef(new IntTypeRef()), new Location(0, 0));
-			toStringFunc.insertObj("i", i);
-		}
-		genScope.insert("toString", new DefinedFunc("toString", toStringFunc, new Location(0, 0)));
+		FuncTypeRef toStringFunc = new FuncTypeRef(new StringTypeRef(), new IntTypeRef());
+		genScope.insert("toString", toStringFunc);
 	}
 	public void codeResolver(Node astRoot) throws SyntaxError {
 		initInternalType();
 		generalResolver(genScope, astRoot);
-		updateType(genScope);
 	}
 	/*
 	* for the whole code or class
@@ -62,31 +44,35 @@ public class ScopeBuilder {
 			Node node = curNode.sons.get(i);
 			if (node instanceof ClassDefNode) {
 				ClassDefNode tmpNode = (ClassDefNode) node;
-				curScope.insert(node.id, new DefinedClass(tmpNode));
 				ClassScope sonScope = Scope.newClassScope(curScope);
 				generalResolver(sonScope, tmpNode);
+				ClassDefTypeRef classType = new ClassDefTypeRef(sonScope.entities);
+				curScope.insert(tmpNode.id, classType);
 			} else if (node instanceof FuncDefNode) {
 				FuncDefNode tmpNode = (FuncDefNode) node;
-				curScope.insert(tmpNode.id, new DefinedFunc(tmpNode));
 
+				FuncTypeRef func = new FuncTypeRef((VarTypeRef) tmpNode.type);
 				LocalScope sonScope = Scope.newLocalScope(curScope);
 				// insert the parameters
 				for (int j = 0; j < tmpNode.sons.size() - 1; ++j) {
 					VarDefNode tmpSonNode = (VarDefNode) tmpNode.sons.get(j);
 					tmpSonNode.belongTo = sonScope;
-					sonScope.insert(tmpSonNode.id, new DefinedVariable(tmpSonNode));
+					sonScope.insert(tmpSonNode.id, (VarTypeRef) tmpSonNode.type);
+					func.insert((VarTypeRef) tmpSonNode.type);
 				}
+				curScope.insert(tmpNode.id, func);
 				// insert the function body
 				localResolver(sonScope, tmpNode.sons.get(node.sons.size() - 1)); // function body
-			} else {
+			} else if (node instanceof VarDefStatNode) {
 				VarDefStatNode tmpNode = (VarDefStatNode) node;
 				tmpNode.belongTo = curScope;
-				List<DefinedVariable> obj = DefinedVariable.splitAndConstr(tmpNode);
-				for (int j = 0; j < obj.size(); ++j) {
-					DefinedVariable var = obj.get(j);
-					curScope.insert(var.id, var);
+				for (int j = 0; j < tmpNode.sons.size(); ++j) {
+					VarDefNode tmpSonNode = (VarDefNode) tmpNode.sons.get(j);
+					VarTypeRef var = (VarTypeRef) tmpSonNode.type;
+					curScope.insert(tmpSonNode.id, var);
 					tmpNode.sons.get(j).belongTo = curScope;
 				}
+				generalResolver(curScope, tmpNode);
 			}
 		}
 	}
@@ -108,10 +94,12 @@ public class ScopeBuilder {
 				localResolver(sonScope, tmpNode);
 			} else if (node instanceof VarDefStatNode) {
 				VarDefStatNode tmpNode = (VarDefStatNode) node;
-				List<DefinedVariable> obj = DefinedVariable.splitAndConstr(tmpNode);
-				for (int j = 0; j < obj.size(); ++j) {
-					DefinedVariable var = obj.get(j);
-					curScope.insert(var.id, var);
+				tmpNode.belongTo = curScope;
+				for (int j = 0; j < tmpNode.sons.size(); ++j) {
+					VarDefNode tmpSonNode = (VarDefNode) tmpNode.sons.get(j);
+					VarTypeRef var = (VarTypeRef) tmpSonNode.type;
+					curScope.insert(tmpSonNode.id, var);
+					tmpNode.sons.get(j).belongTo = curScope;
 				}
 				localResolver(curScope, tmpNode);
 			} else if (forceNewScope && (node instanceof StatNode)
@@ -120,37 +108,6 @@ public class ScopeBuilder {
 				localResolver(sonScope, node);
 			} else {
 				localResolver(curScope, node);
-			}
-		}
-	}
-	boolean checkTypeEntity(TypeRef type) {
-		if (type instanceof ArrayTypeRef) type = ((ArrayTypeRef) type).getSimpleRef();
-		if (type instanceof ClassTypeRef && !genScope.entities.containsKey(type.typeId)) return false;
-		return true;
-	}
-	/* update the type */
-	void updateType(Scope curScope) {
-		for (int i = 0; i < curScope.sonScopes.size(); ++i) {
-			updateType(curScope.sonScopes.get(i));
-		}
-		if (curScope instanceof GeneralScope) {
-			for (String i: ((GeneralScope) curScope).entities.keySet()) {
-				DefinedEntity entity = ((GeneralScope) curScope).entities.get(i);
-				if (entity.type.typeName instanceof ClassTypeRef) {
-					if (entity instanceof DefinedClass) continue;
-					if (checkTypeEntity(entity.type.typeName)) {
-						entity.type.update(genScope.entities.get(entity.type.typeName.typeId).type);
-					}
-				}
-			}
-		} else {
-			for (String i: ((LocalScope) curScope).variables.keySet()) {
-				DefinedVariable entity = ((LocalScope) curScope).variables.get(i);
-				if (entity.type.typeName instanceof ClassTypeRef) {
-					if (checkTypeEntity(entity.type.typeName)) {
-						entity.type.update(genScope.entities.get(entity.type.typeName.typeId).type);
-					}
-				}
 			}
 		}
 	}

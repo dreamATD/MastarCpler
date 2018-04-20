@@ -26,7 +26,7 @@ public class SemanticChecker extends AstVisitor {
 	}
 	boolean checkTypeEntity(TypeRef type) {
 		if (type instanceof ArrayTypeRef) type = ((ArrayTypeRef) type).getSimpleRef();
-		if (type instanceof ClassTypeRef && !genScope.entities.containsKey(type.typeId)) return false;
+		if (type instanceof ClassTypeRef && !genScope.entities.containsKey(((ClassTypeRef) type).typeId)) return false;
 		return true;
 	}
 	boolean checkLeftValue(ExprNode nod) {
@@ -81,6 +81,7 @@ public class SemanticChecker extends AstVisitor {
 		if (iterNum == 0) throw new CntOutIterStat (nod.loc);
 	}
 	@Override void visit(VarDefStatNode nod) throws SyntaxError {
+		if (!checkTypeEntity(nod.type)) throw new NoDefinedTypeError(nod.loc);
 		visitChild(nod);
 		if (!nod.sons.isEmpty()) nod.type = nod.sons.get(0).type;
 	}
@@ -103,11 +104,13 @@ public class SemanticChecker extends AstVisitor {
 		visitChild(nod);
 		ExprNode expr = (ExprNode) nod.sons.get(0);
 		if (!checkLeftValue(expr)) throw new NotLeftValue(expr.loc);
+		if (!(expr.type instanceof IntTypeRef)) throw new NoCastExpr(nod.loc);
 	}
 	@Override void visit(RightUnaryExprNode nod) throws SyntaxError {
 		visitChild(nod);
 		ExprNode expr = (ExprNode) nod.sons.get(0);
 		if (!checkLeftValue(expr)) throw new NotLeftValue(expr.loc);
+		if (!(expr.type instanceof IntTypeRef)) throw new NoCastExpr(nod.loc);
 	}
 	@Override void visit(NewExprNode nod) throws SyntaxError {
 //		System.out.println(nod.type.typeId + " " + nod.type.dimension);
@@ -116,32 +119,34 @@ public class SemanticChecker extends AstVisitor {
 	}
 	@Override void visit(FuncExprNode nod) throws SyntaxError {
 //		System.out.println(nod.id);
-		nod.entity = genScope.matchVarName(nod.id, nod.loc, genScope);
-		DefinedEntity.matchForm(nod, nod.entity);
 		visitChild(nod);
-		nod.type = nod.entity.type.typeName;
+		TypeRef tmp = genScope.matchVarName(nod.id, nod.loc, genScope);
+		if (!(tmp instanceof FuncTypeRef)) throw new NoDefinedTypeError(nod.loc);
+		if (!((FuncTypeRef) tmp).matchForm(nod)) throw new NoDefinedTypeError(nod.loc);
+		nod.type = ((FuncTypeRef) tmp).retType;
 	}
 	@Override void visit(ArrExprNode nod) throws SyntaxError {
 		visitChild(nod);
 		Node pointer = nod.sons.get(0);
-		int dim1 = pointer.type.dimension;
+		if (!(pointer.type instanceof ArrayTypeRef)) throw new NoCastExpr(nod.loc);
+		int dim1 = ((ArrayTypeRef) pointer.type).dimension;
 		int dim2 = nod.sons.size() - 1;
 		if (dim1 < dim2) throw new NullPointer (nod.loc);
 		int dim = dim1 - dim2;
-		if (dim > 0) nod.type = new ArrayTypeRef(pointer.type.typeId, dim);
+		if (dim > 0) nod.type = new ArrayTypeRef(((ArrayTypeRef) pointer.type).getSimpleRef().typeId, dim);
 		else nod.type = ((ArrayTypeRef) pointer.type).getSimpleRef();
 	}
 	@Override void visit(ObjAccExprNode nod) throws SyntaxError {
 		try {
 			visitChild(nod);
 		} catch(SyntaxError e) {}
-		System.out.println(nod.sons.get(0).entity.type.obj.size());
-		DefinedEntity.matchForm(nod, nod.sons.get(0).entity);
-		nod.type = nod.sons.get(1).type;
+		Node sonNode = nod.sons.get(0);
+		Node objNode = nod.sons.get(1);
+		if (!(sonNode.type instanceof ClassTypeRef)) throw new NoCastExpr(nod.loc);
+		ClassDefTypeRef tmp = (ClassDefTypeRef) genScope.entities.get(((ClassTypeRef) sonNode.type).typeId);
+		nod.type = tmp.checkObj(objNode);
 	}
 	@Override void visit(VarExprNode nod) throws SyntaxError {
-		nod.entity = nod.belongTo.matchVarName(nod.id, nod.loc, genScope);
-		if (((DefinedVariable)nod.entity).dimension == 0) nod.type = nod.entity.type.typeName;
-		else nod.type = new ArrayTypeRef(nod.entity.type.typeName.typeId, ((DefinedVariable) nod.entity).dimension);
+		nod.type = nod.belongTo.matchVarName(nod.id, nod.loc, genScope);
 	}
 }

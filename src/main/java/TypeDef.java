@@ -31,7 +31,6 @@ public class TypeDef {
 	}
 	TypeDef(TypeRef tr, List<DefinedEntity> objList) {
 		typeName = tr;
-		System.out.println("typeName " + tr.typeId);
 		obj = new LinkedHashMap<String, DefinedEntity>();
 		for (int i = 0; i < objList.size(); ++i) {
 			obj.put(objList.get(i).id, objList.get(i));

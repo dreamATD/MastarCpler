@@ -7,7 +7,6 @@ public abstract class Node {
 	Location loc;
 	List<Node> sons;
 	Scope belongTo;
-	DefinedEntity entity;
 	Node() {
 		sons = new ArrayList<Node>();
 		type = TypeRef.buildTypeRef("void");
@@ -30,7 +29,7 @@ class CodeNode extends Node {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<CodeNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<CodeNode> id: " + id + " type: " + type.toString());
 	}
 }
 class VarDefNode extends Node {
@@ -39,7 +38,7 @@ class VarDefNode extends Node {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<VarDefNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<VarDefNode> id: " + id + " type: " + type.toString());
 	}
 }
 class ClassDefNode extends Node {
@@ -50,7 +49,7 @@ class ClassDefNode extends Node {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<ClassDefNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<ClassDefNode> id: " + id + " type: " + type.toString());
 	}
 }
 class FuncDefNode extends Node {
@@ -60,7 +59,7 @@ class FuncDefNode extends Node {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<FuncDefNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<FuncDefNode> id: " + id + " type: " + type.toString());
 	}
 }
 class ConsFuncDefNode extends FuncDefNode {
@@ -68,7 +67,7 @@ class ConsFuncDefNode extends FuncDefNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<ConsFuncDefNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<ConsFuncDefNode> id: " + id + " type: " + type.toString());
 	}
 }
 
@@ -77,7 +76,7 @@ abstract class StatNode extends Node {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<StatNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<StatNode> id: " + id + " type: " + type.toString());
 	}
 }
 class CompStatNode extends StatNode {
@@ -86,7 +85,7 @@ class CompStatNode extends StatNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<CompStatNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<CompStatNode> id: " + id + " type: " + type.toString());
 	}
 }
 class ExprStatNode extends StatNode {
@@ -95,7 +94,7 @@ class ExprStatNode extends StatNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<ExprStatNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<ExprStatNode> id: " + id + " type: " + type.toString());
 	}
 }
 abstract class CondStatNode extends StatNode {
@@ -103,7 +102,7 @@ abstract class CondStatNode extends StatNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<CondStatNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<CondStatNode> id: " + id + " type: " + type.toString());
 	}
 }
 class IfStatNode extends CondStatNode {
@@ -113,7 +112,7 @@ class IfStatNode extends CondStatNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<IfStatNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<IfStatNode> id: " + id + " type: " + type.toString());
 	}
 }
 class IfElseStatNode extends CondStatNode {
@@ -124,7 +123,7 @@ class IfElseStatNode extends CondStatNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<IfElseStatNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<IfElseStatNode> id: " + id + " type: " + type.toString());
 	}
 }
 abstract class IterStatNode extends StatNode {
@@ -132,7 +131,7 @@ abstract class IterStatNode extends StatNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<IterStatNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<IterStatNode> id: " + id + " type: " + type.toString());
 	}
 }
 class ForStatNode extends IterStatNode {
@@ -144,7 +143,7 @@ class ForStatNode extends IterStatNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<ForStatNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<ForStatNode> id: " + id + " type: " + type.toString());
 	}
 }
 class WhileStatNode extends IterStatNode {
@@ -154,7 +153,7 @@ class WhileStatNode extends IterStatNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<WhileStatNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<WhileStatNode> id: " + id + " type: " + type.toString());
 	}
 }
 abstract class JumpStatNode extends StatNode {
@@ -162,7 +161,7 @@ abstract class JumpStatNode extends StatNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<JumpStatNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<JumpStatNode> id: " + id + " type: " + type.toString());
 	}
 }
 class RetStatNode extends JumpStatNode {
@@ -171,7 +170,7 @@ class RetStatNode extends JumpStatNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<RetStatNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<RetStatNode> id: " + id + " type: " + type.toString());
 	}
 }
 class BrkStatNode extends JumpStatNode {
@@ -179,7 +178,7 @@ class BrkStatNode extends JumpStatNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<BrkStatNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<BrkStatNode> id: " + id + " type: " + type.toString());
 	}
 }
 class CtnStatNode extends JumpStatNode {
@@ -187,7 +186,7 @@ class CtnStatNode extends JumpStatNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<CtnStatNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<CtnStatNode> id: " + id + " type: " + type.toString());
 	}
 }
 class NullStatNode extends StatNode {
@@ -195,7 +194,7 @@ class NullStatNode extends StatNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<NullStatNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<NullStatNode> id: " + id + " type: " + type.toString());
 	}
 }
 class VarDefStatNode extends StatNode {
@@ -204,7 +203,7 @@ class VarDefStatNode extends StatNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<VarDefStatNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<VarDefStatNode> id: " + id + " type: " + type.toString());
 	}
 }
 abstract class ExprNode extends Node {
@@ -212,7 +211,7 @@ abstract class ExprNode extends Node {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<IfStatNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<IfStatNode> id: " + id + " type: " + type.toString());
 	}
 }
 class EmptyExprNode extends ExprNode {
@@ -220,7 +219,7 @@ class EmptyExprNode extends ExprNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<EmptyExprNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<EmptyExprNode> id: " + id + " type: " + type.toString());
 	}
 }
 class BinaryExprNode extends ExprNode {
@@ -230,7 +229,7 @@ class BinaryExprNode extends ExprNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<BinaryExprNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<BinaryExprNode> id: " + id + " type: " + type.toString());
 	}
 }
 class UnaryExprNode extends ExprNode {
@@ -238,7 +237,7 @@ class UnaryExprNode extends ExprNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<UnaryExprNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<UnaryExprNode> id: " + id + " type: " + type.toString());
 	}
 }
 class LeftUnaryExprNode extends UnaryExprNode {
@@ -247,7 +246,7 @@ class LeftUnaryExprNode extends UnaryExprNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<LeftUnaryExprNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<LeftUnaryExprNode> id: " + id + " type: " + type.toString());
 	}
 }
 class RightUnaryExprNode extends UnaryExprNode {
@@ -256,7 +255,7 @@ class RightUnaryExprNode extends UnaryExprNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<RightUnaryExprNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<RightUnaryExprNode> id: " + id + " type: " + type.toString());
 	}
 }
 class NewExprNode extends ExprNode {
@@ -266,7 +265,7 @@ class NewExprNode extends ExprNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<NewExprNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<NewExprNode> id: " + id + " type: " + type.toString());
 	}
 }
 abstract class PrimExprNode extends ExprNode {
@@ -274,7 +273,7 @@ abstract class PrimExprNode extends ExprNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<PrimExprNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<PrimExprNode> id: " + id + " type: " + type.toString());
 	}
 }
 class FuncExprNode extends PrimExprNode {
@@ -283,7 +282,7 @@ class FuncExprNode extends PrimExprNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<FuncExprNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<FuncExprNode> id: " + id + " type: " + type.toString());
 	}
 }
 class ArrExprNode extends PrimExprNode {
@@ -293,7 +292,7 @@ class ArrExprNode extends PrimExprNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<ArrExprNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<ArrExprNode> id: " + id + " type: " + type.toString());
 	}
 }
 class ObjAccExprNode extends PrimExprNode {
@@ -303,7 +302,7 @@ class ObjAccExprNode extends PrimExprNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<ObjAccExprNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<ObjAccExprNode> id: " + id + " type: " + type.toString());
 	}
 }
 class VarExprNode extends PrimExprNode {
@@ -311,7 +310,7 @@ class VarExprNode extends PrimExprNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<VarExprNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<VarExprNode> id: " + id + " type: " + type.toString());
 	}
 }
 abstract class LiteralNode extends ExprNode {
@@ -319,7 +318,7 @@ abstract class LiteralNode extends ExprNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<LiteralNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<LiteralNode> id: " + id + " type: " + type.toString());
 	}
 }
 abstract class ArithmeticLiteralNode extends LiteralNode {
@@ -327,7 +326,7 @@ abstract class ArithmeticLiteralNode extends LiteralNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<ArithmeticLiteralNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<ArithmeticLiteralNode> id: " + id + " type: " + type.toString());
 	}
 }
 class IntLiteralNode extends ArithmeticLiteralNode {
@@ -335,7 +334,7 @@ class IntLiteralNode extends ArithmeticLiteralNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<IntLiteralNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<IntLiteralNode> id: " + id + " type: " + type.toString());
 	}
 }
 class LogicalLiteralNode extends ArithmeticLiteralNode {
@@ -343,7 +342,7 @@ class LogicalLiteralNode extends ArithmeticLiteralNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<LogicalLiteralNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<LogicalLiteralNode> id: " + id + " type: " + type.toString());
 	}
 }
 class NullLiteralNode extends LiteralNode {
@@ -351,7 +350,7 @@ class NullLiteralNode extends LiteralNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<NullLiteralNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<NullLiteralNode> id: " + id + " type: " + type.toString());
 	}
 }
 class StringLiteralNode extends LiteralNode {
@@ -359,6 +358,6 @@ class StringLiteralNode extends LiteralNode {
 		super();
 	}
 	void print(String indentation) {
-		System.out.println(indentation + "<StringLiteralNode> id: " + id + " type: " + type.typeId);
+		System.out.println(indentation + "<StringLiteralNode> id: " + id + " type: " + type.toString());
 	}
 }

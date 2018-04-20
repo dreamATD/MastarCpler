@@ -27,32 +27,32 @@ public class Scope {
 		if (curScope instanceof ClassScope) {
 			ClassScope cur = (ClassScope) curScope;
 			System.out.print("ClassScope: ");
-			for (DefinedEntity ent: cur.entities.values()) {
-				if (ent instanceof DefinedFunc) {
-					System.out.print("<func " + ent.id + "> ");
-				} else if (ent instanceof DefinedVariable) {
-					System.out.print("<var " + ent.id + "> ");
+			for (Map.Entry<String, TypeRef> ent: cur.entities.entrySet()) {
+				if (ent.getValue() instanceof FuncTypeRef) {
+					System.out.print("<func " + ent.getKey() + "> ");
+				} else if (ent.getValue() instanceof VarTypeRef) {
+					System.out.print("<var " + ent.getKey() + "> ");
 				}
 			}
 			System.out.println();
 		} else if (curScope instanceof GeneralScope) {
 			GeneralScope cur = (GeneralScope) curScope;
 			System.out.print("GeneralScope: ");
-			for (DefinedEntity ent: cur.entities.values()) {
-				if (ent instanceof DefinedFunc) {
-					System.out.print("<func " + ent.id + "> ");
-				} else if (ent instanceof DefinedVariable) {
-					System.out.print("<var " + ent.id + "> ");
-				} else if (ent instanceof DefinedClass) {
-					System.out.print("<class " + ent.id + "> ");
+			for (Map.Entry<String, TypeRef> ent: cur.entities.entrySet()) {
+				if (ent.getValue() instanceof FuncTypeRef) {
+					System.out.print("<func " + ent.getKey() + "> ");
+				} else if (ent.getValue() instanceof VarTypeRef) {
+					System.out.print("<var " + ent.getKey() + "> ");
+				} else if (ent.getValue() instanceof ClassDefTypeRef) {
+					System.out.print("<class " + ent.getKey() + "> ");
 				} else System.out.print("exception!");
 			}
 			System.out.println();
 		} else {
 			LocalScope cur = (LocalScope) curScope;
 			System.out.print("LocalScope: ");
-			for (DefinedVariable ent: cur.variables.values()) {
-				System.out.print("<var " + ent.id + "> ");
+			for (Map.Entry<String, VarTypeRef> ent: cur.variables.entrySet()) {
+				System.out.print("<var " + ent.getKey() + "> ");
 			}
 			System.out.println();
 		}
@@ -61,7 +61,7 @@ public class Scope {
 			dfs(sonScope, indentation + "    ");
 		}
 	}
-	DefinedEntity matchVarName(String name, Location loc, GeneralScope genScope) throws SyntaxError {
+	TypeRef matchVarName(String name, Location loc, GeneralScope genScope) throws SyntaxError {
 		Scope p = this;
 		while (true) {
 			if (p instanceof GeneralScope) {
@@ -80,18 +80,16 @@ public class Scope {
 	}
 }
 class GeneralScope extends Scope {
-	Map<String, DefinedEntity> entities;
+	Map<String, TypeRef> entities;
 	GeneralScope(Scope pnt) {
-		entities = new HashMap<String, DefinedEntity>();
+		entities = new HashMap<String, TypeRef>();
 		sonScopes = new LinkedList<Scope>();
 		parent = pnt;
 	}
-	void insert(String str, DefinedEntity ent) throws SyntaxError {
-		if (entities.containsKey(str)) throw new ReDefinedError(ent.loc);
+	boolean insert(String str, TypeRef ent) {
+		if (entities.containsKey(str)) return false;
 		entities.put(str, ent);
-	}
-	DefinedEntity check(String str) {
-		return entities.get(str);
+		return true;
 	}
 }
 class ClassScope extends GeneralScope {
@@ -100,14 +98,15 @@ class ClassScope extends GeneralScope {
 	}
 }
 class LocalScope extends Scope {
-	Map<String, DefinedVariable> variables;
+	Map<String, VarTypeRef> variables;
 	LocalScope(Scope pnt) {
-		variables = new HashMap<String, DefinedVariable>();
+		variables = new HashMap<String, VarTypeRef>();
 		sonScopes = new LinkedList<Scope>();
 		parent = pnt;
 	}
-	void insert(String str, DefinedVariable ent) throws SyntaxError {
-		if (variables.containsKey(str)) throw new ReDefinedError(ent.loc);
+	boolean insert(String str, VarTypeRef ent) {
+		if (variables.containsKey(str)) return false;
 		variables.put(str, ent);
+		return true;
 	}
 }

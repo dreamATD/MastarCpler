@@ -93,7 +93,7 @@ class DefinedVariable extends DefinedEntity {
 		id = node.id;
 		if (node.type instanceof ArrayTypeRef) {
 			type = new TypeDef((((ArrayTypeRef) node.type).getSimpleRef()));
-			dimension = node.type.dimension;
+//			dimension = node.type.dimension;
 		} else {
 			type = new TypeDef(node.type);
 			dimension = 0;
