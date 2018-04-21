@@ -70,6 +70,7 @@ public class SemanticChecker extends AstVisitor {
 	@Override void visit(ConsFuncDefNode nod) throws SyntaxError {
 		if (!classStack.get(classStack.size() - 1).equals(nod.id)) throw new WrongNameConsFunc(nod.loc);
 		visitChild(nod);
+		checkFuncRet(nod.sons.get(nod.sons.size() - 1), nod.type);
 	}
 	@Override void visit(IfStatNode nod) throws SyntaxError {
 		visitChild(nod);

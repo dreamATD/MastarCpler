@@ -1,16 +1,23 @@
-int main() {
-    string str = null;
+A get() { return new A; } // this is valid
+
+class A {
+    A() {
+        return get(); // cannot return any value in a constructor
+    }
 }
+
+int main() { return 0; }
 
 
 
 /*!! metadata:
 === comment ===
-asiop-7-5120309049-liaochao.mx
+test return in constructor
+class-7-515030910117-zhenglianmin.mx
 === assert ===
 failure_compile
 === phase ===
-semantic pretest
+semantic extended
 === is_public ===
 True
 
