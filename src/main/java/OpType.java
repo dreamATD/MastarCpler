@@ -44,6 +44,9 @@ class RelativeOpType extends OpType {
 			if (left instanceof ClassTypeRef || left instanceof ArrayTypeRef) {
 				return left.equals(right) || right instanceof NullTypeRef;
 			}
+			if (right instanceof ClassTypeRef || right instanceof ArrayTypeRef) {
+				return left.equals(right) || left instanceof NullTypeRef;
+			}
 		}
 		return left.equals(right);
 	}

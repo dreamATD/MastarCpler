@@ -471,7 +471,7 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 	@Override public NullLiteralNode visitUnarithmeticNullLiteral(MxStarParser.UnarithmeticNullLiteralContext ctx) {
 		NullLiteralNode res = new NullLiteralNode();
 		res.id = ctx.NullLiteral().getText();
-		res.type = new VoidTypeRef();
+		res.type = new NullTypeRef();
 		res.loc = new Location(ctx.start);
 		return res;
 	}
