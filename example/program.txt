@@ -1,6 +1,5 @@
 int main() {
-    string str;
-     str = null;
+    string str = null;
 }
 
 

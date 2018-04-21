@@ -177,7 +177,7 @@ class FuncTypeRef extends TypeRef {
 		if (nod.sons.size() != params.size()) return false;
 		for (int i = 0; i < params.size(); ++i) {
 			Node son = nod.sons.get(i);
-			if (!son.type.equalsSingleType("void") && !son.type.equals(params.get(i))) return false;
+			if (!son.type.equals(new NullTypeRef()) && !son.type.equals(params.get(i))) return false;
 		}
 		return true;
 	}

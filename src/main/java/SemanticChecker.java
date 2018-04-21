@@ -42,8 +42,8 @@ public class SemanticChecker extends AstVisitor {
 		if (!nod.sons.isEmpty()) {
 			ExprNode init = (ExprNode) nod.sons.get(0);
 			if (!nod.type.equals(init.type)) {
-				if (nod.type instanceof ArrayTypeRef && init.type instanceof NullTypeRef);
-				else if (nod.type instanceof ClassTypeRef && init.type instanceof NullTypeRef) ;
+				OpType op = new AssignOpType("=");
+				if (((AssignOpType) op).checkExpr(nod.type,  init.type));
 				else throw new NoCastExpr(init.loc);
 			}
 		}
