@@ -1,3 +1,5 @@
+import org.antlr.v4.runtime.tree.TerminalNode;
+
 public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 	@Override public CodeNode visitCode(MxStarParser.CodeContext ctx) {
 		CodeNode res = new CodeNode();
@@ -12,7 +14,7 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 		String className = ctx.classId().getText();
 		for (int i = 0; i < res.sons.size(); ++i) {
 			Node son = res.sons.get(i);
-			if (son instanceof ConsFuncDefNode) son.id = className;
+			if (son instanceof ConsFuncDefNode && son.id == null) son.id = className;
 		}
 		res.id = className;
 		res.loc = new Location(ctx.classId().start);
@@ -69,7 +71,7 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 	@Override public ConsFuncDefNode visitConstructionFunction(MxStarParser.ConstructionFunctionContext ctx) {
 		ConsFuncDefNode res = new ConsFuncDefNode();
 		res.id = ctx.classId().getText();
-		res.type = new NullTypeRef();
+		res.type = new VoidTypeRef();
 		res.sons.add(visit(ctx.functionBody()));
 		res.loc = new Location(ctx.start);
 		return res;
@@ -193,12 +195,12 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 	@Override public VarDefStatNode visitVariableDefinitionWithoutInit(MxStarParser.VariableDefinitionWithoutInitContext ctx) {
 		TypeRef type = TypeRef.buildTypeRef(ctx.typeId().getText());
 		VarDefStatNode res = new VarDefStatNode();
-		for (int i = 0; i < ctx.variableId().size(); ++i) {
+		for (int i = 0; i < ctx.Identifier().size(); ++i) {
 			VarDefNode tmp = new VarDefNode();
-			MxStarParser.VariableIdContext varContext = ctx.variableId(i);
-			tmp.id = varContext.getText();
+			TerminalNode var = ctx.Identifier(i);
+			tmp.id = var.getText();
 			tmp.type = type;
-			tmp.loc = new Location(varContext.start);
+			tmp.loc = new Location(var.getSymbol());
 			res.sons.add(tmp);
 		}
 		res.type = type;
@@ -207,13 +209,13 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 	}
 	@Override public VarDefNode visitVarWithoutInit(MxStarParser.VarWithoutInitContext ctx) {
 		VarDefNode res = new VarDefNode();
-		res.id = ctx.variableId().getText();
+		res.id = ctx.Identifier().getText();
 		res.loc = new Location(ctx.start);
 		return res;
 	}
 	@Override public VarDefNode visitVarWithInit (MxStarParser.VarWithInitContext ctx) {
 		VarDefNode res = new VarDefNode();
-		res.id = ctx.variableId().getText();
+		res.id = ctx.Identifier().getText();
 		res.sons.add(visit(ctx.expression()));
 		res.loc = new Location(ctx.start);
 		return res;

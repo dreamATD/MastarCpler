@@ -161,13 +161,13 @@ variableDefinition
 
 variableDefinitionWithoutInit
 :
-    typeId variableId (',' variableId)*
+    typeId Identifier (',' Identifier)*
 ;
 
 varDef
 :
-	variableId #varWithoutInit
-	| variableId '=' expression #varWithInit
+	Identifier #varWithoutInit
+	| Identifier '=' expression #varWithInit
 ;
 
 /*
