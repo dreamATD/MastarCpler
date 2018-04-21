@@ -32,7 +32,7 @@ public class SemanticChecker extends AstVisitor {
 	boolean checkLeftValue(ExprNode nod) {
 		if (nod instanceof VarExprNode) return true;
 		if (nod instanceof ObjAccExprNode && checkLeftValue((ExprNode) nod.sons.get(1))) return true;
-		if (nod instanceof ArrExprNode && nod.sons.get(0) instanceof VarExprNode) return true;
+		if (nod instanceof ArrExprNode) return true;
 		return false;
 	}
 	@Override void visit(VarDefNode nod) throws SyntaxError {
