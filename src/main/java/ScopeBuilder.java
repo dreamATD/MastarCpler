@@ -64,18 +64,11 @@ public class ScopeBuilder {
 				if (!curScope.insert(tmpNode.id, func)) throw new ReDefinedError(tmpNode.loc);
 				// insert the function body
 				localResolver(sonScope, tmpNode.sons.get(tmpNode.sons.size() - 1)); // function body
-			} else if (node instanceof VarDefStatNode) {
-				VarDefStatNode tmpNode = (VarDefStatNode) node;
-				tmpNode.belongTo = curScope;
-				for (int j = 0; j < tmpNode.sons.size(); ++j) {
-					VarDefNode tmpSonNode = (VarDefNode) tmpNode.sons.get(j);
-					tmpSonNode.belongTo = curScope;
-					if (curScope instanceof ClassScope) {
-						VarTypeRef var = (VarTypeRef) tmpSonNode.type;
-						if (!curScope.insert(tmpSonNode.id, var)) throw new ReDefinedError(tmpSonNode.loc);
-					}
-				}
-			}
+			} else if (node instanceof VarDefNode) {
+				VarDefNode tmpNode = (VarDefNode) node;
+				generalResolver(curScope, tmpNode);
+				if (curScope instanceof ClassScope && !curScope.insert(tmpNode.id, tmpNode.type)) throw new ReDefinedError(tmpNode.loc);
+			} else generalResolver(curScope, node);
 		}
 	}
 	/*
@@ -98,15 +91,7 @@ public class ScopeBuilder {
 					|| (curNode instanceof IfElseStatNode) && (i == curNode.sons.size() - 1)) {
 				LocalScope sonScope = Scope.newLocalScope(curScope);
 				localResolver(sonScope, node);
-			} else if (node instanceof VarDefStatNode) {
-				VarDefStatNode tmpNode = (VarDefStatNode) node;
-//				for (int j = 0; j < tmpNode.sons.size(); ++j) {
-//					VarDefNode tmpSonNode = (VarDefNode) tmpNode.sons.get(j);
-//					VarTypeRef var = (VarTypeRef) tmpSonNode.type;
-//					if (!curScope.insert(tmpSonNode.id, var)) throw new ReDefinedError(tmpSonNode.loc);
-//				}
-				localResolver(curScope, tmpNode);
-			}  else {
+			} else {
 				localResolver(curScope, node);
 			}
 		}
