@@ -1,3 +1,5 @@
+import javax.xml.ws.RequestWrapper;
+
 public class SyntaxError extends Exception {
     Location loc;
     SyntaxError (Location l) {
@@ -110,4 +112,28 @@ class NullPointer extends SyntaxError {
     @Override public String toString() {
         return "NullPointer";
     }
+}
+class VoidDefVarError extends SyntaxError {
+    VoidDefVarError (Location l) {
+        super(l);
+    }
+    @Override public String toString() {
+        return "VoidDefVarError";
+    }
+}
+class NoMainFuncError extends SyntaxError {
+	NoMainFuncError(Location l) {
+		super(l);
+	}
+	@Override public String toString() {
+		return "NoMainFuncError";
+	}
+}
+class NoDefinedOpError extends SyntaxError {
+	NoDefinedOpError(Location l) {
+		super(l);
+	}
+	@Override public String toString() {
+		return "NoDefinedOpError";
+	}
 }

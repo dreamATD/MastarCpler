@@ -186,6 +186,7 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 			tmp.type = type;
 			res.sons.add(tmp);
 		}
+		res.type = type;
 		res.loc = new Location(ctx.start);
 		return res;
 	}
@@ -200,6 +201,7 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 			tmp.loc = new Location(varContext.start);
 			res.sons.add(tmp);
 		}
+		res.type = type;
 		res.loc = new Location(ctx.start);
 		return res;
 	}

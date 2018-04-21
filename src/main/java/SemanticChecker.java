@@ -36,18 +36,33 @@ public class SemanticChecker extends AstVisitor {
 		return false;
 	}
 	@Override void visit(VarDefNode nod) throws SyntaxError {
+		if (!checkTypeEntity(nod.type)) throw new NoDefinedTypeError(nod.loc);
 		visitChild(nod);
 		if (!nod.sons.isEmpty()) {
 			ExprNode init = (ExprNode) nod.sons.get(0);
-			if (!nod.type.equals(init.type)) throw new NoCastExpr(init.loc);
+			if (!nod.type.equals(init.type)) {
+				if (nod.type instanceof ArrayTypeRef && init.type instanceof VoidTypeRef);
+				else if (nod.type instanceof ClassTypeRef && init.type instanceof VoidTypeRef) ;
+				else throw new NoCastExpr(init.loc);
+			}
+		}
+		Scope curScope = nod.belongTo;
+		if (curScope instanceof GeneralScope) {
+			if (!((GeneralScope) curScope).insert(nod.id, nod.type)) throw new ReDefinedError(nod.loc);
+		} else if (curScope instanceof LocalScope) {
+			if (!((LocalScope) curScope).insert(nod.id, (VarTypeRef) nod.type)) throw new ReDefinedError(nod.loc);
 		}
 	}
 	@Override void visit(ClassDefNode nod) throws SyntaxError {
 		classStack.add(nod.id);
-		visitChild(nod);
+		for (int i = 0; i < nod.sons.size(); ++i) {
+			Node son = nod.sons.get(i);
+			if (!(son instanceof VarDefStatNode)) visit(son);
+		}
 		classStack.remove(classStack.size() - 1);
 	}
 	@Override void visit(FuncDefNode nod) throws SyntaxError {
+		if (!checkTypeEntity(nod.type)) throw new NoDefinedTypeError(nod.loc);
 		visitChild(nod);
 		checkFuncRet(nod.sons.get(nod.sons.size() - 1), nod.type);
 	}
@@ -81,7 +96,7 @@ public class SemanticChecker extends AstVisitor {
 		if (iterNum == 0) throw new CntOutIterStat (nod.loc);
 	}
 	@Override void visit(VarDefStatNode nod) throws SyntaxError {
-		if (!checkTypeEntity(nod.type)) throw new NoDefinedTypeError(nod.loc);
+		if (nod.type instanceof VoidTypeRef) throw new VoidDefVarError(nod.loc);
 		visitChild(nod);
 		if (!nod.sons.isEmpty()) nod.type = nod.sons.get(0).type;
 	}
@@ -98,24 +113,28 @@ public class SemanticChecker extends AstVisitor {
 		if (op instanceof AssignOpType) {
 			if (!checkLeftValue(left)) throw new NotLeftValue(left.loc);
 			nod.type = TypeRef.buildTypeRef("void");
-		} if (op instanceof RelativeOpType) {
-			nod.type = TypeRef.buildTypeRef("bool");
-		} else {
-			nod.type = left.type;
-		}
+		} else if (op.containsType(left.type)) {
+			if (op instanceof RelativeOpType) {
+				nod.type = TypeRef.buildTypeRef("bool");
+			} else {
+				nod.type = left.type;
+			}
+		} else throw new NoDefinedOpError(nod.loc);
 	}
 	@Override void visit(LeftUnaryExprNode nod) throws SyntaxError {
 		visitChild(nod);
 		ExprNode expr = (ExprNode) nod.sons.get(0);
-		if (!checkLeftValue(expr) && OpType.belongsTo(nod.id) instanceof SelfPmOpType) throw new NotLeftValue(expr.loc);
-		if (!(expr.type instanceof IntTypeRef) && !(expr.type instanceof BoolTypeRef)) throw new NoCastExpr(nod.loc);
+		OpType op = OpType.belongsTo(nod.id);
+		if (!checkLeftValue(expr) && op instanceof SelfPmOpType) throw new NotLeftValue(expr.loc);
+		if (!op.containsType(expr.type)) throw new NoCastExpr(nod.loc);
 		nod.type = expr.type;
 	}
 	@Override void visit(RightUnaryExprNode nod) throws SyntaxError {
 		visitChild(nod);
 		ExprNode expr = (ExprNode) nod.sons.get(0);
-		if (!checkLeftValue(expr)) throw new NotLeftValue(expr.loc);
-		if (!(expr.type instanceof IntTypeRef) && !(expr.type instanceof BoolTypeRef)) throw new NoCastExpr(nod.loc);
+		OpType op = OpType.belongsTo(nod.id);
+		if (!checkLeftValue(expr) && op instanceof SelfPmOpType) throw new NotLeftValue(expr.loc);
+		if (!op.containsType(expr.type)) throw new NoCastExpr(nod.loc);
 		nod.type = expr.type;
 	}
 	@Override void visit(NewExprNode nod) throws SyntaxError {

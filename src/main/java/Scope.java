@@ -91,6 +91,9 @@ class GeneralScope extends Scope {
 		entities.put(str, ent);
 		return true;
 	}
+	TypeRef getEntity(String obj) {
+		return entities.get(obj);
+	}
 }
 class ClassScope extends GeneralScope {
 	ClassScope(Scope pnt) {
@@ -108,5 +111,8 @@ class LocalScope extends Scope {
 		if (variables.containsKey(str)) return false;
 		variables.put(str, ent);
 		return true;
+	}
+	TypeRef getVar(String var) {
+		return variables.get(var);
 	}
 }
