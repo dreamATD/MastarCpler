@@ -197,9 +197,9 @@ elementExpr
 primaryExpr
 :
 	elementExpr #elemPrimExpr
-	| primaryExpr '['expression']' #arrPrimExpr
 	| primaryExpr '.' primaryExpr #objAccPrimExpr
 	| functionId '(' argumentList? ')' #funcPrimExpr
+	| primaryExpr '['expression']' #arrPrimExpr
 ;
 
 argumentList

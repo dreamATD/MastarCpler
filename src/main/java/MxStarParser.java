@@ -55,7 +55,7 @@ public class MxStarParser extends Parser {
 	};
 
 	private static final String[] _LITERAL_NAMES = {
-		null, "'{'", "'}'", "'('", "')'", "','", "';'", "'='", "'['", "']'", "'.'", 
+		null, "'{'", "'}'", "'('", "')'", "','", "';'", "'='", "'.'", "'['", "']'", 
 		"'++'", "'--'", "'~'", "'!'", "'-'", "'+'", "'*'", "'/'", "'%'", "'<<'", 
 		"'>>'", "'<'", "'>'", "'<='", "'>='", "'=='", "'!='", "'&'", "'^'", "'|'", 
 		"'&&'", "'||'", null, null, null, "'true'", "'false'", null, "'null'", 
@@ -2454,11 +2454,11 @@ public class MxStarParser extends Parser {
 						_localctx = new ObjAccPrimExprContext(new PrimaryExprContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_primaryExpr);
 						setState(302);
-						if (!(precpred(_ctx, 2))) throw new FailedPredicateException(this, "precpred(_ctx, 2)");
+						if (!(precpred(_ctx, 3))) throw new FailedPredicateException(this, "precpred(_ctx, 3)");
 						setState(303);
-						match(T__9);
+						match(T__7);
 						setState(304);
-						primaryExpr(3);
+						primaryExpr(4);
 						}
 						break;
 					case 2:
@@ -2466,13 +2466,13 @@ public class MxStarParser extends Parser {
 						_localctx = new ArrPrimExprContext(new PrimaryExprContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_primaryExpr);
 						setState(305);
-						if (!(precpred(_ctx, 3))) throw new FailedPredicateException(this, "precpred(_ctx, 3)");
+						if (!(precpred(_ctx, 1))) throw new FailedPredicateException(this, "precpred(_ctx, 1)");
 						setState(306);
-						match(T__7);
+						match(T__8);
 						setState(307);
 						expression();
 						setState(308);
-						match(T__8);
+						match(T__9);
 						}
 						break;
 					}
@@ -2944,9 +2944,9 @@ public class MxStarParser extends Parser {
 						{
 						{
 						setState(354);
-						match(T__7);
-						setState(355);
 						match(T__8);
+						setState(355);
+						match(T__9);
 						}
 						} 
 					}
@@ -2967,11 +2967,11 @@ public class MxStarParser extends Parser {
 						{
 						{
 						setState(361);
-						match(T__7);
+						match(T__8);
 						setState(362);
 						expression();
 						setState(363);
-						match(T__8);
+						match(T__9);
 						}
 						}
 						break;
@@ -2990,9 +2990,9 @@ public class MxStarParser extends Parser {
 						{
 						{
 						setState(369);
-						match(T__7);
-						setState(370);
 						match(T__8);
+						setState(370);
+						match(T__9);
 						}
 						} 
 					}
@@ -4481,13 +4481,13 @@ public class MxStarParser extends Parser {
 			setState(527);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==T__7) {
+			while (_la==T__8) {
 				{
 				{
 				setState(523);
-				match(T__7);
-				setState(524);
 				match(T__8);
+				setState(524);
+				match(T__9);
 				}
 				}
 				setState(529);
@@ -4697,9 +4697,9 @@ public class MxStarParser extends Parser {
 	private boolean primaryExpr_sempred(PrimaryExprContext _localctx, int predIndex) {
 		switch (predIndex) {
 		case 0:
-			return precpred(_ctx, 2);
-		case 1:
 			return precpred(_ctx, 3);
+		case 1:
+			return precpred(_ctx, 1);
 		}
 		return true;
 	}
@@ -4911,8 +4911,8 @@ public class MxStarParser extends Parser {
 		"\5\20\t\2\u0128\u012a\7\5\2\2\u0129\u012b\5<\37\2\u012a\u0129\3\2\2\2"+
 		"\u012a\u012b\3\2\2\2\u012b\u012c\3\2\2\2\u012c\u012d\7\6\2\2\u012d\u012f"+
 		"\3\2\2\2\u012e\u0125\3\2\2\2\u012e\u0127\3\2\2\2\u012f\u013a\3\2\2\2\u0130"+
-		"\u0131\f\4\2\2\u0131\u0132\7\f\2\2\u0132\u0139\5:\36\5\u0133\u0134\f\5"+
-		"\2\2\u0134\u0135\7\n\2\2\u0135\u0136\5\64\33\2\u0136\u0137\7\13\2\2\u0137"+
+		"\u0131\f\5\2\2\u0131\u0132\7\n\2\2\u0132\u0139\5:\36\6\u0133\u0134\f\3"+
+		"\2\2\u0134\u0135\7\13\2\2\u0135\u0136\5\64\33\2\u0136\u0137\7\f\2\2\u0137"+
 		"\u0139\3\2\2\2\u0138\u0130\3\2\2\2\u0138\u0133\3\2\2\2\u0139\u013c\3\2"+
 		"\2\2\u013a\u0138\3\2\2\2\u013a\u013b\3\2\2\2\u013b;\3\2\2\2\u013c\u013a"+
 		"\3\2\2\2\u013d\u0142\5\64\33\2\u013e\u013f\7\7\2\2\u013f\u0141\5\64\33"+
@@ -4928,14 +4928,14 @@ public class MxStarParser extends Parser {
 		"\2\u015e\u0150\3\2\2\2\u015e\u0152\3\2\2\2\u015e\u0154\3\2\2\2\u015e\u0156"+
 		"\3\2\2\2\u015e\u0158\3\2\2\2\u015e\u015a\3\2\2\2\u015e\u015c\3\2\2\2\u015f"+
 		"A\3\2\2\2\u0160\u0163\5\n\6\2\u0161\u0163\5^\60\2\u0162\u0160\3\2\2\2"+
-		"\u0162\u0161\3\2\2\2\u0163\u017a\3\2\2\2\u0164\u0165\7\n\2\2\u0165\u0167"+
-		"\7\13\2\2\u0166\u0164\3\2\2\2\u0167\u016a\3\2\2\2\u0168\u0166\3\2\2\2"+
-		"\u0168\u0169\3\2\2\2\u0169\u017b\3\2\2\2\u016a\u0168\3\2\2\2\u016b\u016c"+
-		"\7\n\2\2\u016c\u016d\5\64\33\2\u016d\u016e\7\13\2\2\u016e\u0170\3\2\2"+
-		"\2\u016f\u016b\3\2\2\2\u0170\u0171\3\2\2\2\u0171\u016f\3\2\2\2\u0171\u0172"+
-		"\3\2\2\2\u0172\u0177\3\2\2\2\u0173\u0174\7\n\2\2\u0174\u0176\7\13\2\2"+
-		"\u0175\u0173\3\2\2\2\u0176\u0179\3\2\2\2\u0177\u0175\3\2\2\2\u0177\u0178"+
-		"\3\2\2\2\u0178\u017b\3\2\2\2\u0179\u0177\3\2\2\2\u017a\u0168\3\2\2\2\u017a"+
+		"\u0162\u0161\3\2\2\2\u0163\u017a\3\2\2\2\u0164\u0165\7\13\2\2\u0165\u0167"+
+		"\7\f\2\2\u0166\u0164\3\2\2\2\u0167\u016a\3\2\2\2\u0168\u0166\3\2\2\2\u0168"+
+		"\u0169\3\2\2\2\u0169\u017b\3\2\2\2\u016a\u0168\3\2\2\2\u016b\u016c\7\13"+
+		"\2\2\u016c\u016d\5\64\33\2\u016d\u016e\7\f\2\2\u016e\u0170\3\2\2\2\u016f"+
+		"\u016b\3\2\2\2\u0170\u0171\3\2\2\2\u0171\u016f\3\2\2\2\u0171\u0172\3\2"+
+		"\2\2\u0172\u0177\3\2\2\2\u0173\u0174\7\13\2\2\u0174\u0176\7\f\2\2\u0175"+
+		"\u0173\3\2\2\2\u0176\u0179\3\2\2\2\u0177\u0175\3\2\2\2\u0177\u0178\3\2"+
+		"\2\2\u0178\u017b\3\2\2\2\u0179\u0177\3\2\2\2\u017a\u0168\3\2\2\2\u017a"+
 		"\u016f\3\2\2\2\u017bC\3\2\2\2\u017c\u017d\b#\1\2\u017d\u017e\5@!\2\u017e"+
 		"\u018a\3\2\2\2\u017f\u0180\f\5\2\2\u0180\u0181\7\23\2\2\u0181\u0189\5"+
 		"@!\2\u0182\u0183\f\4\2\2\u0183\u0184\7\24\2\2\u0184\u0189\5@!\2\u0185"+
@@ -4981,15 +4981,15 @@ public class MxStarParser extends Parser {
 		"\3\2\2\2\u0202\u0208\5V,\2\u0203\u0204\5V,\2\u0204\u0205\7\t\2\2\u0205"+
 		"\u0206\5X-\2\u0206\u0208\3\2\2\2\u0207\u0202\3\2\2\2\u0207\u0203\3\2\2"+
 		"\2\u0208Y\3\2\2\2\u0209\u020c\5\n\6\2\u020a\u020c\5^\60\2\u020b\u0209"+
-		"\3\2\2\2\u020b\u020a\3\2\2\2\u020c\u0211\3\2\2\2\u020d\u020e\7\n\2\2\u020e"+
-		"\u0210\7\13\2\2\u020f\u020d\3\2\2\2\u0210\u0213\3\2\2\2\u0211\u020f\3"+
-		"\2\2\2\u0211\u0212\3\2\2\2\u0212[\3\2\2\2\u0213\u0211\3\2\2\2\u0214\u0215"+
-		"\t\3\2\2\u0215]\3\2\2\2\u0216\u0217\t\4\2\2\u0217_\3\2\2\2\u0218\u0219"+
-		"\t\5\2\2\u0219a\3\2\2\28egz\u0081\u0083\u0087\u008b\u008d\u009f\u00a4"+
-		"\u00b2\u00c8\u00cd\u00d1\u00dc\u00e0\u00e4\u00eb\u00f2\u0102\u010b\u0113"+
-		"\u011b\u0123\u012a\u012e\u0138\u013a\u0142\u014c\u015e\u0162\u0168\u0171"+
-		"\u0177\u017a\u0188\u018a\u0196\u0198\u01a4\u01a6\u01b8\u01ba\u01c6\u01c8"+
-		"\u01d3\u01de\u01e9\u01f4\u01ff\u0207\u020b\u0211";
+		"\3\2\2\2\u020b\u020a\3\2\2\2\u020c\u0211\3\2\2\2\u020d\u020e\7\13\2\2"+
+		"\u020e\u0210\7\f\2\2\u020f\u020d\3\2\2\2\u0210\u0213\3\2\2\2\u0211\u020f"+
+		"\3\2\2\2\u0211\u0212\3\2\2\2\u0212[\3\2\2\2\u0213\u0211\3\2\2\2\u0214"+
+		"\u0215\t\3\2\2\u0215]\3\2\2\2\u0216\u0217\t\4\2\2\u0217_\3\2\2\2\u0218"+
+		"\u0219\t\5\2\2\u0219a\3\2\2\28egz\u0081\u0083\u0087\u008b\u008d\u009f"+
+		"\u00a4\u00b2\u00c8\u00cd\u00d1\u00dc\u00e0\u00e4\u00eb\u00f2\u0102\u010b"+
+		"\u0113\u011b\u0123\u012a\u012e\u0138\u013a\u0142\u014c\u015e\u0162\u0168"+
+		"\u0171\u0177\u017a\u0188\u018a\u0196\u0198\u01a4\u01a6\u01b8\u01ba\u01c6"+
+		"\u01c8\u01d3\u01de\u01e9\u01f4\u01ff\u0207\u020b\u0211";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {
