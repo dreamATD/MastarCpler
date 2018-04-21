@@ -69,7 +69,7 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 	@Override public ConsFuncDefNode visitConstructionFunction(MxStarParser.ConstructionFunctionContext ctx) {
 		ConsFuncDefNode res = new ConsFuncDefNode();
 		res.id = ctx.classId().getText();
-		res.type = new VoidTypeRef();
+		res.type = new NullTypeRef();
 		res.sons.add(visit(ctx.functionBody()));
 		res.loc = new Location(ctx.start);
 		return res;

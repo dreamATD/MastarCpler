@@ -36,7 +36,16 @@ class RelativeOpType extends OpType {
 		super(o);
 	}
 	@Override boolean containsType(TypeRef type) {
+		if (op.equals("==") || op.equals("!=")) return true;
 		return (type instanceof IntTypeRef) || (type instanceof StringTypeRef);
+	}
+	boolean checkExpr(TypeRef left, TypeRef right) {
+		if (op.equals("==") || op.equals("!=")) {
+			if (left instanceof ClassTypeRef || left instanceof ArrayTypeRef) {
+				return left.equals(right) || right instanceof NullTypeRef;
+			}
+		}
+		return left.equals(right);
 	}
 }
 class LogicalOpType extends OpType {
@@ -61,6 +70,12 @@ class AssignOpType extends OpType {
 	}
 	@Override boolean containsType(TypeRef type) {
 		return (type instanceof VarTypeRef);
+	}
+	boolean checkExpr(TypeRef left, TypeRef right) {
+		if ((left instanceof ClassTypeRef && !(left instanceof StringTypeRef)) || left instanceof ArrayTypeRef) {
+			return left.equals(right) || right instanceof NullTypeRef;
+		}
+		return left.equals(right);
 	}
 }
 class SelfPmOpType extends OpType {

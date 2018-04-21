@@ -81,6 +81,21 @@ class VoidTypeRef extends SingleTypeRef {
 		return (other instanceof VoidTypeRef);
 	}
 }
+
+// null isn't void type;
+
+class NullTypeRef extends SingleTypeRef {
+	NullTypeRef() {
+		typeId = "null";
+	}
+	NullTypeRef copy() {
+		return new NullTypeRef();
+	}
+	@Override boolean equals (TypeRef other) {
+		return (other instanceof NullTypeRef);
+	}
+}
+
 class ClassTypeRef extends SingleTypeRef {
 	ClassTypeRef(){}
 	ClassTypeRef(String className) {

@@ -15,7 +15,7 @@ public class SemanticChecker extends AstVisitor {
 			if (type.equalsSingleType("void") && nod.sons.size() > 0) throw new DisMatchedFuncReturn(nod.loc);
 			if (!type.equalsSingleType("void")) {
 				if (nod.sons.size() == 0) throw new DisMatchedFuncReturn(nod.loc);
-				if (!type.equals(nod.sons.get(0).type) && !(nod.sons.get(0).type instanceof VoidTypeRef)) throw new DisMatchedFuncReturn(nod.loc);
+				if (!type.equals(nod.sons.get(0).type) && !(nod.sons.get(0).type instanceof NullTypeRef)) throw new DisMatchedFuncReturn(nod.loc);
 			}
 		} else {
 			for (int i = 0; i < nod.sons.size(); ++i) {
@@ -36,13 +36,14 @@ public class SemanticChecker extends AstVisitor {
 		return false;
 	}
 	@Override void visit(VarDefNode nod) throws SyntaxError {
+		if (nod.type instanceof VoidTypeRef) throw new VoidDefVarError(nod.loc);
 		if (!checkTypeEntity(nod.type)) throw new NoDefinedTypeError(nod.loc);
 		visitChild(nod);
 		if (!nod.sons.isEmpty()) {
 			ExprNode init = (ExprNode) nod.sons.get(0);
 			if (!nod.type.equals(init.type)) {
-				if (nod.type instanceof ArrayTypeRef && init.type instanceof VoidTypeRef);
-				else if (nod.type instanceof ClassTypeRef && init.type instanceof VoidTypeRef) ;
+				if (nod.type instanceof ArrayTypeRef && init.type instanceof NullTypeRef);
+				else if (nod.type instanceof ClassTypeRef && init.type instanceof NullTypeRef) ;
 				else throw new NoCastExpr(init.loc);
 			}
 		}
@@ -96,7 +97,6 @@ public class SemanticChecker extends AstVisitor {
 		if (iterNum == 0) throw new CntOutIterStat (nod.loc);
 	}
 	@Override void visit(VarDefStatNode nod) throws SyntaxError {
-		if (nod.type instanceof VoidTypeRef) throw new VoidDefVarError(nod.loc);
 		visitChild(nod);
 		if (!nod.sons.isEmpty()) nod.type = nod.sons.get(0).type;
 	}
@@ -104,12 +104,12 @@ public class SemanticChecker extends AstVisitor {
 		visitChild(nod);
 		ExprNode left = (ExprNode) nod.sons.get(0);
 		ExprNode right = (ExprNode) nod.sons.get(1);
+		OpType op = OpType.belongsTo(nod.id);
 		if (!left.type.equals(right.type)) {
-			if ((left.type instanceof ClassTypeRef || left.type instanceof ArrayTypeRef) && right.type instanceof VoidTypeRef);
-			else if (left.type instanceof VoidTypeRef && (right.type instanceof ClassTypeRef || right.type instanceof ArrayTypeRef));
+			if (op instanceof AssignOpType && ((AssignOpType) op).checkExpr(left.type, right.type));
+			else if (op instanceof RelativeOpType && ((RelativeOpType) op).checkExpr(left.type, right.type));
 			else throw new NoCastExpr(nod.loc);
 		}
-		OpType op = OpType.belongsTo(nod.id);
 		if (op instanceof AssignOpType) {
 			if (!checkLeftValue(left)) throw new NotLeftValue(left.loc);
 			nod.type = TypeRef.buildTypeRef("void");
