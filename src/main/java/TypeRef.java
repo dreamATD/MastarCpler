@@ -96,6 +96,7 @@ class ClassTypeRef extends SingleTypeRef {
 class ArrayTypeRef extends VarTypeRef {
 	SingleTypeRef type;
 	int dimension;
+	FuncTypeRef getSize;
 	ArrayTypeRef (String typeAndDim) {
 		dimension = 0;
 		for (int i = 0; i < typeAndDim.length(); ++i) {
@@ -109,10 +110,12 @@ class ArrayTypeRef extends VarTypeRef {
 				++dimension;
 			}
 		}
+		getSize = new FuncTypeRef(new IntTypeRef());
 	}
 	ArrayTypeRef(String typeId, int dim) {
 		type = (SingleTypeRef) TypeRef.buildTypeRef(typeId);
 		dimension = dim;
+		getSize = new FuncTypeRef(new IntTypeRef());
 	}
 	ArrayTypeRef copy() {
 		return new ArrayTypeRef(type.typeId, dimension);
@@ -123,6 +126,10 @@ class ArrayTypeRef extends VarTypeRef {
 	boolean equals(TypeRef other) {
 		if (!(other instanceof ArrayTypeRef)) return false;
 		return this.type.equals(((ArrayTypeRef) other).type) && this.dimension == ((ArrayTypeRef) other).dimension;
+	}
+	TypeRef checkObj(Node nod) throws SyntaxError {
+		if (!nod.id.equals("size")) throw new NoDefinedVarError(nod.loc);
+		return getSize.retType;
 	}
 }
 class FuncTypeRef extends TypeRef {

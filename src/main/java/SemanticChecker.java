@@ -15,7 +15,7 @@ public class SemanticChecker extends AstVisitor {
 			if (type.equalsSingleType("void") && nod.sons.size() > 0) throw new DisMatchedFuncReturn(nod.loc);
 			if (!type.equalsSingleType("void")) {
 				if (nod.sons.size() == 0) throw new DisMatchedFuncReturn(nod.loc);
-				if (!type.equals(nod.sons.get(0).type)) throw new DisMatchedFuncReturn(nod.loc);
+				if (!type.equals(nod.sons.get(0).type) && !(nod.sons.get(0).type instanceof VoidTypeRef)) throw new DisMatchedFuncReturn(nod.loc);
 			}
 		} else {
 			for (int i = 0; i < nod.sons.size(); ++i) {
@@ -89,7 +89,11 @@ public class SemanticChecker extends AstVisitor {
 		visitChild(nod);
 		ExprNode left = (ExprNode) nod.sons.get(0);
 		ExprNode right = (ExprNode) nod.sons.get(1);
-		if (!left.type.equals(right.type)) throw new NoCastExpr(nod.loc);
+		if (!left.type.equals(right.type)) {
+			if ((left.type instanceof ClassTypeRef || left.type instanceof ArrayTypeRef) && right.type instanceof VoidTypeRef);
+			else if (left.type instanceof VoidTypeRef && (right.type instanceof ClassTypeRef || right.type instanceof ArrayTypeRef));
+			else throw new NoCastExpr(nod.loc);
+		}
 		OpType op = OpType.belongsTo(nod.id);
 		if (op instanceof AssignOpType) {
 			if (!checkLeftValue(left)) throw new NotLeftValue(left.loc);
@@ -112,6 +116,7 @@ public class SemanticChecker extends AstVisitor {
 		ExprNode expr = (ExprNode) nod.sons.get(0);
 		if (!checkLeftValue(expr)) throw new NotLeftValue(expr.loc);
 		if (!(expr.type instanceof IntTypeRef) && !(expr.type instanceof BoolTypeRef)) throw new NoCastExpr(nod.loc);
+		nod.type = expr.type;
 	}
 	@Override void visit(NewExprNode nod) throws SyntaxError {
 //		System.out.println(nod.type.typeId + " " + nod.type.dimension);
@@ -121,7 +126,7 @@ public class SemanticChecker extends AstVisitor {
 	@Override void visit(FuncExprNode nod) throws SyntaxError {
 //		System.out.println(nod.id);
 		visitChild(nod);
-		TypeRef tmp = genScope.matchVarName(nod.id, nod.loc, genScope);
+		TypeRef tmp = nod.belongTo.matchVarName(nod.id, nod.loc, genScope);
 		if (!(tmp instanceof FuncTypeRef)) throw new NoDefinedTypeError(nod.loc);
 		if (!((FuncTypeRef) tmp).matchForm(nod)) throw new NoDefinedTypeError(nod.loc);
 		nod.type = ((FuncTypeRef) tmp).retType;
@@ -143,11 +148,19 @@ public class SemanticChecker extends AstVisitor {
 		} catch(SyntaxError e) {}
 		Node sonNode = nod.sons.get(0);
 		Node objNode = nod.sons.get(1);
+		if (sonNode.type instanceof ArrayTypeRef) {
+			nod.type = ((ArrayTypeRef) sonNode.type).checkObj(objNode);
+			return;
+		}
 		if (!(sonNode.type instanceof ClassTypeRef)) throw new NoCastExpr(nod.loc);
 		ClassDefTypeRef tmp = (ClassDefTypeRef) genScope.entities.get(((ClassTypeRef) sonNode.type).typeId);
 		nod.type = tmp.checkObj(objNode);
 	}
 	@Override void visit(VarExprNode nod) throws SyntaxError {
+		if (nod.id.equals("this") && classStack.size() > 0) {
+			nod.type = new ClassTypeRef(classStack.get(classStack.size() - 1));
+			return;
+		}
 		nod.type = nod.belongTo.matchVarName(nod.id, nod.loc, genScope);
 	}
 }

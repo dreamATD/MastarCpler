@@ -319,7 +319,7 @@ typeId
 
 variableId
 :
-    Identifier
+    Identifier | This
 ;
 
 simpleTypeId
@@ -337,6 +337,11 @@ simpleTypeId
 LineCommentary
 :
 	'//' ~[\r\n]* -> skip
+;
+
+BlockComment
+:
+	'/*' .*? '*/' -> skip
 ;
 
 /*

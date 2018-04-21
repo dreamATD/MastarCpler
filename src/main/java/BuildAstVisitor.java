@@ -233,9 +233,18 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 	}
 	@Override public ObjAccExprNode visitObjAccPrimExpr(MxStarParser.ObjAccPrimExprContext ctx) {
 		ObjAccExprNode res = new ObjAccExprNode();
-		res.sons.add(visit(ctx.primaryExpr(0)));
-		res.sons.add(visit(ctx.primaryExpr(1)));
-		res.loc = new Location(ctx.start);
+		if (ctx.primaryExpr(0).getText().equals("this")) {
+			VarExprNode son = new VarExprNode();
+			son.loc = new Location(ctx.primaryExpr(0).start);
+			son.id = "this";
+			res.sons.add(son);
+			res.sons.add(visit(ctx.primaryExpr(1)));
+			res.loc = new Location(ctx.start);
+		} else {
+			res.sons.add(visit(ctx.primaryExpr(0)));
+			res.sons.add(visit(ctx.primaryExpr(1)));
+			res.loc = new Location(ctx.start);
+		}
 		return res;
 	}
 	@Override public Node visitElemPrimExpr(MxStarParser.ElemPrimExprContext ctx) {

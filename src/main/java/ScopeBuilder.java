@@ -6,7 +6,6 @@ import java.util.Map;
 
 public class ScopeBuilder {
 	GeneralScope genScope = new GeneralScope(null);
-	Map<TypeRef, DefinedEntity> typeTable;
 	void initInternalType() throws SyntaxError {
 		// build string class
 		ClassDefTypeRef stringType = new ClassDefTypeRef();

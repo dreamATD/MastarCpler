@@ -20,10 +20,10 @@ public class MxStarParser extends Parser {
 		T__9=10, T__10=11, T__11=12, T__12=13, T__13=14, T__14=15, T__15=16, T__16=17, 
 		T__17=18, T__18=19, T__19=20, T__20=21, T__21=22, T__22=23, T__23=24, 
 		T__24=25, T__25=26, T__26=27, T__27=28, T__28=29, T__29=30, T__30=31, 
-		T__31=32, LineCommentary=33, StringLiteral=34, True=35, False=36, IntLiteral=37, 
-		NullLiteral=38, Bool=39, Int=40, String=41, Void=42, If=43, Else=44, For=45, 
-		While=46, Break=47, Continue=48, Return=49, New=50, Class=51, This=52, 
-		Identifier=53, WhiteSpace=54, NewLine=55;
+		T__31=32, LineCommentary=33, BlockComment=34, StringLiteral=35, True=36, 
+		False=37, IntLiteral=38, NullLiteral=39, Bool=40, Int=41, String=42, Void=43, 
+		If=44, Else=45, For=46, While=47, Break=48, Continue=49, Return=50, New=51, 
+		Class=52, This=53, Identifier=54, WhiteSpace=55, NewLine=56;
 	public static final int
 		RULE_code = 0, RULE_classDefinition = 1, RULE_functionDefinition = 2, 
 		RULE_statement = 3, RULE_classId = 4, RULE_classBody = 5, RULE_constructionFunction = 6, 
@@ -58,17 +58,18 @@ public class MxStarParser extends Parser {
 		null, "'{'", "'}'", "'('", "')'", "','", "';'", "'='", "'['", "']'", "'.'", 
 		"'++'", "'--'", "'~'", "'!'", "'-'", "'+'", "'*'", "'/'", "'%'", "'<<'", 
 		"'>>'", "'<'", "'>'", "'<='", "'>='", "'=='", "'!='", "'&'", "'^'", "'|'", 
-		"'&&'", "'||'", null, null, "'true'", "'false'", null, "'null'", "'bool'", 
-		"'int'", "'string'", "'void'", "'if'", "'else'", "'for'", "'while'", "'break'", 
-		"'continue'", "'return'", "'new'", "'class'", "'this'"
+		"'&&'", "'||'", null, null, null, "'true'", "'false'", null, "'null'", 
+		"'bool'", "'int'", "'string'", "'void'", "'if'", "'else'", "'for'", "'while'", 
+		"'break'", "'continue'", "'return'", "'new'", "'class'", "'this'"
 	};
 	private static final String[] _SYMBOLIC_NAMES = {
 		null, null, null, null, null, null, null, null, null, null, null, null, 
 		null, null, null, null, null, null, null, null, null, null, null, null, 
 		null, null, null, null, null, null, null, null, null, "LineCommentary", 
-		"StringLiteral", "True", "False", "IntLiteral", "NullLiteral", "Bool", 
-		"Int", "String", "Void", "If", "Else", "For", "While", "Break", "Continue", 
-		"Return", "New", "Class", "This", "Identifier", "WhiteSpace", "NewLine"
+		"BlockComment", "StringLiteral", "True", "False", "IntLiteral", "NullLiteral", 
+		"Bool", "Int", "String", "Void", "If", "Else", "For", "While", "Break", 
+		"Continue", "Return", "New", "Class", "This", "Identifier", "WhiteSpace", 
+		"NewLine"
 	};
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
@@ -1068,7 +1069,7 @@ public class MxStarParser extends Parser {
 			setState(176);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__0) | (1L << T__2) | (1L << T__5) | (1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15) | (1L << StringLiteral) | (1L << True) | (1L << False) | (1L << IntLiteral) | (1L << NullLiteral) | (1L << Bool) | (1L << Int) | (1L << String) | (1L << Void) | (1L << If) | (1L << For) | (1L << While) | (1L << Break) | (1L << Continue) | (1L << Return) | (1L << New) | (1L << Identifier))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__0) | (1L << T__2) | (1L << T__5) | (1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15) | (1L << StringLiteral) | (1L << True) | (1L << False) | (1L << IntLiteral) | (1L << NullLiteral) | (1L << Bool) | (1L << Int) | (1L << String) | (1L << Void) | (1L << If) | (1L << For) | (1L << While) | (1L << Break) | (1L << Continue) | (1L << Return) | (1L << New) | (1L << This) | (1L << Identifier))) != 0)) {
 				{
 				{
 				setState(173);
@@ -1440,7 +1441,7 @@ public class MxStarParser extends Parser {
 			setState(218);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15) | (1L << StringLiteral) | (1L << True) | (1L << False) | (1L << IntLiteral) | (1L << NullLiteral) | (1L << New) | (1L << Identifier))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15) | (1L << StringLiteral) | (1L << True) | (1L << False) | (1L << IntLiteral) | (1L << NullLiteral) | (1L << New) | (1L << This) | (1L << Identifier))) != 0)) {
 				{
 				setState(217);
 				((ForStatementContext)_localctx).initExpr = expression();
@@ -1452,7 +1453,7 @@ public class MxStarParser extends Parser {
 			setState(222);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15) | (1L << StringLiteral) | (1L << True) | (1L << False) | (1L << IntLiteral) | (1L << NullLiteral) | (1L << New) | (1L << Identifier))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15) | (1L << StringLiteral) | (1L << True) | (1L << False) | (1L << IntLiteral) | (1L << NullLiteral) | (1L << New) | (1L << This) | (1L << Identifier))) != 0)) {
 				{
 				setState(221);
 				((ForStatementContext)_localctx).condExpr = expression();
@@ -1464,7 +1465,7 @@ public class MxStarParser extends Parser {
 			setState(226);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15) | (1L << StringLiteral) | (1L << True) | (1L << False) | (1L << IntLiteral) | (1L << NullLiteral) | (1L << New) | (1L << Identifier))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15) | (1L << StringLiteral) | (1L << True) | (1L << False) | (1L << IntLiteral) | (1L << NullLiteral) | (1L << New) | (1L << This) | (1L << Identifier))) != 0)) {
 				{
 				setState(225);
 				((ForStatementContext)_localctx).loopExpr = expression();
@@ -1571,7 +1572,7 @@ public class MxStarParser extends Parser {
 				setState(233);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15) | (1L << StringLiteral) | (1L << True) | (1L << False) | (1L << IntLiteral) | (1L << NullLiteral) | (1L << New) | (1L << Identifier))) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15) | (1L << StringLiteral) | (1L << True) | (1L << False) | (1L << IntLiteral) | (1L << NullLiteral) | (1L << New) | (1L << This) | (1L << Identifier))) != 0)) {
 					{
 					setState(232);
 					expression();
@@ -2250,6 +2251,7 @@ public class MxStarParser extends Parser {
 				literal();
 				}
 				break;
+			case This:
 			case Identifier:
 				_localctx = new VarElemExprContext(_localctx);
 				enterOuterAlt(_localctx, 2);
@@ -2423,7 +2425,7 @@ public class MxStarParser extends Parser {
 				setState(296);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15) | (1L << StringLiteral) | (1L << True) | (1L << False) | (1L << IntLiteral) | (1L << NullLiteral) | (1L << New) | (1L << Identifier))) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15) | (1L << StringLiteral) | (1L << True) | (1L << False) | (1L << IntLiteral) | (1L << NullLiteral) | (1L << New) | (1L << This) | (1L << Identifier))) != 0)) {
 					{
 					setState(295);
 					argumentList();
@@ -2763,6 +2765,7 @@ public class MxStarParser extends Parser {
 			case False:
 			case IntLiteral:
 			case NullLiteral:
+			case This:
 			case Identifier:
 				_localctx = new RUExprContext(_localctx);
 				enterOuterAlt(_localctx, 1);
@@ -4506,6 +4509,7 @@ public class MxStarParser extends Parser {
 
 	public static class VariableIdContext extends ParserRuleContext {
 		public TerminalNode Identifier() { return getToken(MxStarParser.Identifier, 0); }
+		public TerminalNode This() { return getToken(MxStarParser.This, 0); }
 		public VariableIdContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -4528,11 +4532,20 @@ public class MxStarParser extends Parser {
 	public final VariableIdContext variableId() throws RecognitionException {
 		VariableIdContext _localctx = new VariableIdContext(_ctx, getState());
 		enterRule(_localctx, 90, RULE_variableId);
+		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(530);
-			match(Identifier);
+			_la = _input.LA(1);
+			if ( !(_la==This || _la==Identifier) ) {
+			_errHandler.recoverInline(this);
+			}
+			else {
+				if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+				_errHandler.reportMatch(this);
+				consume();
+			}
 			}
 		}
 		catch (RecognitionException re) {
@@ -4785,7 +4798,7 @@ public class MxStarParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\39\u021b\4\2\t\2\4"+
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3:\u021b\4\2\t\2\4"+
 		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t"+
 		"\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\4\23\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30\4\31\t\31"+
@@ -4824,24 +4837,24 @@ public class MxStarParser extends Parser {
 		",\3,\3,\3,\3,\3,\7,\u01fe\n,\f,\16,\u0201\13,\3-\3-\3-\3-\3-\5-\u0208"+
 		"\n-\3.\3.\5.\u020c\n.\3.\3.\7.\u0210\n.\f.\16.\u0213\13.\3/\3/\3\60\3"+
 		"\60\3\61\3\61\3\61\2\16:>DFHJLNPRTV\62\2\4\6\b\n\f\16\20\22\24\26\30\32"+
-		"\34\36 \"$&(*,.\60\62\64\668:<>@BDFHJLNPRTVXZ\\^`\2\5\3\2\r\16\3\2),\3"+
-		"\2%&\2\u0233\2g\3\2\2\2\4j\3\2\2\2\6n\3\2\2\2\bz\3\2\2\2\n|\3\2\2\2\f"+
-		"~\3\2\2\2\16\u0092\3\2\2\2\20\u0096\3\2\2\2\22\u0098\3\2\2\2\24\u00a6"+
-		"\3\2\2\2\26\u00a9\3\2\2\2\30\u00ac\3\2\2\2\32\u00ae\3\2\2\2\34\u00b7\3"+
-		"\2\2\2\36\u00ba\3\2\2\2 \u00d1\3\2\2\2\"\u00d3\3\2\2\2$\u00d9\3\2\2\2"+
-		"&\u00f2\3\2\2\2(\u00f4\3\2\2\2*\u00f6\3\2\2\2,\u00f9\3\2\2\2.\u00fc\3"+
-		"\2\2\2\60\u0105\3\2\2\2\62\u0113\3\2\2\2\64\u0115\3\2\2\2\66\u011b\3\2"+
-		"\2\28\u0123\3\2\2\2:\u012e\3\2\2\2<\u013d\3\2\2\2>\u0145\3\2\2\2@\u015e"+
-		"\3\2\2\2B\u0162\3\2\2\2D\u017c\3\2\2\2F\u018d\3\2\2\2H\u019b\3\2\2\2J"+
-		"\u01a9\3\2\2\2L\u01bd\3\2\2\2N\u01cb\3\2\2\2P\u01d6\3\2\2\2R\u01e1\3\2"+
-		"\2\2T\u01ec\3\2\2\2V\u01f7\3\2\2\2X\u0207\3\2\2\2Z\u020b\3\2\2\2\\\u0214"+
-		"\3\2\2\2^\u0216\3\2\2\2`\u0218\3\2\2\2bf\5\4\3\2cf\5\6\4\2df\5*\26\2e"+
-		"b\3\2\2\2ec\3\2\2\2ed\3\2\2\2fi\3\2\2\2ge\3\2\2\2gh\3\2\2\2h\3\3\2\2\2"+
-		"ig\3\2\2\2jk\7\65\2\2kl\5\n\6\2lm\5\f\7\2m\5\3\2\2\2no\5Z.\2op\5\20\t"+
-		"\2pq\5\22\n\2qr\5\30\r\2r\7\3\2\2\2s{\5\32\16\2t{\5\34\17\2u{\5\36\20"+
-		"\2v{\5 \21\2w{\5&\24\2x{\5(\25\2y{\5*\26\2zs\3\2\2\2zt\3\2\2\2zu\3\2\2"+
-		"\2zv\3\2\2\2zw\3\2\2\2zx\3\2\2\2zy\3\2\2\2{\t\3\2\2\2|}\7\67\2\2}\13\3"+
-		"\2\2\2~\u0083\7\3\2\2\177\u0082\5,\27\2\u0080\u0082\5\6\4\2\u0081\177"+
+		"\34\36 \"$&(*,.\60\62\64\668:<>@BDFHJLNPRTVXZ\\^`\2\6\3\2\r\16\3\2\67"+
+		"8\3\2*-\3\2&\'\2\u0233\2g\3\2\2\2\4j\3\2\2\2\6n\3\2\2\2\bz\3\2\2\2\n|"+
+		"\3\2\2\2\f~\3\2\2\2\16\u0092\3\2\2\2\20\u0096\3\2\2\2\22\u0098\3\2\2\2"+
+		"\24\u00a6\3\2\2\2\26\u00a9\3\2\2\2\30\u00ac\3\2\2\2\32\u00ae\3\2\2\2\34"+
+		"\u00b7\3\2\2\2\36\u00ba\3\2\2\2 \u00d1\3\2\2\2\"\u00d3\3\2\2\2$\u00d9"+
+		"\3\2\2\2&\u00f2\3\2\2\2(\u00f4\3\2\2\2*\u00f6\3\2\2\2,\u00f9\3\2\2\2."+
+		"\u00fc\3\2\2\2\60\u0105\3\2\2\2\62\u0113\3\2\2\2\64\u0115\3\2\2\2\66\u011b"+
+		"\3\2\2\28\u0123\3\2\2\2:\u012e\3\2\2\2<\u013d\3\2\2\2>\u0145\3\2\2\2@"+
+		"\u015e\3\2\2\2B\u0162\3\2\2\2D\u017c\3\2\2\2F\u018d\3\2\2\2H\u019b\3\2"+
+		"\2\2J\u01a9\3\2\2\2L\u01bd\3\2\2\2N\u01cb\3\2\2\2P\u01d6\3\2\2\2R\u01e1"+
+		"\3\2\2\2T\u01ec\3\2\2\2V\u01f7\3\2\2\2X\u0207\3\2\2\2Z\u020b\3\2\2\2\\"+
+		"\u0214\3\2\2\2^\u0216\3\2\2\2`\u0218\3\2\2\2bf\5\4\3\2cf\5\6\4\2df\5*"+
+		"\26\2eb\3\2\2\2ec\3\2\2\2ed\3\2\2\2fi\3\2\2\2ge\3\2\2\2gh\3\2\2\2h\3\3"+
+		"\2\2\2ig\3\2\2\2jk\7\66\2\2kl\5\n\6\2lm\5\f\7\2m\5\3\2\2\2no\5Z.\2op\5"+
+		"\20\t\2pq\5\22\n\2qr\5\30\r\2r\7\3\2\2\2s{\5\32\16\2t{\5\34\17\2u{\5\36"+
+		"\20\2v{\5 \21\2w{\5&\24\2x{\5(\25\2y{\5*\26\2zs\3\2\2\2zt\3\2\2\2zu\3"+
+		"\2\2\2zv\3\2\2\2zw\3\2\2\2zx\3\2\2\2zy\3\2\2\2{\t\3\2\2\2|}\78\2\2}\13"+
+		"\3\2\2\2~\u0083\7\3\2\2\177\u0082\5,\27\2\u0080\u0082\5\6\4\2\u0081\177"+
 		"\3\2\2\2\u0081\u0080\3\2\2\2\u0082\u0085\3\2\2\2\u0083\u0081\3\2\2\2\u0083"+
 		"\u0084\3\2\2\2\u0084\u0087\3\2\2\2\u0085\u0083\3\2\2\2\u0086\u0088\5\16"+
 		"\b\2\u0087\u0086\3\2\2\2\u0087\u0088\3\2\2\2\u0088\u008d\3\2\2\2\u0089"+
@@ -4849,35 +4862,35 @@ public class MxStarParser extends Parser {
 		"\2\2\u008c\u008f\3\2\2\2\u008d\u008b\3\2\2\2\u008d\u008e\3\2\2\2\u008e"+
 		"\u0090\3\2\2\2\u008f\u008d\3\2\2\2\u0090\u0091\7\4\2\2\u0091\r\3\2\2\2"+
 		"\u0092\u0093\5\n\6\2\u0093\u0094\5\24\13\2\u0094\u0095\5\30\r\2\u0095"+
-		"\17\3\2\2\2\u0096\u0097\7\67\2\2\u0097\21\3\2\2\2\u0098\u00a4\7\5\2\2"+
-		"\u0099\u00a5\7\6\2\2\u009a\u009f\5\26\f\2\u009b\u009c\7\7\2\2\u009c\u009e"+
-		"\5\26\f\2\u009d\u009b\3\2\2\2\u009e\u00a1\3\2\2\2\u009f\u009d\3\2\2\2"+
-		"\u009f\u00a0\3\2\2\2\u00a0\u00a2\3\2\2\2\u00a1\u009f\3\2\2\2\u00a2\u00a3"+
-		"\7\6\2\2\u00a3\u00a5\3\2\2\2\u00a4\u0099\3\2\2\2\u00a4\u009a\3\2\2\2\u00a5"+
+		"\17\3\2\2\2\u0096\u0097\78\2\2\u0097\21\3\2\2\2\u0098\u00a4\7\5\2\2\u0099"+
+		"\u00a5\7\6\2\2\u009a\u009f\5\26\f\2\u009b\u009c\7\7\2\2\u009c\u009e\5"+
+		"\26\f\2\u009d\u009b\3\2\2\2\u009e\u00a1\3\2\2\2\u009f\u009d\3\2\2\2\u009f"+
+		"\u00a0\3\2\2\2\u00a0\u00a2\3\2\2\2\u00a1\u009f\3\2\2\2\u00a2\u00a3\7\6"+
+		"\2\2\u00a3\u00a5\3\2\2\2\u00a4\u0099\3\2\2\2\u00a4\u009a\3\2\2\2\u00a5"+
 		"\23\3\2\2\2\u00a6\u00a7\7\5\2\2\u00a7\u00a8\7\6\2\2\u00a8\25\3\2\2\2\u00a9"+
 		"\u00aa\5Z.\2\u00aa\u00ab\5\\/\2\u00ab\27\3\2\2\2\u00ac\u00ad\5\32\16\2"+
 		"\u00ad\31\3\2\2\2\u00ae\u00b2\7\3\2\2\u00af\u00b1\5\b\5\2\u00b0\u00af"+
 		"\3\2\2\2\u00b1\u00b4\3\2\2\2\u00b2\u00b0\3\2\2\2\u00b2\u00b3\3\2\2\2\u00b3"+
 		"\u00b5\3\2\2\2\u00b4\u00b2\3\2\2\2\u00b5\u00b6\7\4\2\2\u00b6\33\3\2\2"+
 		"\2\u00b7\u00b8\5\64\33\2\u00b8\u00b9\7\b\2\2\u00b9\35\3\2\2\2\u00ba\u00bb"+
-		"\7-\2\2\u00bb\u00bc\7\5\2\2\u00bc\u00bd\5\64\33\2\u00bd\u00be\7\6\2\2"+
-		"\u00be\u00c8\5\b\5\2\u00bf\u00c0\7.\2\2\u00c0\u00c1\7-\2\2\u00c1\u00c2"+
+		"\7.\2\2\u00bb\u00bc\7\5\2\2\u00bc\u00bd\5\64\33\2\u00bd\u00be\7\6\2\2"+
+		"\u00be\u00c8\5\b\5\2\u00bf\u00c0\7/\2\2\u00c0\u00c1\7.\2\2\u00c1\u00c2"+
 		"\7\5\2\2\u00c2\u00c3\5\64\33\2\u00c3\u00c4\7\6\2\2\u00c4\u00c5\5\b\5\2"+
 		"\u00c5\u00c7\3\2\2\2\u00c6\u00bf\3\2\2\2\u00c7\u00ca\3\2\2\2\u00c8\u00c6"+
 		"\3\2\2\2\u00c8\u00c9\3\2\2\2\u00c9\u00cd\3\2\2\2\u00ca\u00c8\3\2\2\2\u00cb"+
-		"\u00cc\7.\2\2\u00cc\u00ce\5\b\5\2\u00cd\u00cb\3\2\2\2\u00cd\u00ce\3\2"+
+		"\u00cc\7/\2\2\u00cc\u00ce\5\b\5\2\u00cd\u00cb\3\2\2\2\u00cd\u00ce\3\2"+
 		"\2\2\u00ce\37\3\2\2\2\u00cf\u00d2\5\"\22\2\u00d0\u00d2\5$\23\2\u00d1\u00cf"+
-		"\3\2\2\2\u00d1\u00d0\3\2\2\2\u00d2!\3\2\2\2\u00d3\u00d4\7\60\2\2\u00d4"+
+		"\3\2\2\2\u00d1\u00d0\3\2\2\2\u00d2!\3\2\2\2\u00d3\u00d4\7\61\2\2\u00d4"+
 		"\u00d5\7\5\2\2\u00d5\u00d6\5\64\33\2\u00d6\u00d7\7\6\2\2\u00d7\u00d8\5"+
-		"\b\5\2\u00d8#\3\2\2\2\u00d9\u00da\7/\2\2\u00da\u00dc\7\5\2\2\u00db\u00dd"+
+		"\b\5\2\u00d8#\3\2\2\2\u00d9\u00da\7\60\2\2\u00da\u00dc\7\5\2\2\u00db\u00dd"+
 		"\5\64\33\2\u00dc\u00db\3\2\2\2\u00dc\u00dd\3\2\2\2\u00dd\u00de\3\2\2\2"+
 		"\u00de\u00e0\7\b\2\2\u00df\u00e1\5\64\33\2\u00e0\u00df\3\2\2\2\u00e0\u00e1"+
 		"\3\2\2\2\u00e1\u00e2\3\2\2\2\u00e2\u00e4\7\b\2\2\u00e3\u00e5\5\64\33\2"+
 		"\u00e4\u00e3\3\2\2\2\u00e4\u00e5\3\2\2\2\u00e5\u00e6\3\2\2\2\u00e6\u00e7"+
-		"\7\6\2\2\u00e7\u00e8\5\b\5\2\u00e8%\3\2\2\2\u00e9\u00eb\7\63\2\2\u00ea"+
+		"\7\6\2\2\u00e7\u00e8\5\b\5\2\u00e8%\3\2\2\2\u00e9\u00eb\7\64\2\2\u00ea"+
 		"\u00ec\5\64\33\2\u00eb\u00ea\3\2\2\2\u00eb\u00ec\3\2\2\2\u00ec\u00ed\3"+
-		"\2\2\2\u00ed\u00f3\7\b\2\2\u00ee\u00ef\7\61\2\2\u00ef\u00f3\7\b\2\2\u00f0"+
-		"\u00f1\7\62\2\2\u00f1\u00f3\7\b\2\2\u00f2\u00e9\3\2\2\2\u00f2\u00ee\3"+
+		"\2\2\2\u00ed\u00f3\7\b\2\2\u00ee\u00ef\7\62\2\2\u00ef\u00f3\7\b\2\2\u00f0"+
+		"\u00f1\7\63\2\2\u00f1\u00f3\7\b\2\2\u00f2\u00e9\3\2\2\2\u00f2\u00ee\3"+
 		"\2\2\2\u00f2\u00f0\3\2\2\2\u00f3\'\3\2\2\2\u00f4\u00f5\7\b\2\2\u00f5)"+
 		"\3\2\2\2\u00f6\u00f7\5.\30\2\u00f7\u00f8\7\b\2\2\u00f8+\3\2\2\2\u00f9"+
 		"\u00fa\5\60\31\2\u00fa\u00fb\7\b\2\2\u00fb-\3\2\2\2\u00fc\u00fd\5Z.\2"+
@@ -4889,8 +4902,8 @@ public class MxStarParser extends Parser {
 		"\2\u010d\u010b\3\2\2\2\u010e\u0114\5\\/\2\u010f\u0110\5\\/\2\u0110\u0111"+
 		"\7\t\2\2\u0111\u0112\5\64\33\2\u0112\u0114\3\2\2\2\u0113\u010e\3\2\2\2"+
 		"\u0113\u010f\3\2\2\2\u0114\63\3\2\2\2\u0115\u0116\5X-\2\u0116\65\3\2\2"+
-		"\2\u0117\u011c\7\'\2\2\u0118\u011c\5`\61\2\u0119\u011c\7$\2\2\u011a\u011c"+
-		"\7(\2\2\u011b\u0117\3\2\2\2\u011b\u0118\3\2\2\2\u011b\u0119\3\2\2\2\u011b"+
+		"\2\u0117\u011c\7(\2\2\u0118\u011c\5`\61\2\u0119\u011c\7%\2\2\u011a\u011c"+
+		"\7)\2\2\u011b\u0117\3\2\2\2\u011b\u0118\3\2\2\2\u011b\u0119\3\2\2\2\u011b"+
 		"\u011a\3\2\2\2\u011c\67\3\2\2\2\u011d\u0124\5\66\34\2\u011e\u0124\5\\"+
 		"/\2\u011f\u0120\7\5\2\2\u0120\u0121\5\64\33\2\u0121\u0122\7\6\2\2\u0122"+
 		"\u0124\3\2\2\2\u0123\u011d\3\2\2\2\u0123\u011e\3\2\2\2\u0123\u011f\3\2"+
@@ -4911,7 +4924,7 @@ public class MxStarParser extends Parser {
 		"\7\r\2\2\u0151\u015f\5@!\2\u0152\u0153\7\16\2\2\u0153\u015f\5@!\2\u0154"+
 		"\u0155\7\17\2\2\u0155\u015f\5@!\2\u0156\u0157\7\20\2\2\u0157\u015f\5@"+
 		"!\2\u0158\u0159\7\21\2\2\u0159\u015f\5@!\2\u015a\u015b\7\22\2\2\u015b"+
-		"\u015f\5@!\2\u015c\u015d\7\64\2\2\u015d\u015f\5B\"\2\u015e\u014f\3\2\2"+
+		"\u015f\5@!\2\u015c\u015d\7\65\2\2\u015d\u015f\5B\"\2\u015e\u014f\3\2\2"+
 		"\2\u015e\u0150\3\2\2\2\u015e\u0152\3\2\2\2\u015e\u0154\3\2\2\2\u015e\u0156"+
 		"\3\2\2\2\u015e\u0158\3\2\2\2\u015e\u015a\3\2\2\2\u015e\u015c\3\2\2\2\u015f"+
 		"A\3\2\2\2\u0160\u0163\5\n\6\2\u0161\u0163\5^\60\2\u0162\u0160\3\2\2\2"+
@@ -4971,8 +4984,8 @@ public class MxStarParser extends Parser {
 		"\3\2\2\2\u020b\u020a\3\2\2\2\u020c\u0211\3\2\2\2\u020d\u020e\7\n\2\2\u020e"+
 		"\u0210\7\13\2\2\u020f\u020d\3\2\2\2\u0210\u0213\3\2\2\2\u0211\u020f\3"+
 		"\2\2\2\u0211\u0212\3\2\2\2\u0212[\3\2\2\2\u0213\u0211\3\2\2\2\u0214\u0215"+
-		"\7\67\2\2\u0215]\3\2\2\2\u0216\u0217\t\3\2\2\u0217_\3\2\2\2\u0218\u0219"+
-		"\t\4\2\2\u0219a\3\2\2\28egz\u0081\u0083\u0087\u008b\u008d\u009f\u00a4"+
+		"\t\3\2\2\u0215]\3\2\2\2\u0216\u0217\t\4\2\2\u0217_\3\2\2\2\u0218\u0219"+
+		"\t\5\2\2\u0219a\3\2\2\28egz\u0081\u0083\u0087\u008b\u008d\u009f\u00a4"+
 		"\u00b2\u00c8\u00cd\u00d1\u00dc\u00e0\u00e4\u00eb\u00f2\u0102\u010b\u0113"+
 		"\u011b\u0123\u012a\u012e\u0138\u013a\u0142\u014c\u015e\u0162\u0168\u0171"+
 		"\u0177\u017a\u0188\u018a\u0196\u0198\u01a4\u01a6\u01b8\u01ba\u01c6\u01c8"+
