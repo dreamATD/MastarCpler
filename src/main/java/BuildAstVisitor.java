@@ -107,7 +107,7 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 		return res;
 	}
 	@Override public CondStatNode visitConditionalStatement(MxStarParser.ConditionalStatementContext ctx) {
-		if (ctx.Else() == null) {
+		if (ctx.Else().size() == 0) {
 			IfStatNode res = new IfStatNode();
 			res.sons.add(visit(ctx.expression(0)));
 			res.sons.add(visit(ctx.statement(0)));
