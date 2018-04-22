@@ -12,22 +12,6 @@ public class SemanticChecker extends AstVisitor {
 		classStack = new ArrayList<String>();
 		retType = null;
 	}
-	/*
-	void checkFuncRet(Node nod, TypeRef type) throws SyntaxError {
-		if (nod instanceof RetStatNode) {
-			if (type.equalsSingleType("void") && nod.sons.size() > 0) throw new DisMatchedFuncReturn(nod.loc);
-			if (!type.equalsSingleType("void")) {
-				if (nod.sons.size() == 0) throw new DisMatchedFuncReturn(nod.loc);
-				if (!type.equals(nod.sons.get(0).type) && !(nod.sons.get(0).type instanceof NullTypeRef)) throw new DisMatchedFuncReturn(nod.loc);
-			}
-		} else {
-			for (int i = 0; i < nod.sons.size(); ++i) {
-				Node son = nod.sons.get(i);
-				if (son instanceof StatNode) checkFuncRet(son, type);
-			}
-		}
-	}
-	*/
 	boolean checkTypeEntity(TypeRef type) {
 		if (type instanceof ArrayTypeRef) type = ((ArrayTypeRef) type).getSimpleRef();
 		if (type instanceof ClassTypeRef && !genScope.entities.containsKey(((ClassTypeRef) type).typeId)) return false;

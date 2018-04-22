@@ -1,6 +1,7 @@
 class A{
-    B a;
+    int a;
 }
+string[] func(int a){ return null; }
 int main() {
 
 }
