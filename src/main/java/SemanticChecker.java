@@ -59,6 +59,9 @@ public class SemanticChecker extends AstVisitor {
 		for (int i = 0; i < nod.sons.size(); ++i) {
 			Node son = nod.sons.get(i);
 			if (!(son instanceof VarDefStatNode)) visit(son);
+			else if (son.type instanceof ClassTypeRef) {
+				if (genScope.getEntity(((ClassTypeRef) son.type).typeId) == null) throw new NoDefinedTypeError(son.loc);
+			}
 		}
 		classStack.remove(classStack.size() - 1);
 	}
