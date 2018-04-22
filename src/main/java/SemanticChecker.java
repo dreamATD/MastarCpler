@@ -5,11 +5,14 @@ public class SemanticChecker extends AstVisitor {
 	GeneralScope genScope;
 	int iterNum;
 	List<String> classStack;
+	TypeRef retType;
 	SemanticChecker(GeneralScope g) {
 		genScope = g;
 		iterNum = 0;
 		classStack = new ArrayList<String>();
+		retType = null;
 	}
+	/*
 	void checkFuncRet(Node nod, TypeRef type) throws SyntaxError {
 		if (nod instanceof RetStatNode) {
 			if (type.equalsSingleType("void") && nod.sons.size() > 0) throw new DisMatchedFuncReturn(nod.loc);
@@ -24,6 +27,7 @@ public class SemanticChecker extends AstVisitor {
 			}
 		}
 	}
+	*/
 	boolean checkTypeEntity(TypeRef type) {
 		if (type instanceof ArrayTypeRef) type = ((ArrayTypeRef) type).getSimpleRef();
 		if (type instanceof ClassTypeRef && !genScope.entities.containsKey(((ClassTypeRef) type).typeId)) return false;
@@ -67,13 +71,15 @@ public class SemanticChecker extends AstVisitor {
 	}
 	@Override void visit(FuncDefNode nod) throws SyntaxError {
 		if (!checkTypeEntity(nod.type)) throw new NoDefinedTypeError(nod.loc);
+		retType = nod.type;
 		visitChild(nod);
-		checkFuncRet(nod.sons.get(nod.sons.size() - 1), nod.type);
+		retType = null;
 	}
 	@Override void visit(ConsFuncDefNode nod) throws SyntaxError {
 		if (!classStack.get(classStack.size() - 1).equals(nod.id)) throw new WrongNameConsFunc(nod.loc);
+		retType = nod.type;
 		visitChild(nod);
-		checkFuncRet(nod.sons.get(nod.sons.size() - 1), nod.type);
+		retType = null;
 	}
 	@Override void visit(IfStatNode nod) throws SyntaxError {
 		visitChild(nod);
@@ -99,6 +105,20 @@ public class SemanticChecker extends AstVisitor {
 	}
 	@Override void visit(CtnStatNode nod) throws SyntaxError {
 		if (iterNum == 0) throw new CntOutIterStat (nod.loc);
+	}
+	@Override void visit(RetStatNode nod) throws SyntaxError {
+		if (retType.equalsSingleType("void")) {
+			if (nod.sons.size() > 0) throw new DisMatchedFuncReturn(nod.loc);
+		} else {
+			if (nod.sons.size() == 0) throw new DisMatchedFuncReturn(nod.loc);
+			Node son = nod.sons.get(0);
+			visitChild(nod);
+			if (retType instanceof ArrayTypeRef || retType instanceof ClassTypeRef && !(retType instanceof StringTypeRef)) {
+				if (!retType.equals(son.type) && !(son.type instanceof NullTypeRef)) throw new DisMatchedFuncReturn(nod.loc);
+			} else {
+				if (!retType.equals(son.type)) throw new DisMatchedFuncReturn(nod.loc);
+			}
+		}
 	}
 	@Override void visit(VarDefStatNode nod) throws SyntaxError {
 		visitChild(nod);
