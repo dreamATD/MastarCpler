@@ -1,3 +1,4 @@
+import SemanticProc.*;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
@@ -35,7 +36,7 @@ public class Main {
         // Check Semantic Error;
         SemanticChecker checker = new SemanticChecker(scopeBuilder.genScope);
         try {
-            checker.visit(root);
+            root.accept(checker);
         } catch (SyntaxError e) {
             System.out.println(e.toString() + " on Line: " + e.loc.line + ",  Column: " + e.loc.column);
             throw e;
