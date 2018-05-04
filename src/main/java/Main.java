@@ -1,4 +1,4 @@
-import SemanticProc.*;
+import FrontEnd.*;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
@@ -24,15 +24,12 @@ public class Main {
 
         // print the AST
         TempTestAst tester = new TempTestAst();
-        tester.dfs(root, "");
 
         // build the scopes
         ScopeBuilder scopeBuilder = new ScopeBuilder();
         scopeBuilder.codeResolver(root);
         System.out.println();
 
-        // print the scopes
-		Scope.dfs(scopeBuilder.genScope, "");
         // Check Semantic Error;
         SemanticChecker checker = new SemanticChecker(scopeBuilder.genScope);
         try {
@@ -41,6 +38,11 @@ public class Main {
             System.out.println(e.toString() + " on Line: " + e.loc.line + ",  Column: " + e.loc.column);
             throw e;
         }
+
+        // print the scopes
+        scopeBuilder.genScope.dfs("");
+        System.out.println();
+        tester.dfs(root, "");
 //        System.out.println("Listener:");
 //        ParseTreeWalker walker = new ParseTreeWalker();
 //        Evaluator evalByListener = new Evaluator();
