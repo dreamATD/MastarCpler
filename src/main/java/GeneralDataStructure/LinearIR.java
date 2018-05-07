@@ -1,5 +1,7 @@
 package GeneralDataStructure;
 
+import FrontEnd.LabelTable;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -14,6 +16,11 @@ public class LinearIR {
 	public void print() {
 		for (int i = 0; i < code.size(); ++i) {
 			code.get(i).print();
+		}
+	}
+	public void updateAllLabel(LabelTable labels) {
+		for (int i = 0; i < code.size(); ++i) {
+			code.get(i).updateLabel(labels);
 		}
 	}
 }

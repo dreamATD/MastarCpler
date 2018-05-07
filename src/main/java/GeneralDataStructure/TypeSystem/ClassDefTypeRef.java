@@ -15,6 +15,7 @@ public class ClassDefTypeRef extends TypeRef {
 		for (Map.Entry<String, TypeRef> entry: objList.entrySet()) {
 			TypeRef tp = entry.getValue();
 			objs.put(entry.getKey(), new Pair<>(tp, size));
+
 			if (tp instanceof VarTypeRef) size += tp instanceof SimpleTypeRef ? tp.size : 4; // for class and string
 		}
 	}

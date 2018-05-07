@@ -1,5 +1,7 @@
 package GeneralDataStructure;
 
+import FrontEnd.LabelTable;
+
 public class Quad {
 	String op;
 	String r1, r2, rt;
@@ -42,11 +44,30 @@ public class Quad {
 		label = l;
 	}
 	void print() {
-		if (label != null) System.out.println(label + ": ");
+		if (label != null) System.out.printf("%-20s", label + ": ");
+		else System.out.printf("%-20s", " ");
 		System.out.print(op);
 		if (rt != null) System.out.print(" " + rt);
 		if (r1 != null) System.out.print(" " + r1);
 		if (r2 != null) System.out.print(" " + r2);
 		System.out.println();
+	}
+	public boolean isJump() {
+		switch(op) {
+			case "tbr": case "cbr": case "jump" : return true;
+			default: return false;
+		}
+	}
+	public void updateLabel(LabelTable labels) {
+		switch (op) {
+			case "jump":
+				rt = labels.get(Integer.parseInt(rt));
+				break;
+			case "tbr":
+			case "cbr":
+				r1 = labels.get(Integer.parseInt(r1));
+				r2 = labels.get(Integer.parseInt(r2));
+				break;
+		}
 	}
 }

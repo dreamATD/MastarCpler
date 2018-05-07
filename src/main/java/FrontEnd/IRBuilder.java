@@ -6,39 +6,55 @@ import GeneralDataStructure.ScopeClass.*;
 import GeneralDataStructure.TypeSystem.*;
 import javafx.util.Pair;
 
-import javax.sound.sampled.Line;
 import java.util.*;
 
 public class IRBuilder extends AstVisitor {
 	public LinearIR linearCode;
 	HashTable<String, ClassScope<Info> > classTable;
 	public int labelCnt;
-	String nextStatLabel;
+	List<Integer> nextStatLabel;
+	int ifElseEndLabel;
+	int quadLabelCnt;
 	Scope<Info> curScope;
 	SpecialScope<Info> genScope;
 	FuncFrame curFunc;
 
-	Stack<String> brkLabel;
-	Stack<Pair<String, Boolean>> ctnLabel;
+	Stack<Integer> brkLabel;
+	Stack<Pair<Integer, Boolean>> ctnLabel;
 
+	LabelTable uset;
 	public IRBuilder() {
 		linearCode = new LinearIR();
 		labelCnt = 0;
-		nextStatLabel = null;
+		nextStatLabel = new ArrayList<>();
 		brkLabel = new Stack<>();
 		ctnLabel = new Stack<>();
 		classTable = new HashTable<>();
+		uset = new LabelTable();
+	}
+
+
+	void updateNextStatLabel(int t) {
+		nextStatLabel.add(t);
+		uset.add(t);
 	}
 
 	public LinearIR generateIR(Node root) throws Exception {
 		visit(root);
+		linearCode.updateAllLabel(uset);
 		return linearCode;
 	}
 
+
 	private void insertQuad(Quad ins) {
-		if (nextStatLabel != null) {
-			ins.setLabel(nextStatLabel);
-			nextStatLabel = null;
+		if (nextStatLabel.size() > 0) {
+			String label = nextLabel();
+			ins.setLabel(label);
+			for (int data: nextStatLabel) {
+				uset.set(data, label);
+			}
+			quadLabelCnt++;
+			nextStatLabel.clear();
 		}
 		curFunc.insertCode(ins);
 	}
@@ -48,7 +64,8 @@ public class IRBuilder extends AstVisitor {
 	}
 
 	private String nextLabel() {
-		return "label" + Integer.toString(labelCnt++);
+		String str = "label" + Integer.toString(quadLabelCnt++);
+		return str;
 	}
 
 	private String classFuncLabel(String className, String funcName) {
@@ -122,7 +139,6 @@ public class IRBuilder extends AstVisitor {
 		for (int i = 0; i < nod.sons.size(); ++i) {
 			Node son = nod.sons.get(i);
 			if (son instanceof FuncDefNode) {
-				nextStatLabel = classFuncLabel(nod.id, son.id);
 				visit(son);
 			} else visit(son);
 		}
@@ -131,13 +147,13 @@ public class IRBuilder extends AstVisitor {
 
 	@Override public void visit(FuncDefNode nod) throws Exception {
 		curScope = new LocalScope<>(curScope);
-		curFunc = new FuncFrame((LocalScope<Info>) curScope, genScope);
-		nextStatLabel = nod.inClass == null ? funcLabel(nod.id) : classFuncLabel(nod.inClass, nod.id);
+		curFunc = new FuncFrame(nod.inClass == null ? funcLabel(nod.id) : classFuncLabel(nod.inClass, nod.id), (LocalScope<Info>) curScope, genScope);
+
 		int size = nod.sons.size();
 		for (int i = 0; i < size; ++i) {
 			Node son = nod.sons.get(i);
 			visit(son);
-			if (i < size - 1) insertQuad(new Quad("init", curScope.findItem(son.id).getRegName()));
+			if (i < size - 1) curFunc.addParam(curScope.findItem(son.id).getRegName());
 		}
 		curScope = curScope.parent;
 		insertFunc(curFunc);
@@ -145,56 +161,55 @@ public class IRBuilder extends AstVisitor {
 
 	@Override public void visit(ConsFuncDefNode nod) throws Exception {
 		curScope = new LocalScope<>(curScope);
-		curFunc = new FuncFrame((LocalScope<Info>) curScope, genScope);
-		nextStatLabel = funcLabel(nod.id);
+		curFunc = new FuncFrame(funcLabel(nod.id), (LocalScope<Info>) curScope, genScope);
 		int size = nod.sons.size();
 		for (int i = 0; i < size; ++i) {
 			Node son = nod.sons.get(i);
 			visit(son);
-			if (i < size - 1) insertQuad(new Quad("init", curScope.findItem(son.id).getRegName()));
+			if (i < size - 1) curFunc.addParam(curScope.findItem(son.id).getRegName());
 		}
 		curScope = curScope.parent;
 		insertFunc(curFunc);
 	}
 
 	@Override public void visit(IfElseStatNode nod) throws Exception {
-		String endLabel = nextLabel();
+		ifElseEndLabel = labelCnt++;
 		visit(nod.sons.get(0));
 		for (int i = 1; i < nod.sons.size(); ++i) {
-			insertQuad(new Quad("jump", endLabel));
 			visit(nod.sons.get(i));
 		}
-		nextStatLabel = endLabel;
+		updateNextStatLabel(ifElseEndLabel);
+		ifElseEndLabel = -1;
 	}
 
-	void generateCondition(Node nod, String labelTrue, String labelFalse) throws Exception {
+	void generateCondition(Node nod, int labelTrue, int labelFalse) throws Exception {
 		Node left, right;
-		String label;
+		int label;
 		switch (nod.id) {
 			case "&&":
 				left = nod.sons.get(0);
 				right = nod.sons.get(1);
-				label = nextLabel();
+				label = labelCnt++;
 				generateCondition(left, label, labelFalse);
-				nextStatLabel = label;
+				updateNextStatLabel(label);
 				generateCondition(right, labelTrue, labelFalse);
 				break;
 			case "||":
 				left = nod.sons.get(0);
 				right = nod.sons.get(1);
-				label = nextLabel();
+				label = labelCnt++;
 				generateCondition(left, labelTrue, label);
-				nextStatLabel = label;
+				updateNextStatLabel(label);
 				generateCondition(right, labelTrue, labelFalse);
 				break;
 			case "!" :
 				left = nod.sons.get(0);
 				visit(left);
-				insertQuad(new Quad("tbr", left.reg, labelFalse, labelTrue));
+				insertQuad(new Quad("tbr", left.reg, Integer.toString(labelFalse), Integer.toString(labelTrue)));
 				break;
 			default:
 				visit(nod);
-				insertQuad(new Quad("cbr", nod.reg, labelTrue, labelFalse));
+				insertQuad(new Quad("cbr", nod.reg, Integer.toString(labelTrue), Integer.toString(labelFalse)));
 				break;
 
 		}
@@ -203,11 +218,12 @@ public class IRBuilder extends AstVisitor {
 	@Override public void visit(IfStatNode nod) throws Exception {
 		Node ifCond = nod.sons.get(0);
 		Node ifStat = nod.sons.get(1);
-		String label1 = nextLabel(), label2 = nextLabel();
+		int label1 = labelCnt++, label2 = labelCnt++;
 		generateCondition(ifCond, label1, label2);
-		nextStatLabel = label1;
+		updateNextStatLabel(label1);
 		visit(ifStat);
-		nextStatLabel = label2;
+		if (ifElseEndLabel > 0)	insertQuad(new Quad("jump", Integer.toString(ifElseEndLabel)));
+		updateNextStatLabel(label2);
 	}
 
 	@Override public void visit(ForStatNode nod) throws Exception {
@@ -217,53 +233,52 @@ public class IRBuilder extends AstVisitor {
 		Node forBody = nod.sons.get(3);
 		visit(initExpr);
 
-		String label1 = nextLabel();
-		String label2 = nextLabel();
-		String label3 = nextLabel();
+		int label1 = labelCnt++;
+		int label2 = labelCnt++;
+		int label3 = labelCnt++;
 		if (!(condExpr instanceof EmptyExprNode)) {
 			generateCondition(condExpr, label1, label2);
 		} else {
-			insertQuad(new Quad("jump", label1));
+			insertQuad(new Quad("jump", Integer.toString(label1)));
 		}
 
-		nextStatLabel = label1;
+		updateNextStatLabel(label1);
 		ctnLabel.push(new Pair<>(label3, false));
 		brkLabel.push(label2);
 		visit(forBody);
 		brkLabel.pop();
 
-		if (ctnLabel.pop().getValue().equals(true)) nextStatLabel = label3;
+		if (ctnLabel.pop().getValue().equals(true)) updateNextStatLabel(label3);
 		visit(loopExpr);
 		if (!(condExpr instanceof EmptyExprNode)) {
 			generateCondition(condExpr, label1, label2);
 		} else {
-			insertQuad(new Quad("jump", label1));
+			insertQuad(new Quad("jump", Integer.toString(label1)));
 		}
 
-		nextStatLabel = label2;
+		updateNextStatLabel(label2);
 	}
 
 	@Override public void visit(WhileStatNode nod) throws Exception {
 		Node condExpr = nod.sons.get(0);
 		Node whileBody = nod.sons.get(1);
 
-		String label1, label2, label3;
-		label1 = nextLabel();
-		label2 = nextLabel();
-		label3 = nextLabel();
+		int label1 = labelCnt++;
+		int label2 = labelCnt++;
+		int label3 = labelCnt++;
 		generateCondition(condExpr, label1, label2);
 
-		nextStatLabel = label1;
+		updateNextStatLabel(label1);
 		ctnLabel.push(new Pair<>(label3, false));
 		brkLabel.push(label2);
 		visit(whileBody);
 		brkLabel.pop();
 
-		if (ctnLabel.pop().getValue().equals(true)) nextStatLabel = label3;
+		if (ctnLabel.pop().getValue().equals(true)) updateNextStatLabel(label3);
 		visit(condExpr);
 		generateCondition(condExpr, label1, label2);
 
-		nextStatLabel = label2;
+		updateNextStatLabel(label2);
 	}
 
 	@Override public void visit(RetStatNode nod) throws Exception {
@@ -273,12 +288,12 @@ public class IRBuilder extends AstVisitor {
 	}
 
 	@Override public void visit(BrkStatNode nod) throws Exception {
-		insertQuad(new Quad("jump", brkLabel.peek()));
+		insertQuad(new Quad("jump", Integer.toString(brkLabel.peek())));
 	}
 
 	@Override public void visit(CtnStatNode nod) throws Exception {
-		String label = ctnLabel.pop().getKey();
-		insertQuad(new Quad("jump", label));
+		int label = ctnLabel.pop().getKey();
+		insertQuad(new Quad("jump", Integer.toString(label)));
 		ctnLabel.push(new Pair<>(label, true));
 	}
 
