@@ -19,6 +19,10 @@ public class Scope<T> {
 		parent = pnt;
 	}
 
+	public SymbolTable<T> getTable() {
+		return table;
+	}
+
 	public void pushScope(Scope<T> ls) {
 		sonScopes.add(ls);
 	}

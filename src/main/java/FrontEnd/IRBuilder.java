@@ -42,6 +42,7 @@ public class IRBuilder extends AstVisitor {
 	public LinearIR generateIR(Node root) throws Exception {
 		visit(root);
 		linearCode.updateAllLabel(uset);
+		linearCode.setGeneralSymbols(genScope.getTable());
 		return linearCode;
 	}
 
