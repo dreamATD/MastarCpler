@@ -1,12 +1,13 @@
 import FrontEnd.*;
+import GeneralDataStructure.LinearIR;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
 import java.io.*;
 
 public class Main {
-    public static void main (String[] args) throws IOException, SyntaxError {
-        InputStream is = new FileInputStream ("example/program.txt");
+    public static void main (String[] args) throws IOException, Exception {
+        InputStream is = new FileInputStream ("example/helloworld.txt");
         ANTLRInputStream input = new ANTLRInputStream (is);
         MxStarLexer lexer = new MxStarLexer (input);
         CommonTokenStream tokens = new CommonTokenStream (lexer);
@@ -24,6 +25,7 @@ public class Main {
 
         // print the AST
         TempTestAst tester = new TempTestAst();
+        tester.dfs(root, "");
 
         // build the scopes
         ScopeBuilder scopeBuilder = new ScopeBuilder();
@@ -42,10 +44,9 @@ public class Main {
         // print the scopes
         scopeBuilder.genScope.dfs("");
         System.out.println();
-        tester.dfs(root, "");
-//        System.out.println("Listener:");
-//        ParseTreeWalker walker = new ParseTreeWalker();
-//        Evaluator evalByListener = new Evaluator();
-//        walker.walk(evalByListener, tree);
+
+        IRBuilder irBuilder = new IRBuilder();
+        LinearIR irCode = irBuilder.generateIR(root);
+        irCode.print();
     }
 }

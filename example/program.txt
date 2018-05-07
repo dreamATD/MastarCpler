@@ -1,7 +1,9 @@
-class A{
-    int a;
-}
-string[] func(int a){ return null; }
 int main() {
-
+    int[][] a;
+    a = new int[2][];
+    int i;
+    for (i = 0; i < 2; ++i) {
+        a[i] = new int[3];
+    }
+    a[1][2] = 3;
 }

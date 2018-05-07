@@ -18,7 +18,7 @@ class helloWorld {
 		print("helloWorld!");
 		return;
 	}
-};
+}
 
 int [][][] func2(int p) {
     int [][][] res;
@@ -59,6 +59,9 @@ int main() {
 	int tmp = h[0][0][0][0];
 	int tmp2 = func2(10)[1][1][1];
 	a_b_c.list[2][3] = 3;
+	a_b_c.a = 1;
+	a_b_c.b = 2;
+	a_b_c.c = 3;
 	return 0;
 }
 

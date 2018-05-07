@@ -1,6 +1,9 @@
 package GeneralDataStructure.TypeSystem;
 
 public abstract class SingleTypeRef extends VarTypeRef {
-	public String typeId;
+	String typeId;
+	public String getTypeId() {
+		return typeId;
+	}
 }
 

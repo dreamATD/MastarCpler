@@ -41,4 +41,12 @@ public class Quad {
 	public void setLabel(String l) {
 		label = l;
 	}
+	void print() {
+		if (label != null) System.out.println(label + ": ");
+		System.out.print(op);
+		if (rt != null) System.out.print(" " + rt);
+		if (r1 != null) System.out.print(" " + r1);
+		if (r2 != null) System.out.print(" " + r2);
+		System.out.println();
+	}
 }

@@ -6,12 +6,12 @@ public class ArrayTypeRef extends VarTypeRef {
 	int scale;
 	FuncTypeRef getSize;
 	public ArrayTypeRef(VarTypeRef tp) {
-		type = tp.copy();
+		type = tp;
 		scale = -1;
 		size = 0;
 	}
 	public ArrayTypeRef(VarTypeRef tp, int sc) {
-		type = tp.copy();
+		type = tp;
 		scale = sc;
 		size = tp.size * sc;
 	}

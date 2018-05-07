@@ -50,7 +50,7 @@ public class ScopeBuilder {
 				if (!curScope.addItem(tmpNode.id, classType)) throw new ReDefinedError(tmpNode.loc);
 			} else if (node instanceof FuncDefNode) {
 				FuncDefNode tmpNode = (FuncDefNode) node;
-
+				node.belongTo = curScope;
 				FuncTypeRef func = new FuncTypeRef((VarTypeRef) tmpNode.type);
 				LocalScope<TypeRef> sonScope = Scope.newLocalScope(curScope);
 				// insert the parameters

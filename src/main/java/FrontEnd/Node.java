@@ -12,15 +12,11 @@ public abstract class Node {
 	Location loc;
 	List<Node> sons;
 	Scope<TypeRef> belongTo;
-	String reg;
+	String reg, inClass;
 	Node() {
 		sons = new ArrayList<Node>();
 		type = TypeRef.buildTypeRef("void");
-	}
-	Node (String id2, TypeRef type2) {
-		id = id2;
-		type = type2;
-		sons = new ArrayList<Node>();
+		reg = inClass = null;
 	}
 	void print(String indentation) {}
 	public void accept(AstVisitor visitor) throws Exception {

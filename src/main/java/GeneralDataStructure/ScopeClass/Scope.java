@@ -58,12 +58,11 @@ public class Scope<T> {
 		}
 	}
 
-	public Pair<Scope<T>, T> matchVarName(String name, GeneralScope<T> genScope) {
+	public Pair<Scope<T>, T> matchVarName(String name) {
 		Scope<T> p = this;
-		while (true) {
+		while (p != null) {
 			T ret = p.table.find(name);
 			if (ret != null) return new Pair<>(p, ret);
-			if (p == genScope) break;
 			p = p.parent;
 		}
 		return null;

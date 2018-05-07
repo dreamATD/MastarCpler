@@ -1,40 +1,41 @@
 package FrontEnd;
 
 import GeneralDataStructure.*;
-import GeneralDataStructure.OprandClass.Register;
 import GeneralDataStructure.Quad;
-import GeneralDataStructure.ScopeClass.ClassScope;
-import GeneralDataStructure.ScopeClass.GeneralScope;
-import GeneralDataStructure.ScopeClass.LocalScope;
-import GeneralDataStructure.ScopeClass.Scope;
+import GeneralDataStructure.ScopeClass.*;
 import GeneralDataStructure.TypeSystem.*;
 import javafx.util.Pair;
 
+import javax.sound.sampled.Line;
 import java.util.*;
 
 public class IRBuilder extends AstVisitor {
-	public List<FuncFrame> linearCode;
+	public LinearIR linearCode;
 	HashTable<String, ClassScope<Info> > classTable;
 	public int labelCnt;
 	String nextStatLabel;
 	Scope<Info> curScope;
+	SpecialScope<Info> genScope;
 	FuncFrame curFunc;
 
 	Stack<String> brkLabel;
 	Stack<Pair<String, Boolean>> ctnLabel;
 
 	public IRBuilder() {
-		linearCode = new LinkedList<>();
+		linearCode = new LinearIR();
 		labelCnt = 0;
 		nextStatLabel = null;
+		brkLabel = new Stack<>();
+		ctnLabel = new Stack<>();
+		classTable = new HashTable<>();
 	}
 
-	public List<FuncFrame> generateIR(Node root) throws Exception {
+	public LinearIR generateIR(Node root) throws Exception {
 		visit(root);
 		return linearCode;
 	}
 
-	void insertQuad(Quad ins) {
+	private void insertQuad(Quad ins) {
 		if (nextStatLabel != null) {
 			ins.setLabel(nextStatLabel);
 			nextStatLabel = null;
@@ -42,28 +43,31 @@ public class IRBuilder extends AstVisitor {
 		curFunc.insertCode(ins);
 	}
 
-	void insertFunc(FuncFrame fun) {
-		linearCode.add(fun);
+	private void insertFunc(FuncFrame fun) {
+		linearCode.insertFunc(fun);
 	}
 
-	String nextLabel() {
+	private String nextLabel() {
 		return "label" + Integer.toString(labelCnt++);
 	}
 
-	String classFuncLabel(String className, String funcName) {
-		return "def_" + className + "_" + funcName;
+	private String classFuncLabel(String className, String funcName) {
+		return "%" + className + "_" + funcName;
 	}
 
-	String FuncLabel(String funcName) {
-		return "def_" + funcName;
+	private String funcLabel(String funcName) {
+		return "@" + funcName;
 	}
 
-	String getGlobalName(String name) {
+	private String getGlobalName(String name) {
 		return "@" + name;
 	}
 
-	String getLocalName(String name) {
+	private String getLocalName(String name) {
 		return "%" + name + Integer.toString(labelCnt++);
+	}
+	private String getTempName() {
+		return "%" + Integer.toString(labelCnt++);
 	}
 
 
@@ -74,18 +78,21 @@ public class IRBuilder extends AstVisitor {
 		}
 	}
 
-	String generateNewCode(Node nod) throws Exception {
-		if (nod.type instanceof SingleTypeRef) return Integer.toString(nod.type.getSize());
+	private String generateNewCode(Node nod, boolean isPointer) throws Exception {
+		boolean p = isPointer;
+		if (nod.type instanceof SingleTypeRef) return Integer.toString(p ? 4 : nod.type.getSize());
 		Node scale = nod.sons.get(1);
 		if (scale instanceof EmptyExprNode) {
-			return Integer.toString(4);
+			p = true;
+			return generateNewCode(nod.sons.get(0), p);
+		} else {
+			visit(scale);
+			return scale.reg + "x" + generateNewCode(nod.sons.get(0), p);
 		}
-		visit(scale);
-		return scale.reg + "(" + generateNewCode(nod.sons.get(0)) + ")";
 	}
 
 	void initAll() {
-
+		curScope = genScope = new GeneralScope<>(null);
 	}
 
 	@Override public void visit(CodeNode nod) throws Exception {
@@ -99,17 +106,18 @@ public class IRBuilder extends AstVisitor {
 	@Override public void visit(VarDefNode nod) throws Exception {
 		Info var;
 		if (curScope instanceof GeneralScope) var = new Info(getGlobalName(nod.id), nod.type);
+		else if (curScope instanceof ClassScope) var = new Info(getLocalName("this." + nod.id), nod.type);
 		else var = new Info(getLocalName(nod.id), nod.type);
 		curScope.addItem(nod.id, var);
 		if (nod.sons.size() == 0) return;
 		Node son = nod.sons.get(0);
 		if (son instanceof NewExprNode) {
-			curFunc.insertCode(new Quad("new", var.getRegName(), generateNewCode(son.sons.get(0))));
+			insertQuad(new Quad("new", var.getRegName(), generateNewCode(son.sons.get(0), false)));
 		}
 	}
 
 	@Override public void visit(ClassDefNode nod) throws Exception {
-		curScope = new ClassScope<>(curScope);
+		curScope = genScope = new ClassScope<>(curScope);
 		classTable.insert(nod.id, (ClassScope<Info>) curScope);
 		for (int i = 0; i < nod.sons.size(); ++i) {
 			Node son = nod.sons.get(i);
@@ -118,25 +126,35 @@ public class IRBuilder extends AstVisitor {
 				visit(son);
 			} else visit(son);
 		}
-		curScope = curScope.parent;
+		curScope = genScope = (SpecialScope<Info>) genScope.parent;
 	}
 
 	@Override public void visit(FuncDefNode nod) throws Exception {
 		curScope = new LocalScope<>(curScope);
-		curFunc = new FuncFrame((LocalScope<Info>) curScope);
-		nextStatLabel = FuncLabel(nod.id);
+		curFunc = new FuncFrame((LocalScope<Info>) curScope, genScope);
+		nextStatLabel = nod.inClass == null ? funcLabel(nod.id) : classFuncLabel(nod.inClass, nod.id);
 		int size = nod.sons.size();
 		for (int i = 0; i < size; ++i) {
 			Node son = nod.sons.get(i);
 			visit(son);
-			if (i < size - 1) curFunc.insertCode(new Quad("init", son.id, curScope.findItem(son.id).getRegName()));
+			if (i < size - 1) insertQuad(new Quad("init", curScope.findItem(son.id).getRegName()));
 		}
 		curScope = curScope.parent;
-
+		insertFunc(curFunc);
 	}
 
 	@Override public void visit(ConsFuncDefNode nod) throws Exception {
-
+		curScope = new LocalScope<>(curScope);
+		curFunc = new FuncFrame((LocalScope<Info>) curScope, genScope);
+		nextStatLabel = funcLabel(nod.id);
+		int size = nod.sons.size();
+		for (int i = 0; i < size; ++i) {
+			Node son = nod.sons.get(i);
+			visit(son);
+			if (i < size - 1) insertQuad(new Quad("init", curScope.findItem(son.id).getRegName()));
+		}
+		curScope = curScope.parent;
+		insertFunc(curFunc);
 	}
 
 	@Override public void visit(IfElseStatNode nod) throws Exception {
@@ -149,14 +167,45 @@ public class IRBuilder extends AstVisitor {
 		nextStatLabel = endLabel;
 	}
 
+	void generateCondition(Node nod, String labelTrue, String labelFalse) throws Exception {
+		Node left, right;
+		String label;
+		switch (nod.id) {
+			case "&&":
+				left = nod.sons.get(0);
+				right = nod.sons.get(1);
+				label = nextLabel();
+				generateCondition(left, label, labelFalse);
+				nextStatLabel = label;
+				generateCondition(right, labelTrue, labelFalse);
+				break;
+			case "||":
+				left = nod.sons.get(0);
+				right = nod.sons.get(1);
+				label = nextLabel();
+				generateCondition(left, labelTrue, label);
+				nextStatLabel = label;
+				generateCondition(right, labelTrue, labelFalse);
+				break;
+			case "!" :
+				left = nod.sons.get(0);
+				visit(left);
+				insertQuad(new Quad("tbr", left.reg, labelFalse, labelTrue));
+				break;
+			default:
+				visit(nod);
+				insertQuad(new Quad("cbr", nod.reg, labelTrue, labelFalse));
+				break;
+
+		}
+	}
+
 	@Override public void visit(IfStatNode nod) throws Exception {
 		Node ifCond = nod.sons.get(0);
 		Node ifStat = nod.sons.get(1);
-		String label1, label2;
-		label1 = ifStat.label = nextLabel();
-		label2 = nextStatLabel = nextLabel();
-		visit(ifCond);
-		insertQuad(new Quad("cbr", ifCond.result, label1, label2));
+		String label1 = nextLabel(), label2 = nextLabel();
+		generateCondition(ifCond, label1, label2);
+		nextStatLabel = label1;
 		visit(ifStat);
 		nextStatLabel = label2;
 	}
@@ -167,13 +216,12 @@ public class IRBuilder extends AstVisitor {
 		Node loopExpr = nod.sons.get(2);
 		Node forBody = nod.sons.get(3);
 		visit(initExpr);
-		visit(condExpr);
 
 		String label1 = nextLabel();
 		String label2 = nextLabel();
 		String label3 = nextLabel();
 		if (!(condExpr instanceof EmptyExprNode)) {
-			insertQuad(new Quad("cbr", condExpr.result, label1, label2));
+			generateCondition(condExpr, label1, label2);
 		} else {
 			insertQuad(new Quad("jump", label1));
 		}
@@ -186,9 +234,8 @@ public class IRBuilder extends AstVisitor {
 
 		if (ctnLabel.pop().getValue().equals(true)) nextStatLabel = label3;
 		visit(loopExpr);
-		visit(condExpr);
 		if (!(condExpr instanceof EmptyExprNode)) {
-			insertQuad(new Quad("cbr", condExpr.result, label1, label2));
+			generateCondition(condExpr, label1, label2);
 		} else {
 			insertQuad(new Quad("jump", label1));
 		}
@@ -199,13 +246,12 @@ public class IRBuilder extends AstVisitor {
 	@Override public void visit(WhileStatNode nod) throws Exception {
 		Node condExpr = nod.sons.get(0);
 		Node whileBody = nod.sons.get(1);
-		visit(condExpr);
 
 		String label1, label2, label3;
 		label1 = nextLabel();
 		label2 = nextLabel();
 		label3 = nextLabel();
-		insertQuad(new Quad("cbr", condExpr.result, label1, label2));
+		generateCondition(condExpr, label1, label2);
 
 		nextStatLabel = label1;
 		ctnLabel.push(new Pair<>(label3, false));
@@ -215,12 +261,15 @@ public class IRBuilder extends AstVisitor {
 
 		if (ctnLabel.pop().getValue().equals(true)) nextStatLabel = label3;
 		visit(condExpr);
-		insertQuad(new Quad("cbr", condExpr.result, label1, label2));
+		generateCondition(condExpr, label1, label2);
 
 		nextStatLabel = label2;
 	}
 
 	@Override public void visit(RetStatNode nod) throws Exception {
+		visitChild(nod);
+		if (nod.sons.size() > 0) insertQuad(new Quad("ret", nod.sons.get(0).reg));
+		else insertQuad(new Quad("ret"));
 	}
 
 	@Override public void visit(BrkStatNode nod) throws Exception {
@@ -237,130 +286,181 @@ public class IRBuilder extends AstVisitor {
 		insertQuad(new Quad("nop"));
 	}
 
-	@Override public void visit(VarDefStatNode nod) throws Exception {
-		visitChild(nod);
-	}
-
-	@Override public void visit(EmptyExprNode nod) throws Exception {
-	}
-
-	void visitLeft(Node nod) {
-		if (nod instanceof VarExprNode) visitLeft((VarExprNode) nod);
-		else if (nod instanceof )
-	}
-
-	void visitLeft(VarExprNode nod) {
-		String mem = (nod.defineBelongTo instanceof GeneralScope && !(nod.defineBelongTo instanceof ClassScope)) ? getGlobalName(nod.id) : getLocalName(nod.id);
-		insertQuad(new Quad("LoadI",  ))
-	}
-
 	@Override public void visit(BinaryExprNode nod) throws Exception {
 		Node left = nod.sons.get(0);
 		Node right = nod.sons.get(1);
-		String res = nod.result;
 
-		visitLeft(left);
+		visit(left);
 		visit(right);
+		nod.reg = getTempName();
 
 		switch (nod.id) {
 			case "=":
-				opc = "xchg";
-
+				insertQuad(new Quad("mov", left.reg, right.reg));
 				break;
 			case "+":
-				opc = "add";
+				insertQuad(new Quad("add", nod.reg, left.reg, right.reg));
 				break;
 			case "-":
-				opc = "sub";
+				insertQuad(new Quad("sub", nod.reg, left.reg, right.reg));
 				break;
 			case "*":
-				opc = "mult";
+				insertQuad(new Quad("mul", nod.reg, left.reg, right.reg));
 				break;
 			case "/":
-				opc = "div";
+				insertQuad(new Quad("div", nod.reg, left.reg, right.reg));
 				break;
 			case "%":
-				opc = "mod";
+				insertQuad(new Quad("mod", nod.reg, left.reg, right.reg));
 				break;
 			case "<<":
-				opc = "lshift";
+				insertQuad(new Quad("lsh", nod.reg, left.reg, right.reg));
 				break;
 			case ">>":
-				opc = "rshift";
+				insertQuad(new Quad("rsh", nod.reg, left.reg, right.reg));
 				break;
 			case "&":
-				opc = "and";
+				insertQuad(new Quad("rsh", nod.reg, left.reg, right.reg));
 				break;
 			case "|":
-				opc = "or";
+				insertQuad(new Quad("or", nod.reg, left.reg, right.reg));
 				break;
 			case "^":
-				opc = "xor";
+				insertQuad(new Quad("xor", nod.reg, left.reg, right.reg));
 				break;
 			case "==":
-				opc = "cmpEQ";
+				insertQuad(new Quad("equ", nod.reg, left.reg, right.reg));
 				break;
 			case "!=":
-				opc = "cmpNE";
+				insertQuad(new Quad("neq", nod.reg, left.reg, right.reg));
 				break;
 			case "<":
-				opc = "cmpLT";
+				insertQuad(new Quad("les", nod.reg, left.reg, right.reg));
 				break;
 			case "<=":
-				opc = "cmpLE";
+				insertQuad(new Quad("leq", nod.reg, left.reg, right.reg));
 				break;
 			case ">":
-				opc = "cmpGT";
+				insertQuad(new Quad("gre", nod.reg, left.reg, right.reg));
 				break;
 			case ">=":
-				opc = "cmpGE";
+				insertQuad(new Quad("geq", nod.reg, left.reg, right.reg));
 				break;
 		}
-
-		Quad result;
-		if (opc.equals("xchg")) {
-			insertQuad(Quad.assignExpr(opc, left.result.name, right.result.name));
-			result = new Quad("store", ??,left.result.name);
-		}
-		else {
-			nod.result = Register.getNextReg();
-			result = Quad.binaryExpr(opc, nod.result.name, left.result.name, right.result.name);
-		}
-		insertQuad(result);
-		update(ret, result);
-		return ret;
 	}
 
-
-
-	public Quad visit(FuncExprNode nod) throws Exception {
-		List<String> lst;
-		lst = new ArrayList<>();
-		Quad ret = null;
-		for (int i = 0; i < nod.sons.size(); ++i) {
-			Node son = nod.sons.get(i);
-			update(ret, visit(son));
-			lst.add(son.result.name);
+	@Override void visit(LeftUnaryExprNode nod) throws Exception {
+		visitChild(nod);
+		String sonReg = nod.sons.get(0).reg;
+		String tmp;
+		switch(nod.id) {
+			case "++":
+				nod.reg = sonReg;
+				insertQuad(new Quad("add", sonReg, sonReg, Integer.toString(1)));
+				break;
+			case "--":
+				nod.reg = sonReg;
+				insertQuad(new Quad("sub", sonReg, sonReg, Integer.toString(1)));
+				break;
+			case "~": case "!":
+				nod.reg = tmp = getTempName();
+				insertQuad(new Quad("not", tmp, sonReg));
+				break;
+			case "-":
+				nod.reg = tmp = getTempName();
+				insertQuad(new Quad("neg", tmp, sonReg));
+				break;
+			case "+":
+				nod.reg = sonReg;
+				break;
 		}
-		Quad func;
-		if (nod.type instanceof VoidTypeRef)
-			func = Quad.funcCall("call", getGlobalName(nod.id), lst);
-		else {
-			nod.result = Register.getNextReg();
-			func = Quad.funcCall("call", nod.result.name, getGlobalName(nod.id), lst);
-		}
-		insertQuad(func);
-		update(ret, func);
-		return ret;
 	}
 
-	public void visit(VarExprNode nod) throws Exception {
-		nod.result = new Register(nod.defineBelongTo.toString() + "." + nod.id);
-		Quad ret = null;
-		if (...) {
-			update(ret, insertQuad(new Quad("load", nod.result, ??)));
+	@Override void visit(RightUnaryExprNode nod) throws Exception {
+		visitChild(nod);
+		String tmp = getTempName(), sonReg = nod.sons.get(0).reg;
+		insertQuad(new Quad("mov", tmp, sonReg));
+		switch (nod.id) {
+			case "++":
+				insertQuad(new Quad("add", sonReg, sonReg, Integer.toString(1)));
+				break;
+			case "--":
+				insertQuad(new Quad("sub", sonReg, sonReg, Integer.toString(1)));
+				break;
 		}
-		return ret;
+		nod.reg = tmp;
 	}
 
+	@Override void visit(NewExprNode nod) throws Exception {
+		visitChild(nod);
+		String var = getTempName();
+		Node son = nod.sons.get(0);
+		insertQuad(new Quad("new", var, generateNewCode(son, false)));
+		nod.reg = var;
+	}
+
+	@Override public void visit(FuncExprNode nod) throws Exception {
+		visitChild(nod);
+		int n = nod.sons.size();
+		for (int i = 0; i < n; ++i) {
+			insertQuad(new Quad("param", nod.sons.get(i).reg));
+		}
+		String fun = nod.inClass == null ? funcLabel(nod.id): classFuncLabel(nod.inClass, nod.id);
+		if (!(nod.type instanceof VoidTypeRef)) {
+			nod.reg = getTempName();
+			insertQuad(new Quad("call", nod.reg, fun, Integer.toString(n)));
+		} else {
+			insertQuad(new Quad("call", null, fun, Integer.toString(n)));
+		}
+	}
+
+	@Override void visit(ArrExprNode nod) throws Exception {
+		visitChild(nod);
+		Node son = nod.sons.get(0);
+		Node idx = nod.sons.get(1);
+		if (nod.type instanceof SingleTypeRef) {
+			nod.reg = son.reg + '.' + idx.reg + 'x' + nod.type.getSize();
+		} else {
+			nod.reg = son.reg + '.' + idx.reg + 'x' + 4;
+		}
+	}
+
+	@Override void visit(ObjAccExprNode nod) throws Exception {
+		Node son = nod.sons.get(0);
+		Node mem = nod.sons.get(1);
+		visit(son);
+		if (mem instanceof VarExprNode) {
+			nod.reg = son.reg + '.' + ((ClassTypeRef) son.type).getBelongClass().getOffset(mem.id);
+		} else {
+			if (son.type instanceof ClassTypeRef) visit(mem);
+			else {
+
+			}
+		}
+	}
+
+	@Override public void visit(VarExprNode nod) throws Exception {
+		if (nod.id.equals("this")) {
+			nod.id = "this";
+			return;
+		}
+		Info var = curScope.matchVarName(nod.id).getValue();
+		nod.reg = var.getRegName();
+	}
+
+	@Override void visit(IntLiteralNode nod) throws Exception {
+		nod.reg = nod.id;
+	}
+
+	@Override void visit(LogicalLiteralNode nod) throws Exception {
+		nod.reg = nod.id;
+	}
+
+	@Override void visit(NullLiteralNode nod) throws Exception {
+		nod.reg = "null";
+	}
+
+	@Override void visit(StringLiteralNode nod) throws Exception {
+		nod.reg = '"' + nod.id + '"';
+	}
 }

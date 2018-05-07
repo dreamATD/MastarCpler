@@ -1,23 +1,26 @@
 package GeneralDataStructure.TypeSystem;
 
+import javafx.util.Pair;
+
 import java.util.*;
 
 public class ClassDefTypeRef extends TypeRef {
-	Map<String, TypeRef> objs;
+	Map<String, Pair<TypeRef, Integer>> objs;
 	public ClassDefTypeRef() {
-		objs = new HashMap<String, TypeRef>();
+		objs = new HashMap<>();
 		size = 0;
 	}
 	public ClassDefTypeRef(Map<String, TypeRef> objList) {
-		objs = new HashMap<String, TypeRef>(objList);
-		for (Map.Entry<String, TypeRef> entry: objs) {
+		objs = new HashMap<>();
+		for (Map.Entry<String, TypeRef> entry: objList.entrySet()) {
 			TypeRef tp = entry.getValue();
-			size += tp.size == 0 ? 4 : tp.size; // for class and string
+			objs.put(entry.getKey(), new Pair<>(tp, size));
+			if (tp instanceof VarTypeRef) size += tp instanceof SimpleTypeRef ? tp.size : 4; // for class and string
 		}
 	}
-	public void insertObj(String key, TypeRef val) {
-		objs.put(key, val);
-		size += val.size == 0 ? 4 : val.size;
+	public void insertObj(String key, TypeRef tp) {
+		objs.put(key, new Pair<>(tp, size));
+		if (tp instanceof VarTypeRef) size += tp instanceof SimpleTypeRef ? tp.size : 4; // for class and string
 	}
 	public boolean equals(TypeRef other) {
 		if (!(other instanceof ClassDefTypeRef)) return false;
@@ -31,7 +34,10 @@ public class ClassDefTypeRef extends TypeRef {
 		return objs.containsKey(str);
 	}
 	public TypeRef getEntity(String str) {
-		return objs.get(str);
+		return objs.get(str).getKey();
+	}
+	public int getOffset(String str) {
+		return objs.get(str).getValue();
 	}
 }
 

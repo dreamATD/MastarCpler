@@ -1,5 +1,6 @@
 package FrontEnd;
 
+import GeneralDataStructure.ScopeClass.ClassScope;
 import GeneralDataStructure.ScopeClass.GeneralScope;
 import GeneralDataStructure.ScopeClass.Scope;
 import GeneralDataStructure.TypeSystem.*;
@@ -7,21 +8,26 @@ import javafx.util.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public class SemanticChecker extends AstVisitor {
 	GeneralScope<TypeRef> genScope;
 	int iterNum;
-	List<String> classStack;
+	Stack<String> classStack;
 	TypeRef retType;
 	public SemanticChecker(GeneralScope<TypeRef> g) {
 		genScope = g;
 		iterNum = 0;
-		classStack = new ArrayList<String>();
+		classStack = new Stack<String>();
 		retType = null;
 	}
 	boolean checkTypeEntity(TypeRef type) {
 		if (type instanceof ArrayTypeRef) type = ((ArrayTypeRef) type).getSimpleRef();
-		if (type instanceof ClassTypeRef && genScope.findItem(((ClassTypeRef) type).typeId) == null) return false;
+		if (type instanceof ClassTypeRef) {
+			ClassDefTypeRef belong = (ClassDefTypeRef) genScope.findItem(((ClassTypeRef) type).getTypeId());
+			if (belong == null) return false;
+			else ((ClassTypeRef) type).setBelongClass(belong);
+		}
 		return true;
 	}
 	boolean checkLeftValue(ExprNode nod) {
@@ -82,30 +88,33 @@ public class SemanticChecker extends AstVisitor {
 			}
 		}
 		Scope<TypeRef> curScope = nod.belongTo;
+		if (curScope instanceof ClassScope) nod.inClass = classStack.peek();
 		if (!curScope.addItem(nod.id, nod.type)) throw new ReDefinedError(nod.loc);
 	}
 	@Override void visit(ClassDefNode nod) throws Exception {
-		classStack.add(nod.id);
+		classStack.push(nod.id);
 		for (int i = 0; i < nod.sons.size(); ++i) {
 			Node son = nod.sons.get(i);
 			if (!(son instanceof VarDefStatNode)) visit(son);
 			else if (son.type instanceof ClassTypeRef) {
-				if (genScope.findItem(((ClassTypeRef) son.type).typeId) == null) throw new NoDefinedTypeError(son.loc);
+				if (genScope.findItem(((ClassTypeRef) son.type).getTypeId()) == null) throw new NoDefinedTypeError(son.loc);
 			}
 		}
-		classStack.remove(classStack.size() - 1);
+		classStack.pop();
 	}
 	@Override void visit(FuncDefNode nod) throws Exception {
 		if (!checkTypeEntity(nod.type)) throw new NoDefinedTypeError(nod.loc);
 		retType = nod.type;
 		visitChild(nod);
 		retType = null;
+		if (nod.belongTo instanceof ClassScope) nod.inClass = classStack.peek();
 	}
 	@Override void visit(ConsFuncDefNode nod) throws Exception {
 		if (!classStack.get(classStack.size() - 1).equals(nod.id)) throw new WrongNameConsFunc(nod.loc);
 		retType = nod.type;
 		visitChild(nod);
 		retType = null;
+		nod.inClass = classStack.peek();
 	}
 	@Override void visit(IfStatNode nod) throws Exception {
 		visitChild(nod);
@@ -203,8 +212,9 @@ public class SemanticChecker extends AstVisitor {
 	@Override void visit(FuncExprNode nod) throws Exception {
 //		System.out.println(nod.id);
 		visitChild(nod);
-		Pair<Scope<TypeRef>, TypeRef> ret = nod.belongTo.matchVarName(nod.id, genScope);
+		Pair<Scope<TypeRef>, TypeRef> ret = nod.belongTo.matchVarName(nod.id);
 		if (ret == null) throw new NoDefinedTypeError(nod.loc);
+		if (ret.getKey() instanceof ClassScope) nod.inClass = classStack.peek();
 		TypeRef tmp = ret.getValue();
 		if (!(tmp instanceof FuncTypeRef)) throw new NoDefinedTypeError(nod.loc);
 		if (!matchFuncForm((FuncTypeRef) tmp,nod)) throw new NoDefinedTypeError(nod.loc);
@@ -217,26 +227,29 @@ public class SemanticChecker extends AstVisitor {
 		nod.type = ((ArrayTypeRef) pointer.type).getInnerType();
 	}
 	@Override void visit(ObjAccExprNode nod) throws Exception {
-		try {
-			visitChild(nod);
-		} catch(Exception e) {}
 		Node sonNode = nod.sons.get(0);
 		Node objNode = nod.sons.get(1);
+		visit(sonNode);
 		if (sonNode.type instanceof ArrayTypeRef) {
 			nod.type = arrCheckObj((ArrayTypeRef) sonNode.type, objNode);
 			return;
 		}
 		if (!(sonNode.type instanceof ClassTypeRef)) throw new NoCastExpr(nod.loc);
-		ClassDefTypeRef tmp = (ClassDefTypeRef) genScope.findItem(((ClassTypeRef) sonNode.type).typeId);
+		ClassDefTypeRef tmp = (ClassDefTypeRef) genScope.findItem(((ClassTypeRef) sonNode.type).getTypeId());
+		for (int i = 0; i < objNode.sons.size(); ++i) {
+			visit(objNode.sons.get(i));
+		}
 		nod.type = classCheckObj(tmp, objNode);
+		objNode.inClass = ((ClassTypeRef) sonNode.type).getTypeId();
 	}
 	@Override void visit(VarExprNode nod) throws Exception {
 		if (nod.id.equals("this") && classStack.size() > 0) {
 			nod.type = new ClassTypeRef(classStack.get(classStack.size() - 1));
 			return;
 		}
-		Pair<Scope<TypeRef>, TypeRef> ret = nod.belongTo.matchVarName(nod.id, genScope);
+		Pair<Scope<TypeRef>, TypeRef> ret = nod.belongTo.matchVarName(nod.id);
 		if (ret == null) throw new NoDefinedVarError(nod.loc);
+		if (ret.getKey() instanceof ClassScope) nod.inClass = classStack.peek();
 		nod.type = ret.getValue();
 	}
 }
