@@ -11,11 +11,12 @@ public class ClassTypeRef extends SingleTypeRef {
 	}
 	public ClassTypeRef(String className, ClassDefTypeRef b) {
 		typeId = className;
-		size = 0;
+		size = b.getSize();
 		belong = b;
 	}
 	public void setBelongClass(ClassDefTypeRef belong) {
 		this.belong = belong;
+		this.size = belong.getSize();
 	}
 	public ClassDefTypeRef getBelongClass() {
 		return belong;

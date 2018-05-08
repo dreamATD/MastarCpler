@@ -1,4 +1,5 @@
-package FrontEnd;// Generated from /home/cloudroof/IdeaProjects/MastarCpler/src/main/java/MxStar.g4 by ANTLR 4.7
+// Generated from /home/cloudroof/IdeaProjects/MastarCpler/src/main/java/FrontEnd/MxStar.g4 by ANTLR 4.7
+package FrontEnd;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
 /**

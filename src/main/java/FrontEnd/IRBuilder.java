@@ -4,6 +4,8 @@ import GeneralDataStructure.*;
 import GeneralDataStructure.Quad;
 import GeneralDataStructure.ScopeClass.*;
 import GeneralDataStructure.TypeSystem.*;
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.IntType;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import javafx.util.Pair;
 
 import java.util.*;
@@ -98,7 +100,9 @@ public class IRBuilder extends AstVisitor {
 
 	private String generateNewCode(Node nod, boolean isPointer) throws Exception {
 		boolean p = isPointer;
-		if (nod.type instanceof SingleTypeRef) return Integer.toString(p ? 4 : nod.type.getSize());
+		if (nod.type instanceof SingleTypeRef) {
+			return Integer.toString(p ? 4 + 4 : nod.type.getSize()); // with size in record
+		}
 		Node scale = nod.sons.get(1);
 		if (scale instanceof EmptyExprNode) {
 			p = true;
@@ -131,6 +135,9 @@ public class IRBuilder extends AstVisitor {
 		Node son = nod.sons.get(0);
 		if (son instanceof NewExprNode) {
 			insertQuad(new Quad("new", var.getRegName(), generateNewCode(son.sons.get(0), false)));
+		} else {
+			visit(son);
+			insertQuad(new Quad("mov", var.getRegName(), son.reg));
 		}
 	}
 
@@ -308,66 +315,94 @@ public class IRBuilder extends AstVisitor {
 
 		visit(left);
 		visit(right);
-		nod.reg = getTempName();
+		boolean certain = left.isCertain() && right.isCertain();
+		if (certain) nod.beCertain();
+		else nod.reg = getTempName();
 
 		switch (nod.id) {
 			case "=":
 				insertQuad(new Quad("mov", left.reg, right.reg));
 				break;
 			case "+":
-				insertQuad(new Quad("add", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new Quad("add", nod.reg, left.reg, right.reg));
+				else nod.reg = Integer.toString(Integer.parseInt(left.reg) + Integer.parseInt(right.reg));
 				break;
 			case "-":
-				insertQuad(new Quad("sub", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new Quad("sub", nod.reg, left.reg, right.reg));
+				else nod.reg = Integer.toString(Integer.parseInt(left.reg) - Integer.parseInt(right.reg));
 				break;
 			case "*":
-				insertQuad(new Quad("mul", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new Quad("mul", nod.reg, left.reg, right.reg));
+				else nod.reg = Integer.toString(Integer.parseInt(left.reg) * Integer.parseInt(right.reg));
 				break;
 			case "/":
-				insertQuad(new Quad("div", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new Quad("div", nod.reg, left.reg, right.reg));
+				else nod.reg = Integer.toString(Integer.parseInt(left.reg) / Integer.parseInt(right.reg));
 				break;
 			case "%":
-				insertQuad(new Quad("mod", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new Quad("mod", nod.reg, left.reg, right.reg));
+				else nod.reg = Integer.toString(Integer.parseInt(left.reg) % Integer.parseInt(right.reg));
 				break;
 			case "<<":
-				insertQuad(new Quad("lsh", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new Quad("lsh", nod.reg, left.reg, right.reg));
+				else nod.reg = Integer.toString(Integer.parseInt(left.reg) << Integer.parseInt(right.reg));
 				break;
 			case ">>":
-				insertQuad(new Quad("rsh", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new Quad("rsh", nod.reg, left.reg, right.reg));
+				else nod.reg = Integer.toString(Integer.parseInt(left.reg) >> Integer.parseInt(right.reg));
 				break;
 			case "&":
-				insertQuad(new Quad("rsh", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new Quad("and", nod.reg, left.reg, right.reg));
+				else nod.reg = Integer.toString(Integer.parseInt(left.reg) & Integer.parseInt(right.reg));
 				break;
 			case "|":
-				insertQuad(new Quad("or", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new Quad("or", nod.reg, left.reg, right.reg));
+				else nod.reg = Integer.toString(Integer.parseInt(left.reg) | Integer.parseInt(right.reg));
 				break;
 			case "^":
-				insertQuad(new Quad("xor", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new Quad("xor", nod.reg, left.reg, right.reg));
+				else nod.reg = Integer.toString(Integer.parseInt(left.reg) ^ Integer.parseInt(right.reg));
 				break;
 			case "==":
-				insertQuad(new Quad("equ", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new Quad("equ", nod.reg, left.reg, right.reg));
+				else
+					nod.reg = Boolean.toString(left.reg.equals(right.reg));
 				break;
 			case "!=":
-				insertQuad(new Quad("neq", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new Quad("neq", nod.reg, left.reg, right.reg));
+				else nod.reg = Boolean.toString(!left.reg.equals(right.reg));
 				break;
 			case "<":
-				insertQuad(new Quad("les", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new Quad("les", nod.reg, left.reg, right.reg));
+				else if (left.type instanceof IntTypeRef) {
+					nod.reg = Boolean.toString(Integer.parseInt(left.reg) < Integer.parseInt(right.reg));
+				} else nod.reg = Boolean.toString(left.reg.compareTo(right.reg) < 0);
 				break;
 			case "<=":
-				insertQuad(new Quad("leq", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new Quad("leq", nod.reg, left.reg, right.reg));
+				else if (left.type instanceof IntTypeRef) {
+				nod.reg = Boolean.toString(Integer.parseInt(left.reg) <= Integer.parseInt(right.reg));
+				} else nod.reg = Boolean.toString(left.reg.compareTo(right.reg) <= 0);
 				break;
 			case ">":
-				insertQuad(new Quad("gre", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new Quad("gre", nod.reg, left.reg, right.reg));
+				else if (left.type instanceof IntTypeRef) {
+					nod.reg = Boolean.toString(Integer.parseInt(left.reg) > Integer.parseInt(right.reg));
+				} else nod.reg = Boolean.toString(left.reg.compareTo(right.reg) > 0);
 				break;
 			case ">=":
-				insertQuad(new Quad("geq", nod.reg, left.reg, right.reg));
+				if (certain) insertQuad(new Quad("geq", nod.reg, left.reg, right.reg));
+				else if (left.type instanceof IntTypeRef) {
+					nod.reg = Boolean.toString(Integer.parseInt(left.reg) >= Integer.parseInt(right.reg));
+				} else nod.reg = Boolean.toString(left.reg.compareTo(right.reg) >= 0);
 				break;
 		}
 	}
 
 	@Override void visit(LeftUnaryExprNode nod) throws Exception {
 		visitChild(nod);
-		String sonReg = nod.sons.get(0).reg;
+		Node son = nod.sons.get(0);
+		String sonReg = son.reg;
 		String tmp;
 		switch(nod.id) {
 			case "++":
@@ -379,15 +414,30 @@ public class IRBuilder extends AstVisitor {
 				insertQuad(new Quad("sub", sonReg, sonReg, Integer.toString(1)));
 				break;
 			case "~": case "!":
-				nod.reg = tmp = getTempName();
-				insertQuad(new Quad("not", tmp, sonReg));
+				if (!son.isCertain()) {
+					nod.reg = tmp = getTempName();
+					insertQuad(new Quad("not", tmp, sonReg));
+				} else {
+					nod.beCertain();
+					if (son.type instanceof IntTypeRef) {
+						nod.reg = Integer.toString(~Integer.parseInt(sonReg));
+					} else {
+						nod.reg = sonReg.equals("true") ? "false" : "true";
+					}
+				}
 				break;
 			case "-":
-				nod.reg = tmp = getTempName();
-				insertQuad(new Quad("neg", tmp, sonReg));
+				if (!son.isCertain()) {
+					nod.reg = tmp = getTempName();
+					insertQuad(new Quad("neg", tmp, sonReg));
+				} else {
+					nod.beCertain();
+					nod.reg = Integer.toString(-Integer.parseInt(sonReg));
+				}
 				break;
 			case "+":
 				nod.reg = sonReg;
+				nod.setCertain(son.isCertain());
 				break;
 		}
 	}
@@ -408,7 +458,6 @@ public class IRBuilder extends AstVisitor {
 	}
 
 	@Override void visit(NewExprNode nod) throws Exception {
-		visitChild(nod);
 		String var = getTempName();
 		Node son = nod.sons.get(0);
 		insertQuad(new Quad("new", var, generateNewCode(son, false)));
@@ -437,7 +486,7 @@ public class IRBuilder extends AstVisitor {
 		if (nod.type instanceof SingleTypeRef) {
 			nod.reg = son.reg + '.' + idx.reg + 'x' + nod.type.getSize();
 		} else {
-			nod.reg = son.reg + '.' + idx.reg + 'x' + 4;
+			nod.reg = son.reg + '.' + idx.reg + 'x' + 8;
 		}
 	}
 
@@ -448,9 +497,13 @@ public class IRBuilder extends AstVisitor {
 		if (mem instanceof VarExprNode) {
 			nod.reg = son.reg + '.' + ((ClassTypeRef) son.type).getBelongClass().getOffset(mem.id);
 		} else {
-			if (son.type instanceof ClassTypeRef) visit(mem);
+			if (son.type instanceof ClassTypeRef) {
+				visit(mem);
+				nod.reg = mem.reg;
+			}
 			else {
-
+				nod.reg = getTempName();
+				insertQuad(new Quad("loadAI", nod.reg, son.reg, Integer.toString(4)));
 			}
 		}
 	}
@@ -466,17 +519,21 @@ public class IRBuilder extends AstVisitor {
 
 	@Override void visit(IntLiteralNode nod) throws Exception {
 		nod.reg = nod.id;
+		nod.beCertain();
 	}
 
 	@Override void visit(LogicalLiteralNode nod) throws Exception {
 		nod.reg = nod.id;
+		nod.beCertain();
 	}
 
 	@Override void visit(NullLiteralNode nod) throws Exception {
 		nod.reg = "null";
+		nod.beCertain();
 	}
 
 	@Override void visit(StringLiteralNode nod) throws Exception {
-		nod.reg = '"' + nod.id + '"';
+		nod.reg = nod.id;
+		nod.beCertain();
 	}
 }

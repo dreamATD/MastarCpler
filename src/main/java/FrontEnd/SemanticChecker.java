@@ -72,7 +72,7 @@ public class SemanticChecker extends AstVisitor {
 		return true;
 	}
 	TypeRef arrCheckObj(ArrayTypeRef tp, Node nod) throws Exception {
-		if (nod.id.equals("size") && nod.sons.size() == 1) return new IntTypeRef();
+		if (nod.id.equals("size") && nod.sons.size() == 0) return new IntTypeRef();
 		throw new NoDefinedTypeError(nod.loc);
 	}
 	@Override void visit(VarDefNode nod) throws Exception {
@@ -241,6 +241,7 @@ public class SemanticChecker extends AstVisitor {
 		}
 		nod.type = classCheckObj(tmp, objNode);
 		objNode.inClass = ((ClassTypeRef) sonNode.type).getTypeId();
+		objNode.type = nod.type;
 	}
 	@Override void visit(VarExprNode nod) throws Exception {
 		if (nod.id.equals("this") && classStack.size() > 0) {

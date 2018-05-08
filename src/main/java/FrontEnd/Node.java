@@ -13,10 +13,21 @@ public abstract class Node {
 	List<Node> sons;
 	Scope<TypeRef> belongTo;
 	String reg, inClass;
+	boolean certain;
 	Node() {
 		sons = new ArrayList<Node>();
 		type = TypeRef.buildTypeRef("void");
 		reg = inClass = null;
+		certain = false;
+	}
+	void beCertain() {
+		certain = true;
+	}
+	void setCertain(boolean other) {
+		certain = other;
+	}
+	boolean isCertain() {
+		return certain;
 	}
 	void print(String indentation) {}
 	public void accept(AstVisitor visitor) throws Exception {

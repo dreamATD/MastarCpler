@@ -20,6 +20,8 @@ class helloWorld {
 	}
 }
 
+int TAT;
+
 int [][][] func2(int p) {
     int [][][] res;
     res = new int [p][p][p];
@@ -35,7 +37,9 @@ int [][][] func2(int p) {
 }
 
 int main() {
+    TAT = 3;
 	helloWorld a_b_c;
+	a_b_c = new helloWorld();
 	a_b_c.func(1, 2, 3);
 	while (true) {
 		int[][] vec;
@@ -62,6 +66,9 @@ int main() {
 	a_b_c.a = 1;
 	a_b_c.b = 2;
 	a_b_c.c = 3;
+	string str = "abccd";
+	println(toString(str.length()));
+	tmp2 = a_b_c.list[2].size();
 	return 0;
 }
 
