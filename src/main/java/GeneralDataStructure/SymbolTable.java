@@ -12,9 +12,7 @@ public class SymbolTable<T> {
 	}
 
 	public T find(String name) {
-		Pair<String, T> res = table.find(name);
-		if (res == null) return null;
-		return res.getValue();
+		return table.find(name);
 	}
 
 	public boolean insert(Pair<String, T> item) {

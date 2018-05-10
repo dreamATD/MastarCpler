@@ -12,15 +12,15 @@ public class HashTable<K, T> {
 		for (int i = 0; i < p; ++i) arr.add(null);
 	}
 
-	public Pair<K, T> find(K other) {
+	public T find(K other) {
 		int t = other.hashCode() % p;
 		t = (t + p) % p;
 //		System.out.println("hash_code for " + other.toString() + ": " + t);
 		if (arr.get(t) == null) return null;
-		LinkedList< Pair<K, T> > list = arr.get(t);
+		LinkedList<Pair<K, T>> list = arr.get(t);
 		for (Iterator< Pair<K, T> > iter = list.iterator(); iter.hasNext(); ) {
-			Pair<K, T> ret = iter.next();
-			if (ret.getKey().equals(other)) return ret;
+			Pair<K, T> pir = iter.next();
+			if (pir.getKey().equals(other)) return pir.getValue();
 		}
 		return null;
 	}
@@ -78,5 +78,19 @@ public class HashTable<K, T> {
 			}
 		}
 		return ret;
+	}
+
+	public void set(K key, T value) {
+		int t = key.hashCode() % p;
+		t = (t + p) % p;
+//		System.out.println("hash_code for " + other.toString() + ": " + t);
+		if (arr.get(t) == null) arr.set(t, new LinkedList<>());
+		LinkedList< Pair<K, T> > list = arr.get(t);
+		for (ListIterator< Pair<K, T> > iter = list.listIterator(); iter.hasNext(); ) {
+			Pair<K, T> ret = iter.next();
+			if (ret.getKey().equals(key)) {
+				iter.set(new Pair<>(key, value));
+			}
+		}
 	}
 }

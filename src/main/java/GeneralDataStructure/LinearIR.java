@@ -24,9 +24,4 @@ public class LinearIR {
 			code.get(i).print();
 		}
 	}
-	public void updateAllLabel(LabelTable labels) {
-		for (int i = 0; i < code.size(); ++i) {
-			code.get(i).updateLabel(labels);
-		}
-	}
 }

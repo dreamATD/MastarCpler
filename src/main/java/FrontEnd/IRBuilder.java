@@ -1,6 +1,7 @@
 package FrontEnd;
 
 import GeneralDataStructure.*;
+import GeneralDataStructure.MyListClass.MyList;
 import GeneralDataStructure.Quad;
 import GeneralDataStructure.ScopeClass.*;
 import GeneralDataStructure.TypeSystem.*;
@@ -19,7 +20,9 @@ public class IRBuilder extends AstVisitor {
 	int quadLabelCnt;
 	Scope<Info> curScope;
 	SpecialScope<Info> genScope;
+
 	FuncFrame curFunc;
+	ArrayList<Quad> curCodeList;
 
 	Stack<Integer> brkLabel;
 	Stack<Pair<Integer, Boolean>> ctnLabel;
@@ -33,6 +36,7 @@ public class IRBuilder extends AstVisitor {
 		ctnLabel = new Stack<>();
 		classTable = new HashTable<>();
 		uset = new LabelTable();
+		curCodeList = new ArrayList<>();
 	}
 
 
@@ -43,7 +47,6 @@ public class IRBuilder extends AstVisitor {
 
 	public LinearIR generateIR(Node root) throws Exception {
 		visit(root);
-		linearCode.updateAllLabel(uset);
 		linearCode.setGeneralSymbols(genScope.getTable());
 		return linearCode;
 	}
@@ -59,10 +62,20 @@ public class IRBuilder extends AstVisitor {
 			quadLabelCnt++;
 			nextStatLabel.clear();
 		}
-		curFunc.insertCode(ins);
+		curCodeList.add(ins);
+	}
+
+	public void updateLabel(LabelTable labels, ArrayList<Quad> code) {
+		for (int i = 0; i < code.size(); ++i) {
+			Quad qua = code.get(i);
+			qua.updateLabel(labels);
+		}
 	}
 
 	private void insertFunc(FuncFrame fun) {
+		updateLabel(uset, curCodeList);
+		curFunc.buildCFG(curCodeList);
+		curCodeList.clear();
 		linearCode.insertFunc(fun);
 	}
 
@@ -72,7 +85,7 @@ public class IRBuilder extends AstVisitor {
 	}
 
 	private String classFuncLabel(String className, String funcName) {
-		return "%" + className + "_" + funcName;
+		return "%" + className + "$" + funcName;
 	}
 
 	private String funcLabel(String funcName) {
@@ -324,8 +337,18 @@ public class IRBuilder extends AstVisitor {
 				insertQuad(new Quad("mov", left.reg, right.reg));
 				break;
 			case "+":
-				if (!certain) insertQuad(new Quad("add", nod.reg, left.reg, right.reg));
-				else nod.reg = Integer.toString(Integer.parseInt(left.reg) + Integer.parseInt(right.reg));
+				if (!certain) {
+					if (left.type instanceof IntTypeRef) insertQuad(new Quad("add", nod.reg, left.reg, right.reg));
+					else if (left.type instanceof StringTypeRef) {
+						insertQuad(new Quad("param", left.reg));
+						insertQuad(new Quad("param", right.reg));
+						insertQuad(new Quad("call", nod.reg, funcLabel("stringCat"), Integer.toString(2)));
+					}
+				}
+				else {
+					if (left.type instanceof IntTypeRef) nod.reg = Integer.toString(Integer.parseInt(left.reg) + Integer.parseInt(right.reg));
+					else nod.reg = left.reg.substring(0, left.reg.length() - 1) + right.reg.substring(1, right.reg.length());
+				}
 				break;
 			case "-":
 				if (!certain) insertQuad(new Quad("sub", nod.reg, left.reg, right.reg));
@@ -373,25 +396,53 @@ public class IRBuilder extends AstVisitor {
 				else nod.reg = Boolean.toString(!left.reg.equals(right.reg));
 				break;
 			case "<":
-				if (!certain) insertQuad(new Quad("les", nod.reg, left.reg, right.reg));
+				if (!certain) {
+					if (left.type instanceof IntTypeRef) insertQuad(new Quad("les", nod.reg, left.reg, right.reg));
+					else if (left.type instanceof StringTypeRef) {
+						insertQuad(new Quad("param", left.reg));
+						insertQuad(new Quad("param", right.reg));
+						insertQuad(new Quad("call", nod.reg, funcLabel("stringLes"), Integer.toString(2)));
+					}
+				}
 				else if (left.type instanceof IntTypeRef) {
 					nod.reg = Boolean.toString(Integer.parseInt(left.reg) < Integer.parseInt(right.reg));
 				} else nod.reg = Boolean.toString(left.reg.compareTo(right.reg) < 0);
 				break;
 			case "<=":
-				if (!certain) insertQuad(new Quad("leq", nod.reg, left.reg, right.reg));
+				if (!certain) {
+					if (left.type instanceof IntTypeRef) insertQuad(new Quad("leq", nod.reg, left.reg, right.reg));
+					else if (left.type instanceof StringTypeRef) {
+						insertQuad(new Quad("param", left.reg));
+						insertQuad(new Quad("param", right.reg));
+						insertQuad(new Quad("call", nod.reg, funcLabel("stringLeq"), Integer.toString(2)));
+					}
+				}
 				else if (left.type instanceof IntTypeRef) {
-				nod.reg = Boolean.toString(Integer.parseInt(left.reg) <= Integer.parseInt(right.reg));
+					nod.reg = Boolean.toString(Integer.parseInt(left.reg) <= Integer.parseInt(right.reg));
 				} else nod.reg = Boolean.toString(left.reg.compareTo(right.reg) <= 0);
 				break;
 			case ">":
-				if (!certain) insertQuad(new Quad("gre", nod.reg, left.reg, right.reg));
+				if (!certain) {
+					if (left.type instanceof IntTypeRef) insertQuad(new Quad("gre", nod.reg, left.reg, right.reg));
+					else if (left.type instanceof StringTypeRef) {
+						insertQuad(new Quad("param", right.reg));
+						insertQuad(new Quad("param", left.reg));
+						insertQuad(new Quad("call", nod.reg, funcLabel("stringLes"), Integer.toString(2)));
+					}
+				}
 				else if (left.type instanceof IntTypeRef) {
 					nod.reg = Boolean.toString(Integer.parseInt(left.reg) > Integer.parseInt(right.reg));
 				} else nod.reg = Boolean.toString(left.reg.compareTo(right.reg) > 0);
 				break;
 			case ">=":
-				if (certain) insertQuad(new Quad("geq", nod.reg, left.reg, right.reg));
+				if (certain) {
+					if (left.type instanceof IntTypeRef) insertQuad(new Quad("geq", nod.reg, left.reg, right.reg));
+					else if (left.type instanceof StringTypeRef) {
+						insertQuad(new Quad("param", right.reg));
+						insertQuad(new Quad("param", left.reg));
+						insertQuad(new Quad("call", nod.reg, funcLabel("stringLeq"), Integer.toString(2)));
+					}
+				}
 				else if (left.type instanceof IntTypeRef) {
 					nod.reg = Boolean.toString(Integer.parseInt(left.reg) >= Integer.parseInt(right.reg));
 				} else nod.reg = Boolean.toString(left.reg.compareTo(right.reg) >= 0);
