@@ -5,29 +5,35 @@ import GeneralDataStructure.TypeSystem.*;
 public class Info {
 	String reg;
 	TypeRef type;
+	String val;
 	boolean certain;
-	String valForString;
-	boolean valForBoolean;
-	int valForInt;
 	public Info(String regName, TypeRef tp) {
 		reg = regName;
 		type = tp;
 		certain = false;
 	}
+	public void setReg(String name) {
+		reg = name;
+	}
 	public String getRegName() {
 		return reg;
 	}
-	public void setValue(String str) {
+	public void setCertainValue(String str) {
 		certain = true;
-		valForString = str;
+		val = str;
 	}
-	public void setValue(int i) {
-		certain = true;
-		valForInt = i;
+	public void setUncertainValue(String str) {
+		certain = false;
+		val = str;
 	}
-	public void setBoolean(boolean b) {
-		certain = true;
-		valForBoolean = b;
+	public void modifyRegName(String nReg) {
+		reg = nReg;
+	}
+	public boolean isCertain() {
+		return certain;
+	}
+	public String getValue() {
+		return val;
 	}
 
 }

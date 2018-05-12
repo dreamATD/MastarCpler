@@ -13,7 +13,6 @@ import java.util.*;
 
 public class IRBuilder extends AstVisitor {
 	public LinearIR linearCode;
-	HashTable<String, ClassScope<Info> > classTable;
 	public int labelCnt;
 	List<Integer> nextStatLabel;
 	int ifElseEndLabel;
@@ -28,13 +27,14 @@ public class IRBuilder extends AstVisitor {
 	Stack<Pair<Integer, Boolean>> ctnLabel;
 
 	LabelTable uset;
+
+	ClassDefTypeRef classType;
 	public IRBuilder() {
 		linearCode = new LinearIR();
 		labelCnt = 0;
 		nextStatLabel = new ArrayList<>();
 		brkLabel = new Stack<>();
 		ctnLabel = new Stack<>();
-		classTable = new HashTable<>();
 		uset = new LabelTable();
 		curCodeList = new ArrayList<>();
 	}
@@ -97,7 +97,7 @@ public class IRBuilder extends AstVisitor {
 	}
 
 	private String getLocalName(String name) {
-		return "%" + name + Integer.toString(labelCnt++);
+		return "%" + name + '.' + Integer.toString(labelCnt++);
 	}
 	private String getTempName() {
 		return "%" + Integer.toString(labelCnt++);
@@ -141,7 +141,7 @@ public class IRBuilder extends AstVisitor {
 	@Override public void visit(VarDefNode nod) throws Exception {
 		Info var;
 		if (curScope instanceof GeneralScope) var = new Info(getGlobalName(nod.id), nod.type);
-		else if (curScope instanceof ClassScope) var = new Info(getLocalName("this." + nod.id), nod.type);
+		else if (curScope instanceof ClassScope) var = new Info("%this$" + classType.getOffset(nod.id), nod.type);
 		else var = new Info(getLocalName(nod.id), nod.type);
 		curScope.addItem(nod.id, var);
 		if (nod.sons.size() == 0) return;
@@ -156,7 +156,7 @@ public class IRBuilder extends AstVisitor {
 
 	@Override public void visit(ClassDefNode nod) throws Exception {
 		curScope = genScope = new ClassScope<>(curScope);
-		classTable.insert(nod.id, (ClassScope<Info>) curScope);
+		classType = (ClassDefTypeRef) nod.type;
 		for (int i = 0; i < nod.sons.size(); ++i) {
 			Node son = nod.sons.get(i);
 			if (son instanceof FuncDefNode) {
@@ -176,6 +176,7 @@ public class IRBuilder extends AstVisitor {
 			visit(son);
 			if (i < size - 1) curFunc.addParam(curScope.findItem(son.id).getRegName());
 		}
+		if (!nextStatLabel.isEmpty()) insertQuad(new Quad("nop"));
 		curScope = curScope.parent;
 		insertFunc(curFunc);
 	}
@@ -535,9 +536,9 @@ public class IRBuilder extends AstVisitor {
 		Node son = nod.sons.get(0);
 		Node idx = nod.sons.get(1);
 		if (nod.type instanceof SingleTypeRef) {
-			nod.reg = son.reg + '.' + idx.reg + 'x' + nod.type.getSize();
+			nod.reg = son.reg + '$' + idx.reg + 'x' + nod.type.getSize();
 		} else {
-			nod.reg = son.reg + '.' + idx.reg + 'x' + 8;
+			nod.reg = son.reg + '$' + idx.reg + 'x' + 8;
 		}
 	}
 
@@ -546,7 +547,7 @@ public class IRBuilder extends AstVisitor {
 		Node mem = nod.sons.get(1);
 		visit(son);
 		if (mem instanceof VarExprNode) {
-			nod.reg = son.reg + '.' + ((ClassTypeRef) son.type).getBelongClass().getOffset(mem.id);
+			nod.reg = son.reg + '$' + ((ClassTypeRef) son.type).getBelongClass().getOffset(mem.id);
 		} else {
 			if (son.type instanceof ClassTypeRef) {
 				visit(mem);
@@ -561,7 +562,7 @@ public class IRBuilder extends AstVisitor {
 
 	@Override public void visit(VarExprNode nod) throws Exception {
 		if (nod.id.equals("this")) {
-			nod.id = "this";
+			nod.reg = "%this";
 			return;
 		}
 		Info var = curScope.matchVarName(nod.id).getValue();

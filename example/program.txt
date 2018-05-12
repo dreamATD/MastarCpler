@@ -1,9 +1,28 @@
-int main() {
-    int[][] a;
-    a = new int[2][];
-    int i;
-    for (i = 0; i < 2; ++i) {
-        a[i] = new int[3];
+class struct {
+    int a, b;
+    int[] c;
+    int func() {
+        return this.a + b;
     }
-    a[1][2] = 3;
+}
+
+int b, c, d;
+int main() {
+    int i, j, n = 10;
+/*
+    b = 14;
+    c = b;
+    i = b + c;
+    j = n;
+    i = j + b;
+*/
+    struct k;
+    struct [] list;
+    k = new struct();
+    list = new struct[3];
+    k.a = b + c;
+    k.b = k.a + i;
+    k.c = new int [b * c];
+    k.c[0] = 1;
+    list[0].c[12] = 2;
 }

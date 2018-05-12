@@ -1,0 +1,5 @@
+int main() {
+    int[][] list;
+    list = new int [3][];
+    list[0] = new int [2];
+}

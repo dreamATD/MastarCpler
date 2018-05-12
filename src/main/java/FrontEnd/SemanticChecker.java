@@ -100,6 +100,7 @@ public class SemanticChecker extends AstVisitor {
 				if (genScope.findItem(((ClassTypeRef) son.type).getTypeId()) == null) throw new NoDefinedTypeError(son.loc);
 			}
 		}
+		nod.type = genScope.findItem(nod.id);
 		classStack.pop();
 	}
 	@Override void visit(FuncDefNode nod) throws Exception {
@@ -245,7 +246,9 @@ public class SemanticChecker extends AstVisitor {
 	}
 	@Override void visit(VarExprNode nod) throws Exception {
 		if (nod.id.equals("this") && classStack.size() > 0) {
-			nod.type = new ClassTypeRef(classStack.get(classStack.size() - 1));
+			String c = classStack.get(classStack.size() - 1);
+			nod.type = new ClassTypeRef(c);
+			((ClassTypeRef) nod.type).setBelongClass((ClassDefTypeRef) genScope.findItem(c));
 			return;
 		}
 		Pair<Scope<TypeRef>, TypeRef> ret = nod.belongTo.matchVarName(nod.id);
