@@ -7,30 +7,31 @@ import java.io.*;
 
 public class Main {
     public static void main (String[] args) throws IOException, Exception {
-        InputStream is = new FileInputStream ("example/program.txt");
+        InputStream is = new FileInputStream ("example/test.txt");
         ANTLRInputStream input = new ANTLRInputStream (is);
         MxStarLexer lexer = new MxStarLexer (input);
         CommonTokenStream tokens = new CommonTokenStream (lexer);
         MxStarParser parser = new MxStarParser (tokens);
+        parser.setErrorHandler( new BailErrorStrategy());
         ParseTree tree = parser.code();
 
-        System.out.println("LISP:");
-        System.out.println(tree.toStringTree(parser));
-        System.out.println();
+//        System.out.println("LISP:");
+//        System.out.println(tree.toStringTree(parser));
+//        System.out.println();
 
         // build an AST
-        System.out.println("Visitor:");
+//        System.out.println("Visitor:");
         BuildAstVisitor buildByVisitor = new BuildAstVisitor();
         Node root = buildByVisitor.visit(tree);
 
         // print the AST
-        TempTestAst tester = new TempTestAst();
-        tester.dfs(root, "");
+//        TempTestAst tester = new TempTestAst();
+//        tester.dfs(root, "");
 
         // build the scopes
         ScopeBuilder scopeBuilder = new ScopeBuilder();
         scopeBuilder.codeResolver(root);
-        System.out.println();
+//        System.out.println();
 
         // Check Semantic Error;
         SemanticChecker checker = new SemanticChecker(scopeBuilder.genScope);
@@ -42,11 +43,12 @@ public class Main {
         }
 
         // print the scopes
-        scopeBuilder.genScope.dfs("");
-        System.out.println();
-
+//        scopeBuilder.genScope.dfs("");
+//        System.out.println();
+/*
         IRBuilder irBuilder = new IRBuilder();
         LinearIR irCode = irBuilder.generateIR(root);
         irCode.print();
+*/
     }
 }
