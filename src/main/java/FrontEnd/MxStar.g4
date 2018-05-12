@@ -461,7 +461,7 @@ This
 
 Identifier
 :
-	NONDIGIT (NONDIGIT | DIGIT)*
+	ALPHABET (NONDIGIT | DIGIT)*
 ;
 
 /*

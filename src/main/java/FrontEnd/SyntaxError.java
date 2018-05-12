@@ -137,3 +137,9 @@ class NoDefinedOpError extends SyntaxError {
 		return "NoDefinedOpError";
 	}
 }
+class ThisBeAssigned extends SyntaxError {
+    ThisBeAssigned(Location l) {
+        super(l);
+    }
+    @Override public String toString() {return "ThisBeAssigned";}
+}

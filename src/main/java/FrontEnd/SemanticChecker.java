@@ -77,6 +77,7 @@ public class SemanticChecker extends AstVisitor {
 	}
 	@Override void visit(VarDefNode nod) throws Exception {
 		if (nod.type instanceof VoidTypeRef) throw new VoidDefVarError(nod.loc);
+		if (nod.type instanceof ArrayTypeRef && ((ArrayTypeRef) nod.type).getSimpleRef() instanceof VoidTypeRef) throw new VoidDefVarError(nod.loc);
 		if (!checkTypeEntity(nod.type)) throw new NoDefinedTypeError(nod.loc);
 		visitChild(nod);
 		if (!nod.sons.isEmpty()) {
@@ -172,6 +173,7 @@ public class SemanticChecker extends AstVisitor {
 		}
 		if (op instanceof AssignOpType) {
 			if (!checkLeftValue(left)) throw new NotLeftValue(left.loc);
+			if (left.id.equals("this")) throw new ThisBeAssigned(left.loc);
 			nod.type = TypeRef.buildTypeRef("void");
 		} else if (op.containsType(left.type)) {
 			if (op instanceof RelativeOpType) {

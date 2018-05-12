@@ -1,3 +1,4 @@
-int main() {
-    int a
+class A{A a;void f(A t){this=t;}}
+int main(){
+  return 0;
 }
