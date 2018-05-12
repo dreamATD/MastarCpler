@@ -173,7 +173,7 @@ public class SemanticChecker extends AstVisitor {
 		}
 		if (op instanceof AssignOpType) {
 			if (!checkLeftValue(left)) throw new NotLeftValue(left.loc);
-			if (left.id.equals("this")) throw new ThisBeAssigned(left.loc);
+			if (left instanceof VarExprNode && left.id.equals("this")) throw new ThisBeAssigned(left.loc);
 			nod.type = TypeRef.buildTypeRef("void");
 		} else if (op.containsType(left.type)) {
 			if (op instanceof RelativeOpType) {
