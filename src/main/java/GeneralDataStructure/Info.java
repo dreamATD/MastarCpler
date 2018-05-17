@@ -6,6 +6,7 @@ public class Info {
 	String reg;
 	TypeRef type;
 	String val;
+	int offset;
 	boolean certain;
 	public Info(String regName, TypeRef tp) {
 		reg = regName;

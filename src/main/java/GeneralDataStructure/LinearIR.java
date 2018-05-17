@@ -6,8 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class LinearIR {
-	LinkedList<FuncFrame> code;
-	SymbolTable<Info> generalSymbols;
+	public LinkedList<FuncFrame> code;
+	public SymbolTable<Info> generalSymbols;
 	public LinearIR() {
 		code = new LinkedList<>();
 	}

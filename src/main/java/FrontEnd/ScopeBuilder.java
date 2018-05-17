@@ -4,7 +4,7 @@ import GeneralDataStructure.ScopeClass.*;
 import GeneralDataStructure.TypeSystem.*;
 
 public class ScopeBuilder {
-	public GeneralScope<TypeRef> genScope = new GeneralScope<>(null);
+	public GeneralScope<TypeRef> genScope = new GeneralScope<>(null, "");
 	void initInternalType() throws SyntaxError {
 		// build string class
 		ClassDefTypeRef stringType = new ClassDefTypeRef();
@@ -36,7 +36,7 @@ public class ScopeBuilder {
 		if (!(type instanceof FuncTypeRef) || !((FuncTypeRef) type).getReturnType().equalsSingleType("int")) throw new NoMainFuncError(new Location(0, 0));
 	}
 	/*
-	* for the whole code or class
+	* for the whole codes or class
 	* */
 	void specialScopeResolver(SpecialScope<TypeRef> curScope, Node curNode) throws SyntaxError {
 		curNode.belongTo = curScope;

@@ -1,4 +1,6 @@
 package GeneralDataStructure.OprandClass;
 
-public class Oprand {
+public abstract class Oprand {
+	public abstract String get();
+	public abstract void set(String v);
 }

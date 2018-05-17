@@ -12,6 +12,16 @@ public class MyList<T> {
 	public int size() {
 		return size;
 	}
+	public void addFirst(T data) {
+		ListNode<T> nod = new ListNode<>(data, null, null);
+		ListNode.link(nod, head.next);
+		ListNode.link(head, nod);
+		if (size == 0) {
+			curIter = head.next;
+			curIdx = 0;
+		}
+		++size;
+	}
 	public void add(T data) {
 		ListNode<T> nod = new ListNode<>(data, null, null);
 		ListNode.link(tail.last, nod);
@@ -48,5 +58,23 @@ public class MyList<T> {
 		}
 		moveIterTo(idx);
 		return curIter.data;
+	}
+	public void removeBefore(int k) {
+		moveIterTo(k);
+		size = size - k;
+		ListNode.link(head, curIter);
+		curIdx = 0;
+	}
+	public void removeAfter(int k) {
+		moveIterTo(k);
+		size = k + 1;
+		ListNode.link(curIter, tail);
+	}
+	public void remove(int k) {
+		moveIterTo(k);
+		ListNode.link(curIter.last, curIter.next);
+		--size;
+		curIter = curIter.last; // For the sake of loop.
+		curIdx--;
 	}
 }

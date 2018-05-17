@@ -3,6 +3,7 @@ package FrontEnd;
 import java.util.ArrayList;
 import java.util.List;
 
+import GeneralDataStructure.OprandClass.Oprand;
 import GeneralDataStructure.ScopeClass.Scope;
 import GeneralDataStructure.TypeSystem.TypeRef;
 
@@ -12,12 +13,14 @@ public abstract class Node {
 	Location loc;
 	List<Node> sons;
 	Scope<TypeRef> belongTo;
-	String reg, inClass;
+	String inClass;
+	Oprand reg;
 	boolean certain;
 	Node() {
 		sons = new ArrayList<Node>();
 		type = TypeRef.buildTypeRef("void");
-		reg = inClass = null;
+		inClass = null;
+		reg = null;
 		certain = false;
 	}
 	void beCertain() {

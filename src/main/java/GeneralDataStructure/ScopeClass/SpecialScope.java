@@ -1,7 +1,7 @@
 package GeneralDataStructure.ScopeClass;
 
 public class SpecialScope<T> extends Scope<T> {
-	SpecialScope(Scope<T> pnt) {
-		super(pnt);
+	SpecialScope(Scope<T> pnt, String n) {
+		super(pnt, n);
 	}
 }

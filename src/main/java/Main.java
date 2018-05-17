@@ -45,10 +45,8 @@ public class Main {
         // print the scopes
 //        scopeBuilder.genScope.dfs("");
 //        System.out.println();
-/*
         IRBuilder irBuilder = new IRBuilder();
         LinearIR irCode = irBuilder.generateIR(root);
         irCode.print();
-*/
     }
 }

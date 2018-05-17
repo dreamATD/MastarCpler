@@ -9,14 +9,17 @@ public class Scope<T> {
 	public List<Scope<T> > sonScopes;
 	public Scope<T> parent;
 	public SymbolTable<T> table;
+	String name;
 
-	// mem start
-	int base;
+	public String getName() {
+		return name;
+	}
 
-	public Scope(Scope<T> pnt) {
+	public Scope(Scope<T> pnt, String n) {
 		sonScopes = new ArrayList<>();
 		table = new SymbolTable<>();
 		parent = pnt;
+		name = n;
 	}
 
 	public SymbolTable<T> getTable() {
@@ -36,19 +39,19 @@ public class Scope<T> {
 	}
 
 	public static <L> GeneralScope<L> newGeneralScope(Scope<L> pnt) {
-		GeneralScope<L> sonScope = new GeneralScope<>(pnt);
+		GeneralScope<L> sonScope = new GeneralScope<>(pnt, pnt.name + '.' + Integer.toString(pnt.sonScopes.size()));
 		pnt.pushScope(sonScope);
 		return sonScope;
 	}
 
 	public static <L> ClassScope<L> newClassScope(Scope<L> pnt) {
-		ClassScope<L> sonScope = new ClassScope<>(pnt);
+		ClassScope<L> sonScope = new ClassScope<>(pnt, pnt.name + '.' + Integer.toString(pnt.sonScopes.size()));
 		pnt.pushScope(sonScope);
 		return sonScope;
 	}
 
 	public static <L> LocalScope<L> newLocalScope(Scope<L> pnt) {
-		LocalScope<L> sonScope = new LocalScope<>(pnt);
+		LocalScope<L> sonScope = new LocalScope<>(pnt, pnt.name + '.' + Integer.toString(pnt.sonScopes.size()));
 		pnt.pushScope(sonScope);
 		return sonScope;
 	}

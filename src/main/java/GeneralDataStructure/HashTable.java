@@ -12,6 +12,10 @@ public class HashTable<K, T> {
 		for (int i = 0; i < p; ++i) arr.add(null);
 	}
 
+	public boolean containsKey(K other) {
+		return find(other) == null;
+	}
+
 	public T find(K other) {
 		int t = other.hashCode() % p;
 		t = (t + p) % p;

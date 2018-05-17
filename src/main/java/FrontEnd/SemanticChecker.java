@@ -1,5 +1,6 @@
 package FrontEnd;
 
+import GeneralDataStructure.OprandClass.Register;
 import GeneralDataStructure.ScopeClass.ClassScope;
 import GeneralDataStructure.ScopeClass.GeneralScope;
 import GeneralDataStructure.ScopeClass.Scope;
@@ -91,6 +92,7 @@ public class SemanticChecker extends AstVisitor {
 		Scope<TypeRef> curScope = nod.belongTo;
 		if (curScope instanceof ClassScope) nod.inClass = classStack.peek();
 		if (!curScope.addItem(nod.id, nod.type)) throw new ReDefinedError(nod.loc);
+		nod.reg = new Register(nod.id + nod.belongTo.getName());
 	}
 	@Override void visit(ClassDefNode nod) throws Exception {
 		classStack.push(nod.id);
@@ -256,6 +258,7 @@ public class SemanticChecker extends AstVisitor {
 		Pair<Scope<TypeRef>, TypeRef> ret = nod.belongTo.matchVarName(nod.id);
 		if (ret == null) throw new NoDefinedVarError(nod.loc);
 		if (ret.getKey() instanceof ClassScope) nod.inClass = classStack.peek();
+		nod.reg = new Register(nod.id + ret.getKey().getName());
 		nod.type = ret.getValue();
 	}
 }

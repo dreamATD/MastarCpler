@@ -1,4 +1,14 @@
-class A{A a;void f(A t){this=t;}}
-int main(){
-  return 0;
+int main() {
+    int a = 1, b = 2, c = 2;
+    {
+        int c;
+        c = a + b;
+    }
+    {
+        int a;
+        a = c + b;
+    }
+    a = c + b;
+    b = c + a;
+    return 0;
 }
