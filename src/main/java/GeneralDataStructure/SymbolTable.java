@@ -21,7 +21,15 @@ public class SymbolTable<T> {
 		return true;
 	}
 
+	public boolean insert(String a, T b) {
+		return insert(new Pair<>(a, b));
+	}
+
 	public HashMap<String, T> toHashMap() {
 		return table.toHashMap();
+	}
+
+	public int getSize() {
+		return table.getSize();
 	}
 }

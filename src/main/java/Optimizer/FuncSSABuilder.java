@@ -2,25 +2,25 @@ package Optimizer;
 
 import GeneralDataStructure.*;
 import GeneralDataStructure.MyListClass.MyList;
-import GeneralDataStructure.QuadClass.A3Quad;
-import GeneralDataStructure.QuadClass.Quad;
+import GeneralDataStructure.OprandClass.Register;
+import GeneralDataStructure.QuadClass.*;
 import Utilizer.SetOperation;
 
 import java.util.*;
 
 public class FuncSSABuilder {
-	HashSet<String> global;
+	private HashSet<String> global;
 
-	HashMap<String, HashSet<BasicBlock>> varDomain;
-	ArrayList<HashSet<BasicBlock> > domainEdge;
-	ArrayList<LinkedList<BasicBlock> > dom;
-	ArrayList<BasicBlock> immDom;
-	ArrayList<ArrayList<BasicBlock>> rmmDom;
-	HashMap<String, Stack<String> > nameStack;
+	private HashMap<String, HashSet<BasicBlock>> varDomain;
+	private ArrayList<HashSet<BasicBlock> > domainEdge;
+	private ArrayList<LinkedList<BasicBlock> > dom;
+	private ArrayList<BasicBlock> immDom;
+	private ArrayList<ArrayList<BasicBlock>> rmmDom;
+	private HashMap<String, Stack<String> > nameStack;
 
-	ArrayList<BasicBlock> blockList;
+	private ArrayList<BasicBlock> blockList;
 
-	int varCnt;
+	private int varCnt;
 
 	public FuncSSABuilder(FuncFrame func) {
 		blockList = func.getBbList();
@@ -41,17 +41,78 @@ public class FuncSSABuilder {
 		renameVar(blockList.get(0));
 	}
 
-	void addPhi() {
+	private void BuildImmDom() {
+		int n = blockList.size() - 1;
+		dom.add(new LinkedList<>());
+		dom.get(0).add(blockList.get(0));
+		for (int i = 1; i < blockList.size(); ++i) {
+			dom.add(new LinkedList<>());
+			for (int j = 0; j < blockList.size(); ++j) {
+				dom.get(i).add(blockList.get(j));
+			}
+		}
+		boolean changed = true;
+		LinkedList<BasicBlock> temp;
+		if (n > 0) {
+			while (changed) {
+				changed = false;
+				for (int i = 1; i <= n; ++i) {
+					BasicBlock u = blockList.get(i);
+					temp = new LinkedList<>();
+					temp.addAll(dom.get(u.preps.get(0).getIdx()));
+					for (int j = 1; j < u.preps.size(); ++j) {
+						BasicBlock v = u.preps.get(j);
+						temp = SetOperation.intersect(temp, dom.get(v.getIdx()));
+					}
+					temp.add(u);
+					if (!temp.equals(dom.get(i))) {
+						dom.set(i, temp);
+						changed = true;
+					}
+				}
+			}
+		}
+		immDom.add(blockList.get(0));
+		rmmDom.add(new ArrayList<>());
+		for (int i = 1; i < blockList.size(); ++i) {
+			immDom.add(dom.get(i).get(dom.get(i).size() - 2));
+			rmmDom.add(new ArrayList<>());
+		}
+		for (int i = 1; i < blockList.size(); ++i) {
+			rmmDom.get(immDom.get(i).getIdx()).add(blockList.get(i));
+		}
+	}
+
+	private void BuildDomainEdge() {
+		for (int i = 0; i < blockList.size(); ++i) {
+			domainEdge.add(new HashSet<>());
+		}
+		for(int i = 0; i < blockList.size(); ++i) {
+			BasicBlock u = blockList.get(i);
+			if (u.getPreps().size() <= 1) continue;
+			ArrayList<BasicBlock> preps = u.getPreps();
+			for (BasicBlock v: preps) {
+				BasicBlock cur = v;
+				while (cur != immDom.get(i)) {
+					domainEdge.get(cur.getIdx()).add(u);
+					cur = immDom.get(cur.getIdx());
+				}
+			}
+		}
+	}
+
+	private void addPhi() {
 		HashSet<String> varKill = new HashSet<>();
 
 		for (BasicBlock u: blockList) {
 			MyList<Quad> codes = u.getCodes();
 			for (int i = 0; i < codes.size(); ++i) {
 				Quad c = codes.get(i);
-				if (c instanceof A3Quad) {
-					String x = c.getRtName(), y = c.getR1Name(), z = c.getR2Name();
-					if (!varKill.contains(y)) global.add(y);
-					if (!varKill.contains(z)) global.add(z);
+				if (c instanceof A3Quad || c instanceof MovQuad || c instanceof CallQuad) {
+					String x = c.getRtName();
+					if (c.getR1() instanceof Register && !varKill.contains(c.getR1Name())) global.add(c.getR1Name());
+					if (c.getR2() instanceof Register && c instanceof A3Quad && !varKill.contains(c.getR2Name()))
+						global.add(c.getR2Name());
 					varKill.add(x);
 					if (!varDomain.containsKey(x)) {
 						varDomain.put(x, new HashSet<>());
@@ -75,65 +136,8 @@ public class FuncSSABuilder {
 		}
 	}
 
-	void BuildDomainEdge() {
-		for (int i = 0; i < blockList.size(); ++i) {
-			domainEdge.add(new HashSet<>());
-		}
-		for(int i = 0; i < blockList.size(); ++i) {
-			BasicBlock u = blockList.get(i);
-			if (u.getPreps().size() <= 1) continue;
-			ArrayList<BasicBlock> preps = u.getPreps();
-			for (BasicBlock v: preps) {
-				BasicBlock cur = v;
-				while (cur != immDom.get(i)) {
-					domainEdge.get(cur.getIdx()).add(u);
-					cur = immDom.get(cur.getIdx());
-				}
-			}
-		}
-	}
 
-
-	void BuildImmDom() {
-		int n = blockList.size() - 1;
-		dom.add(new LinkedList<>());
-		dom.get(0).add(blockList.get(0));
-		for (int i = 1; i < blockList.size(); ++i) {
-			dom.add(new LinkedList<>());
-			for (int j = 0; j < blockList.size(); ++j) {
-				dom.get(i).add(blockList.get(j));
-			}
-		}
-		boolean changed = true;
-		LinkedList<BasicBlock> temp;
-		while (changed) {
-			changed = false;
-			for (int i = 1; i <= n; ++i) {
-				BasicBlock u = blockList.get(i);
-				temp = new LinkedList<>();
-				temp.addAll(dom.get(u.preps.get(0).getIdx()));
-				for (int j = 1; j < u.preps.size(); ++j) {
-					BasicBlock v = u.preps.get(j);
-					temp = SetOperation.intersect(temp, dom.get(v.getIdx()));
-				}
-				temp.add(u);
-				if (!temp.equals(dom.get(i))) {
-					dom.set(i, temp);
-					changed = true;
-				}
-			}
-		}
-		immDom.add(blockList.get(0));
-		for (int i = 1; i < blockList.size(); ++i) {
-			immDom.add(dom.get(i).get(dom.get(i).size() - 2));
-			rmmDom.add(new ArrayList<>());
-		}
-		for (int i = 0; i < blockList.size(); ++i) {
-			rmmDom.get(immDom.get(i).getIdx()).add(blockList.get(i));
-		}
-	}
-
-	String newName(String name) {
+	private String newName(String name) {
 		String res = name + '_' + Integer.toString(varCnt++);
 		if (!nameStack.containsKey(name)) {
 			nameStack.put(name, new Stack<>());
@@ -142,19 +146,19 @@ public class FuncSSABuilder {
 		return res;
 	}
 
-	void renameVar(BasicBlock u) {
+	private void renameVar(BasicBlock u) {
 		HashSet<String> tmp = new HashSet<>();
 		MyList<Quad> codes = u.getCodes();
 		for (int i = 0; i < codes.size(); ++i) {
 			Quad c = codes.get(i);
-			if (c.getOp().equals("phi")) {
+			if (c instanceof PhiQuad) {
 				String rt = c.getRtName();
 				c.setRt(newName(rt));
 				tmp.add(rt);
-			} else if (c instanceof A3Quad) {
+			} else if (c instanceof A3Quad || c instanceof MovQuad || c instanceof CallQuad) {
 				String rt = c.getRtName();
-				c.setR1(nameStack.get(c.getR1Name()).peek());
-				c.setR2(nameStack.get(c.getR2Name()).peek());
+				if (c.getR1() instanceof Register && !nameStack.isEmpty()) c.setR1(nameStack.get(c.getR1Name()).peek());
+				if (c.getR2() instanceof Register && !nameStack.isEmpty()) c.setR2(nameStack.get(c.getR2Name()).peek());
 				c.setRt(newName(rt));
 				tmp.add(rt);
 			}
@@ -171,8 +175,8 @@ public class FuncSSABuilder {
 
 		for (int i = 0; i < codes.size(); ++i) {
 			Quad c = codes.get(i);
-			if (c.getOp().equals("phi") || c instanceof A3Quad) {
-				nameStack.get(c.getRtName()).pop();
+			if (c instanceof PhiQuad || c instanceof A3Quad || c instanceof MovQuad) {
+				nameStack.get(c.getRtName().split("_")[0]).pop();
 			}
 		}
 	}

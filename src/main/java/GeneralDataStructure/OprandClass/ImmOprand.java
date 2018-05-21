@@ -1,17 +1,22 @@
 package GeneralDataStructure.OprandClass;
 
+import Utilizer.ConstVar;
+
 public class ImmOprand extends Oprand {
-	int val;
-	public ImmOprand(int v) {
+	long val;
+	public ImmOprand(long v) {
 		val = v;
 	}
 	@Override public String get() {
-		return Integer.toString(val);
+		return Long.toString(val);
 	}
 	@Override public void set(String v) {
 		val = Integer.parseInt(v);
 	}
-	public int getVal() {
+	public long getVal() {
 		return val;
+	}
+	public int getSize() {
+		return this instanceof BoolImmOprand ? ConstVar.boolLen : ConstVar.intLen;
 	}
 }

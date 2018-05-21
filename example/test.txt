@@ -1,13 +1,7 @@
 int main() {
-    int a = 1, b = 2, c = 2;
-    {
-        int c;
-        c = a + b;
-    }
-    {
-        int a;
-        a = c + b;
-    }
+    int a = getInt(), b = getInt(), c = getInt();
+    c = a + b;
+    a = c + b;
     a = c + b;
     b = c + a;
     return 0;

@@ -77,4 +77,18 @@ public class MyList<T> {
 		curIter = curIter.last; // For the sake of loop.
 		curIdx--;
 	}
+	public void addAll(MyList<T> other) {
+		for (int i = 0; i < other.size(); ++i) {
+			add(other.get(i));
+		}
+	}
+	public void insertBefore(int k, T data) {
+		moveIterTo(k);
+
+		ListNode<T> tmp = new ListNode<>(data, null, null);
+		ListNode.link(curIter.last, tmp);
+		ListNode.link(tmp, curIter);
+		++curIdx;
+		++size;
+	}
 }

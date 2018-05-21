@@ -1,27 +1,44 @@
 package GeneralDataStructure;
 
-import FrontEnd.LabelTable;
+import Utilizer.ConstVar;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class LinearIR {
-	public LinkedList<FuncFrame> code;
-	public SymbolTable<Info> generalSymbols;
+	ArrayList<FuncFrame> funcs;
+	ArrayList<String> globals;
+	HashMap<String, Integer> varSize;
+
 	public LinearIR() {
-		code = new LinkedList<>();
-	}
-	public void setGeneralSymbols(SymbolTable<Info> table) {
-		generalSymbols = table;
+		funcs = new ArrayList<>();
+		globals = new ArrayList<>();
+		varSize = new HashMap<>();
+		globals.add("@getInt");
+		varSize.put("@getInt", ConstVar.intLen);
 	}
 	public void insertFunc(FuncFrame func) {
-		code.add(func);
+		funcs.add(func);
+		globals.add(func.getName());
+		varSize.put(func.getName(), func.getRetSize());
+	}
+	public void insertVar(String str, Integer sz) {
+		globals.add(str);
+		varSize.put(str, sz);
 	}
 	public void print() {
 		System.out.println("General Symbols: ");
-		generalSymbols.println();
-		for (int i = 0; i < code.size(); ++i) {
-			code.get(i).print();
+		for (int i = 0; i < funcs.size(); ++i) {
+			funcs.get(i).print();
 		}
+	}
+	public ArrayList<String> getGlobals() {
+		return globals;
+	}
+	public ArrayList<FuncFrame> getFuncs() {
+		return funcs;
+	}
+	public HashMap<String, Integer> getVarSize() {
+		return varSize;
 	}
 }

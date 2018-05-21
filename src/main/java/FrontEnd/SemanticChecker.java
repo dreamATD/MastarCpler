@@ -92,7 +92,8 @@ public class SemanticChecker extends AstVisitor {
 		Scope<TypeRef> curScope = nod.belongTo;
 		if (curScope instanceof ClassScope) nod.inClass = classStack.peek();
 		if (!curScope.addItem(nod.id, nod.type)) throw new ReDefinedError(nod.loc);
-		nod.reg = new Register(nod.id + nod.belongTo.getName());
+		String name = nod.id + nod.belongTo.getName();
+		nod.reg = new Register(name, name);
 	}
 	@Override void visit(ClassDefNode nod) throws Exception {
 		classStack.push(nod.id);
@@ -258,7 +259,8 @@ public class SemanticChecker extends AstVisitor {
 		Pair<Scope<TypeRef>, TypeRef> ret = nod.belongTo.matchVarName(nod.id);
 		if (ret == null) throw new NoDefinedVarError(nod.loc);
 		if (ret.getKey() instanceof ClassScope) nod.inClass = classStack.peek();
-		nod.reg = new Register(nod.id + ret.getKey().getName());
+		String name = nod.id + ret.getKey().getName();
+		nod.reg = new Register(name, name);
 		nod.type = ret.getValue();
 	}
 }

@@ -7,8 +7,11 @@ import GeneralDataStructure.OprandClass.Register;
 import java.util.ArrayList;
 
 /*
+* A2Quad:
 * new       rt [mem]
 * mov       rt r1
+*
+* A3Quad:
 * add       rt r1 r2
 * sub       rt r1 r2
 * mul       rt r1 r2
@@ -25,11 +28,13 @@ import java.util.ArrayList;
 * leq       rt r1 r2
 * gre       rt r1 r2
 * geq       rt r1 r2
-* not       rt r1
-* neg       rt r1
+* not       rt r1     ( xor r1 (1<<31)-1 )
+* neg       rt r1     ( sub 0  neg       )
 *
+* PhiQuad
 * phi       rt phiList
 *
+* Quad:
 * loadAI    rt r1 r2
 *
 * nop
@@ -51,6 +56,8 @@ public class Quad {
 	public String label;
 
 	public ArrayList<Register> phiParams;
+
+	boolean futureLive;
 
 	public Quad(String op, Oprand rt, ArrayList<Register> phiParams) {
 		this.op = op;
@@ -143,7 +150,22 @@ public class Quad {
 	public void setRt(String rt) {
 		this.rt.set(rt);
 	}
+
 	public void addPhiParams(String x) {
 		phiParams.add(new Register(x));
+	}
+
+	public void setLive(boolean live) {
+		futureLive = live;
+	}
+
+	public boolean isLive() {
+		return futureLive;
+	}
+	public void changeR1(Oprand nr1) {
+		r1 = nr1;
+	}
+	public void changeR2(Oprand nr2) {
+		r2 = nr2;
 	}
 }

@@ -1,9 +1,11 @@
 package GeneralDataStructure.TypeSystem;
 
+import static Utilizer.ConstVar.boolLen;
+
 public class BoolTypeRef extends SimpleTypeRef {
 	public BoolTypeRef() {
 		typeId = "bool";
-		size = 1;
+		size = boolLen;
 	}
 	public BoolTypeRef copy() {
 		return new BoolTypeRef();

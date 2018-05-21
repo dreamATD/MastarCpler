@@ -16,12 +16,12 @@ public class ClassDefTypeRef extends TypeRef {
 			TypeRef tp = entry.getValue();
 			objs.put(entry.getKey(), new Pair<>(tp, size));
 
-			if (tp instanceof VarTypeRef) size += tp instanceof SimpleTypeRef ? tp.size : 4; // for class and string
+			if (tp instanceof VarTypeRef) size += tp.size; // for class and string
 		}
 	}
 	public void insertObj(String key, TypeRef tp) {
 		objs.put(key, new Pair<>(tp, size));
-		if (tp instanceof VarTypeRef) size += tp instanceof SimpleTypeRef ? tp.size : 4; // for class and string
+		if (tp instanceof VarTypeRef) size += tp.size; // for class and string
 	}
 	public boolean equals(TypeRef other) {
 		if (!(other instanceof ClassDefTypeRef)) return false;

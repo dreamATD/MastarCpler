@@ -6,6 +6,7 @@ public class SimpleUnionFind {
 
 	public SimpleUnionFind(int size) {
 		f = new int[size];
+		s = new int[size];
 		this.size = size;
 		for (int i = 0; i < size; ++i) {
 			f[i] = i;

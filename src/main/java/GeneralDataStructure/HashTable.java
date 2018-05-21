@@ -5,11 +5,13 @@ import java.util.*;
 
 public class HashTable<K, T> {
 	ArrayList< LinkedList< Pair<K, T> > > arr;
+	int size;
 	static int p = 1447;
 
 	public HashTable() {
 		arr = new ArrayList<>(p);
 		for (int i = 0; i < p; ++i) arr.add(null);
+		size = 0;
 	}
 
 	public boolean containsKey(K other) {
@@ -39,12 +41,14 @@ public class HashTable<K, T> {
 //		System.out.println("hash_code for " + other.toString() + ": " + t);
 		if (arr.get(t) == null) arr.set(t, new LinkedList<>());
 		arr.get(t).add(other);
+		++size;
 	}
 
 	public void clear() {
 		for (int i = 0; i < arr.size(); ++i) {
 			if (arr.get(i) != null) arr.set(i, null);
 		}
+		size = 0;
 	}
 
 	public void remove(K other) {
@@ -59,6 +63,7 @@ public class HashTable<K, T> {
 				return;
 			}
 		}
+		size--;
 	}
 
 	public void println() {
@@ -96,5 +101,9 @@ public class HashTable<K, T> {
 				iter.set(new Pair<>(key, value));
 			}
 		}
+	}
+
+	public int getSize() {
+		return size;
 	}
 }

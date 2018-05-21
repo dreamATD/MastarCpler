@@ -1,6 +1,10 @@
 package GeneralDataStructure.TypeSystem;
 
 
+import Utilizer.ConstVar;
+
+import static Utilizer.ConstVar.addrLen;
+
 public class ArrayTypeRef extends VarTypeRef {
 	VarTypeRef type;
 	int scale;
@@ -8,12 +12,12 @@ public class ArrayTypeRef extends VarTypeRef {
 	public ArrayTypeRef(VarTypeRef tp) {
 		type = tp;
 		scale = -1;
-		size = 0;
+		size = addrLen;
 	}
 	public ArrayTypeRef(VarTypeRef tp, int sc) {
 		type = tp;
 		scale = sc;
-		size = tp.size * sc;
+		size = addrLen;
 	}
 	public ArrayTypeRef(String typeId, int dim) {
 		VarTypeRef tmp = (VarTypeRef) TypeRef.buildTypeRef(typeId);
@@ -26,6 +30,7 @@ public class ArrayTypeRef extends VarTypeRef {
 		}
 		type = tmp;
 		getSize = new FuncTypeRef(new IntTypeRef());
+		size = addrLen;
 	}
 	public ArrayTypeRef copy() {
 		return new ArrayTypeRef(type.copy(), scale);

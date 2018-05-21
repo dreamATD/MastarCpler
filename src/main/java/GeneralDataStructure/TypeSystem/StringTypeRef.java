@@ -1,9 +1,11 @@
 package GeneralDataStructure.TypeSystem;
 
-public class StringTypeRef extends ClassTypeRef {
+import static Utilizer.ConstVar.addrLen;
+
+public class StringTypeRef extends SpecialTypeRef {
 	public StringTypeRef() {
 		typeId = "string";
-		size = 0;
+		size = addrLen;
 	}
 	public StringTypeRef copy() {
 		return new StringTypeRef();

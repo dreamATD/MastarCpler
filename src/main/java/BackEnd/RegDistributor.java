@@ -5,67 +5,65 @@ import GeneralDataStructure.FuncFrame;
 import GeneralDataStructure.MyListClass.MyList;
 import GeneralDataStructure.OprandClass.Oprand;
 import GeneralDataStructure.OprandClass.Register;
-import GeneralDataStructure.QuadClass.A3Quad;
-import GeneralDataStructure.QuadClass.MovQuad;
-import GeneralDataStructure.QuadClass.PhiQuad;
-import GeneralDataStructure.QuadClass.Quad;
+import GeneralDataStructure.QuadClass.*;
 import Optimizer.ActionAnalyzer;
 import Utilizer.SimpleUnionFind;
 import Utilizer.Tool;
-import com.sun.org.apache.xpath.internal.operations.Or;
 
 import java.util.*;
 
 public class RegDistributor {
-	ArrayList<BasicBlock> blocks;
-	SimpleUnionFind activeSet;
-	ArrayList<String> global;
-	HashMap<String, Integer> nameIdx;
-	ArrayList<HashSet<Integer>> edge;
-	ArrayList<HashSet<String>> liveOut;
-	boolean [][] matrix;
-	boolean [] exist;
-	int[] value, col;
-	int nVar;
+	private ArrayList<BasicBlock> blocks;
+	private SimpleUnionFind activeSet;
+	private ArrayList<String> global;
+	private HashMap<String, Integer> nameIdx;
+	private ArrayList<HashSet<Integer>> edge;
+	private ArrayList<HashSet<String>> liveOut;
 
-	int colCnt, outCol;
+	private String[] funcParams;
+	private boolean [][] matrix;
+	private boolean [] exist;
+	private int[] value, col;
+	private int nVar;
 
-	String[] regList;
+	private int colCnt, outCol;
 
-	boolean checkRegister(Oprand opr) {
+	private String[] regList = {"rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r10", "r11", "r12", "r13", "r14", "r15", "rbx", "rbp", "rsp"};
+
+	private boolean checkRegister(Oprand opr) {
 		return opr instanceof Register && !(nameIdx.containsKey(opr.get()));
 	}
 
-	void addRegister(Oprand opr) {
+	private void addRegister(Oprand opr) {
 		nameIdx.put(opr.get(), nVar++);
 		global.add(opr.get());
 	}
 
-	void removeNode(int x) {
+	private void removeNode(int x) {
 		nameIdx.remove(global.get(x));
 		exist[x] = false;
 	}
 
-	void link(int u, int v) {
+	private void link(int u, int v) {
 		edge.get(u).add(v);
 		edge.get(v).add(u);
 		matrix[u][v] = matrix[v][u] = true;
 	}
 
-	void cut(int u, int v) {
+	private void cut(int u, int v) {
 		edge.get(u).remove(v);
 		edge.get(v).remove(u);
 		matrix[u][v] = matrix[v][u] = false;
 	}
 
-	public RegDistributor(FuncFrame func, int colors, String[] regs) {
+	public RegDistributor(FuncFrame func) {
 		blocks = func.getBbList();
 		global = new ArrayList<>();
 		nameIdx = new HashMap<>();
 		edge = new ArrayList<>();
-		colCnt = colors - 1;
-		outCol = colors - 1;
-		regList = regs;
+		funcParams = func.getFirst6Params();
+		colCnt = 22;
+		outCol = 22;
 
 		for (int i = 0; i < blocks.size(); ++i) {
 			MyList<Quad> codes = blocks.get(i).getCodes();
@@ -89,7 +87,7 @@ public class RegDistributor {
 		}
 	}
 
-	void regDistribute() {
+	public void regDistribute() {
 		buildActiveDomain();
 		buildLiveOut();
 		buildGraph();
@@ -99,7 +97,7 @@ public class RegDistributor {
 		rebuildCodes();
 	}
 
-	void buildActiveDomain() {
+	private void buildActiveDomain() {
 		for (int i = 0; i < blocks.size(); ++i) {
 			MyList<Quad> codes = blocks.get(i).getCodes();
 			for (int j = 0; j < codes.size(); ++j) {
@@ -119,12 +117,18 @@ public class RegDistributor {
 		}
 	}
 
-	void buildLiveOut() {
+	private void buildLiveOut() {
 		ActionAnalyzer analyzer = new ActionAnalyzer(blocks);
 		liveOut = analyzer.buildLiveOut();
 	}
 
-	void buildGraph() {
+	void updateRegLive(Register r, HashSet<String> liveNow) {
+		r.setEntity(r.get());
+		if (liveNow.contains(r.get())) r.setWillUse(true);
+		else r.setWillUse(false);
+	}
+
+	private void buildGraph() {
 		for (int i = 0; i < nVar; ++i) {
 			for (int j = 0; j < nVar; ++j) {
 				matrix[i][j] = false;
@@ -137,28 +141,42 @@ public class RegDistributor {
 			HashSet<String> liveNow = liveOut.get(i);
 			for (int j = codes.size() - 1; j >= 0; --j) {
 				Quad c = codes.get(j);
-				if (c instanceof A3Quad) {
-					String rt = c.getRtName();
-					String r1 = c.getR1Name();
-					String r2 = c.getR2Name();
-					int u = activeSet.find(nameIdx.get(rt));
+				if (c.getRt() instanceof Register) {
+					updateRegLive((Register) c.getRt(), liveNow);
+				}
+				if (c.getR1() instanceof Register) {
+					updateRegLive((Register) c.getR1(), liveNow);
+				}
+				if (c.getR2() instanceof Register) {
+					updateRegLive((Register) c.getR2(), liveNow);
+				}
+				if (c instanceof A3Quad || c instanceof MovQuad || c instanceof CallQuad) {
+					if (c.getRt() == null) continue;
+					String nt = c.getRtName();
+					int u = activeSet.find(nameIdx.get(nt));
 					for (String data: liveNow) {
-						if (data.equals(rt)) continue;
+						if (data.equals(nt)) continue;
 						int v = activeSet.find(nameIdx.get(data));
-						if (matrix[u][v]) continue;
+						if (matrix[u][v] || (c instanceof MovQuad && data.equals(c.getR1Name()))) continue;
 						matrix[u][v] = matrix[v][u] = true;
 						edge.get(u).add(v);
 						edge.get(v).add(u);
+						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
 					}
-					if (liveNow.contains(rt)) liveNow.remove(rt);
-					liveNow.add(r1);
-					liveNow.add(r2);
+					if (liveNow.contains(nt)) {
+						liveNow.remove(nt);
+						c.setLive(true);
+					} else {
+						c.setLive(false);
+					}
+					if (c.getR1() instanceof Register) liveNow.add(c.getR1Name());
+					if (c.getR2() instanceof Register) liveNow.add(c.getR2Name());
 				}
 			}
 		}
 	}
 
-	boolean mergeActive() {
+	private boolean mergeActive() {
 		boolean changed = false;
 		MyList<Quad> codes;
 		for (int i = 0; i < blocks.size(); ++i) {
@@ -186,16 +204,15 @@ public class RegDistributor {
 				}
 			}
 		}
-
 		return changed;
 	}
 
-	void calcVal() {
+	private void calcVal() {
 		for (int i = 0; i < blocks.size(); ++i) {
 			MyList<Quad> codes = blocks.get(i).getCodes();
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
-				if (c instanceof A3Quad) {
+				if (c instanceof A3Quad || c instanceof MovQuad || c instanceof ParamQuad) {
 					Oprand r1 = c.getR1(), r2 = c.getR2();
 					if (r1 instanceof Register) {
 						++value[activeSet.find(nameIdx.get(r1.get()))];
@@ -208,7 +225,29 @@ public class RegDistributor {
 		}
 	}
 
-	void dyeGraph() {
+	private void dyeGraph() {
+
+		boolean[] dyed = new boolean[6];
+
+		/* force dye */
+		for (int i = 0; i < blocks.size(); ++i) {
+			MyList<Quad> codes = blocks.get(i).getCodes();
+			for (int j = 0; j < codes.size(); ++j) {
+				Quad c = codes.get(j);
+				Oprand r1 = c.getR1();
+				Oprand r2 = c.getR2();
+				for (int k = 0; k < funcParams.length; ++k) {
+					if (!dyed[k] && r1 instanceof Register && ((Register) r1).getMemPos().equals(funcParams[k])) {
+						dyed[k] = true;
+						col[activeSet.find(nameIdx.get(r1.get()))] = k;
+					}
+					if (!dyed[k] && r2 instanceof Register && ((Register) r2).getMemPos().equals(funcParams[k])) {
+						dyed[k] = true;
+						col[activeSet.find(nameIdx.get(r2.get()))] = k;
+					}
+				}
+			}
+		}
 		ArrayList<Integer> sortList = new ArrayList<>();
 		for (HashMap.Entry<String, Integer> entry: nameIdx.entrySet()) {
 			int u = entry.getValue();
@@ -226,6 +265,7 @@ public class RegDistributor {
 				if (col[v] >= 0) tmp.add(col[v]);
 			}
 			Collections.sort(tmp);
+			Tool.unique(tmp);
 			int j;
 			for (j = 0; j < tmp.size(); ++j) {
 				if (j != tmp.get(j)) {
@@ -249,6 +289,7 @@ public class RegDistributor {
 					if (col[v] >= 0) tmp.add(col[v]);
 				}
 				Collections.sort(tmp);
+				Tool.unique(tmp);
 				int j;
 				for (j = 0; j < tmp.size(); ++j) {
 					if (j != tmp.get(j)) {
@@ -256,11 +297,17 @@ public class RegDistributor {
 						break;
 					}
 				}
+				if (col[u] == -1) {
+					if (j < colCnt) col[u] = j;
+					else {
+						col[u] = outCol; // Can't be dyed.
+					}
+				}
 			}
 		}
 	}
 
-	void rebuildCodes() {
+	private void rebuildCodes() {
 		MyList<Quad> codes;
 		for (int i = 0; i < blocks.size(); ++i) {
 			codes = blocks.get(i).getCodes();
@@ -278,6 +325,7 @@ public class RegDistributor {
 				Quad c = codes.get(j);
 				Oprand rt = c.getRt(), r1 = c.getR1(), r2 = c.getR2();
 				if (rt instanceof Register) {
+					int t = activeSet.find(nameIdx.get(rt.get()));
 					int nrt = col[activeSet.find(nameIdx.get(rt.get()))];
 					rt.set(regList[nrt]);
 				}

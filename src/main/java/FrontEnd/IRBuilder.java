@@ -2,15 +2,16 @@ package FrontEnd;
 
 import GeneralDataStructure.*;
 import GeneralDataStructure.OprandClass.*;
-import GeneralDataStructure.QuadClass.A2Quad;
-import GeneralDataStructure.QuadClass.A3Quad;
-import GeneralDataStructure.QuadClass.MovQuad;
-import GeneralDataStructure.QuadClass.Quad;
+import GeneralDataStructure.QuadClass.*;
 import GeneralDataStructure.ScopeClass.*;
 import GeneralDataStructure.TypeSystem.*;
+import Utilizer.ConstVar;
 import javafx.util.Pair;
 
 import java.util.*;
+
+import static GeneralDataStructure.OprandClass.Register.isTempReg;
+import static Utilizer.ConstVar.addrLen;
 
 public class IRBuilder extends AstVisitor {
 	public LinearIR linearCode;
@@ -30,6 +31,8 @@ public class IRBuilder extends AstVisitor {
 	LabelTable uset;
 
 	ClassDefTypeRef classType;
+
+	boolean isFuncParam;    // for insert func params.
 	public IRBuilder() {
 		linearCode = new LinearIR();
 		labelCnt = 0;
@@ -38,6 +41,7 @@ public class IRBuilder extends AstVisitor {
 		ctnLabel = new Stack<>();
 		uset = new LabelTable();
 		curCodeList = new ArrayList<>();
+		isFuncParam = false;
 	}
 
 
@@ -48,7 +52,6 @@ public class IRBuilder extends AstVisitor {
 
 	public LinearIR generateIR(Node root) throws Exception {
 		visit(root);
-		linearCode.setGeneralSymbols(genScope.getTable());
 		return linearCode;
 	}
 
@@ -73,8 +76,25 @@ public class IRBuilder extends AstVisitor {
 		}
 	}
 
+	void setEntities(ArrayList<Quad> codes) {
+		for (int i = 0; i < codes.size(); ++i) {
+			Quad c = codes.get(i);
+			Oprand r1 = c.getR1(), r2 = c.getR2();
+			if (r1 instanceof Register) {
+				String n1 = r1.get();
+				if (!isTempReg(n1)) ((Register) r1).setMemPos(n1);
+			}
+			if (r2 instanceof Register) {
+				String n2 = r2.get();
+				if (!isTempReg(n2)) ((Register) r2).setMemPos(n2);
+			}
+		}
+	}
+
 	private void insertFunc(FuncFrame fun) {
 		updateLabel(uset, curCodeList);
+		setEntities(curCodeList);
+		curFunc.sortLocalVar();
 		curFunc.buildCFG(curCodeList);
 		curCodeList.clear();
 		linearCode.insertFunc(fun);
@@ -115,7 +135,7 @@ public class IRBuilder extends AstVisitor {
 	private String generateNewCode(Node nod, boolean isPointer) throws Exception {
 		boolean p = isPointer;
 		if (nod.type instanceof SingleTypeRef) {
-			return Integer.toString(p ? 4 + 4 : nod.type.getSize()); // with size in record
+			return Integer.toString(p ? addrLen + ConstVar.intLen : nod.type.getSize()); // with size in record
 		}
 		Node scale = nod.sons.get(1);
 		if (scale instanceof EmptyExprNode) {
@@ -141,18 +161,33 @@ public class IRBuilder extends AstVisitor {
 
 	@Override public void visit(VarDefNode nod) throws Exception {
 		Info var;
-		if (curScope instanceof GeneralScope) var = new Info(nod.reg.get(), nod.type);
+
+		int sz = nod.type.getSize();
+
+		if (curScope instanceof GeneralScope) {
+			var = new Info(nod.reg.get(), nod.type);
+			linearCode.insertVar(nod.id, sz);
+		}
 		else if (curScope instanceof ClassScope) var = new Info("%this$" + classType.getOffset(nod.id), nod.type);
-		else var = new Info(nod.reg.get(), nod.type);
+		else {
+			var = new Info(nod.reg.get(), nod.type);
+			if (isFuncParam) curFunc.addParam(nod.reg.get(), sz);
+			else curFunc.addLocalVar(nod.reg.get(), sz);
+		}
 		curScope.addItem(nod.id, var);
+
+
 		if (nod.sons.size() == 0) return;
 		Node son = nod.sons.get(0);
 		if (son instanceof NewExprNode) {
-			insertQuad(new Quad("new", new Register(var.getRegName()), new MemSpace(generateNewCode(son.sons.get(0), false))));
+			if (son.type instanceof ClassTypeRef)
+				insertQuad(new Quad("new", new Register(var.getRegName()), new MemSpace(Integer.toString(((ClassTypeRef) son.type).getBelongClass().getSize()))));
+			else
+				insertQuad(new Quad("new", new Register(var.getRegName()), new MemSpace(generateNewCode(son.sons.get(0), false))));
 		} else {
 			visit(son);
 			if (isTempReg(son.reg.get())) {
-				updateTempReg(son.reg.get(), nod.reg.get());
+				updateTempReg(son.reg.get(), nod.reg.get(), ((Register) nod.reg).getMemPos());
 				son.reg = nod.reg;
 			}
 			else insertQuad(new MovQuad("mov", new Register(var.getRegName()), son.reg));
@@ -176,13 +211,15 @@ public class IRBuilder extends AstVisitor {
 		curFunc = new FuncFrame(nod.inClass == null ? funcLabel(nod.id) : classFuncLabel(nod.inClass, nod.id), (LocalScope<Info>) curScope, genScope);
 
 		int size = nod.sons.size();
+		isFuncParam = true;
 		for (int i = 0; i < size; ++i) {
 			Node son = nod.sons.get(i);
+			if (i == 6 || i == size - 1) isFuncParam = false;
 			visit(son);
-			if (i < size - 1) curFunc.addParam(curScope.findItem(son.id).getRegName());
 		}
 		if (!nextStatLabel.isEmpty()) insertQuad(new Quad("nop"));
 		curScope = curScope.parent;
+		curFunc.setRetSize(nod.type.getSize());
 		insertFunc(curFunc);
 	}
 
@@ -193,7 +230,6 @@ public class IRBuilder extends AstVisitor {
 		for (int i = 0; i < size; ++i) {
 			Node son = nod.sons.get(i);
 			visit(son);
-			if (i < size - 1) curFunc.addParam(curScope.findItem(son.id).getRegName());
 		}
 		curScope = curScope.parent;
 		insertFunc(curFunc);
@@ -328,16 +364,12 @@ public class IRBuilder extends AstVisitor {
 		insertQuad(new Quad("nop"));
 	}
 
-	boolean isTempReg(String name) {
-		char c = name.charAt(1);
-		return '0' <= c && c <= '9';
-	}
-
-	void updateTempReg(String name, String newName) {
+	void updateTempReg(String name, String newName, String entity) {
 		for (int i = curCodeList.size() - 1; i >= 0; --i) {
 			Quad code = curCodeList.get(i);
-			if (code.getRtName().equals(name)) {
+			if (code.getRt() instanceof Register && code.getRtName().equals(name)) {
 				code.setRt(newName);
+				((Register) code.getRt()).setMemPos(entity);
 				break;
 			}
 		}
@@ -358,7 +390,7 @@ public class IRBuilder extends AstVisitor {
 		switch (nod.id) {
 			case "=":
 				if (isTempReg(right.reg.get())) {
-					updateTempReg(right.reg.get(), left.reg.get());
+					updateTempReg(right.reg.get(), left.reg.get(), ((Register) left.reg).getMemPos());
 				} else {
 					insertQuad(new MovQuad("mov", left.reg, right.reg));
 				}
@@ -368,9 +400,9 @@ public class IRBuilder extends AstVisitor {
 					if (left.type instanceof IntTypeRef)
 						insertQuad(new A3Quad("add", nod.reg, left.reg, right.reg));
 					else if (left.type instanceof StringTypeRef) {
-						insertQuad(new Quad("param", left.reg));
-						insertQuad(new Quad("param", right.reg));
-						insertQuad(new Quad("call", nod.reg, new FuncName(funcLabel("stringCat")), new ImmOprand(2)));
+						insertQuad(new ParamQuad("param", left.reg));
+						insertQuad(new ParamQuad("param", right.reg));
+						insertQuad(new CallQuad("call", nod.reg, new FuncName(funcLabel("stringCat")), new ImmOprand(2)));
 					}
 				}
 				else {
@@ -429,9 +461,9 @@ public class IRBuilder extends AstVisitor {
 				if (!certain) {
 					if (left.type instanceof IntTypeRef) insertQuad(new A3Quad("les", nod.reg, left.reg, right.reg));
 					else if (left.type instanceof StringTypeRef) {
-						insertQuad(new Quad("param", left.reg));
-						insertQuad(new Quad("param", right.reg));
-						insertQuad(new Quad("call", nod.reg, new FuncName(funcLabel("stringLes")), new ImmOprand(2)));
+						insertQuad(new ParamQuad("param", left.reg));
+						insertQuad(new ParamQuad("param", right.reg));
+						insertQuad(new CallQuad("call", nod.reg, new FuncName(funcLabel("stringLes")), new ImmOprand(2)));
 					}
 				}
 				else if (left.type instanceof IntTypeRef) {
@@ -442,9 +474,9 @@ public class IRBuilder extends AstVisitor {
 				if (!certain) {
 					if (left.type instanceof IntTypeRef) insertQuad(new A3Quad("leq", nod.reg, left.reg, right.reg));
 					else if (left.type instanceof StringTypeRef) {
-						insertQuad(new Quad("param", left.reg));
-						insertQuad(new Quad("param", right.reg));
-						insertQuad(new Quad("call", nod.reg, new FuncName(funcLabel("stringLeq")), new ImmOprand(2)));
+						insertQuad(new ParamQuad("param", left.reg));
+						insertQuad(new ParamQuad("param", right.reg));
+						insertQuad(new CallQuad("call", nod.reg, new FuncName(funcLabel("stringLeq")), new ImmOprand(2)));
 					}
 				}
 				else if (left.type instanceof IntTypeRef) {
@@ -455,9 +487,9 @@ public class IRBuilder extends AstVisitor {
 				if (!certain) {
 					if (left.type instanceof IntTypeRef) insertQuad(new A3Quad("gre", nod.reg, left.reg, right.reg));
 					else if (left.type instanceof StringTypeRef) {
-						insertQuad(new Quad("param", right.reg));
-						insertQuad(new Quad("param", left.reg));
-						insertQuad(new Quad("call", nod.reg, new FuncName(funcLabel("stringLes")), new ImmOprand(2)));
+						insertQuad(new ParamQuad("param", right.reg));
+						insertQuad(new ParamQuad("param", left.reg));
+						insertQuad(new CallQuad("call", nod.reg, new FuncName(funcLabel("stringLes")), new ImmOprand(2)));
 					}
 				}
 				else if (left.type instanceof IntTypeRef) {
@@ -468,9 +500,9 @@ public class IRBuilder extends AstVisitor {
 				if (certain) {
 					if (left.type instanceof IntTypeRef) insertQuad(new A3Quad("geq", nod.reg, left.reg, right.reg));
 					else if (left.type instanceof StringTypeRef) {
-						insertQuad(new Quad("param", right.reg));
-						insertQuad(new Quad("param", left.reg));
-						insertQuad(new Quad("call", nod.reg, new FuncName(funcLabel("stringLeq")), new ImmOprand(2)));
+						insertQuad(new ParamQuad("param", right.reg));
+						insertQuad(new ParamQuad("param", left.reg));
+						insertQuad(new CallQuad("call", nod.reg, new FuncName(funcLabel("stringLeq")), new ImmOprand(2)));
 					}
 				}
 				else if (left.type instanceof IntTypeRef) {
@@ -498,7 +530,7 @@ public class IRBuilder extends AstVisitor {
 				if (!son.isCertain()) {
 					nod.reg = tmp = new Register(getTempName());
 					long val = (1L << 31) - 1;
-					insertQuad(new A3Quad("xor", tmp, sonReg, new ImmOprand((int) val)));
+					insertQuad(new A3Quad("not", tmp, sonReg, new ImmOprand(0L)));
 				} else {
 					nod.beCertain();
 					if (son.type instanceof IntTypeRef) {
@@ -542,7 +574,10 @@ public class IRBuilder extends AstVisitor {
 	@Override void visit(NewExprNode nod) throws Exception {
 		Oprand var = new Register(getTempName());
 		Node son = nod.sons.get(0);
-		insertQuad(new Quad("new", var, new MemSpace(generateNewCode(son, false))));
+		if (son.type instanceof ClassTypeRef)
+			insertQuad(new Quad("new", var, new MemSpace(Integer.toString(((ClassTypeRef) son.type).getBelongClass().getSize()))));
+		else
+			insertQuad(new Quad("new", var, new MemSpace(generateNewCode(son, false))));
 		nod.reg = var;
 	}
 
@@ -550,14 +585,14 @@ public class IRBuilder extends AstVisitor {
 		visitChild(nod);
 		int n = nod.sons.size();
 		for (int i = 0; i < n; ++i) {
-			insertQuad(new Quad("param", nod.sons.get(i).reg));
+			insertQuad(new ParamQuad("param", nod.sons.get(i).reg));
 		}
 		String fun = nod.inClass == null ? funcLabel(nod.id): classFuncLabel(nod.inClass, nod.id);
 		if (!(nod.type instanceof VoidTypeRef)) {
 			nod.reg = new Register(getTempName());
-			insertQuad(new Quad("call", nod.reg, new FuncName(fun), new ImmOprand(n)));
+			insertQuad(new CallQuad("call", nod.reg, new FuncName(fun), new ImmOprand(n)));
 		} else {
-			insertQuad(new Quad("call", null, new FuncName(fun), new ImmOprand(n)));
+			insertQuad(new CallQuad("call", null, new FuncName(fun), new ImmOprand(n)));
 		}
 	}
 
@@ -568,7 +603,7 @@ public class IRBuilder extends AstVisitor {
 		if (nod.type instanceof SingleTypeRef) {
 			nod.reg = new MemAccess(son.reg.get() + '$' + idx.reg.get() + 'x' + nod.type.getSize());
 		} else {
-			nod.reg = new MemAccess(son.reg.get() + '$' + idx.reg.get() + 'x' + 8);
+			nod.reg = new MemAccess(son.reg.get() + '$' + idx.reg.get() + 'x' + addrLen);
 		}
 	}
 
@@ -585,7 +620,7 @@ public class IRBuilder extends AstVisitor {
 			}
 			else {
 				nod.reg = new Register(getTempName());
-				insertQuad(new Quad("loadAI", nod.reg, son.reg, new ImmOprand(4)));
+				insertQuad(new Quad("loadAI", nod.reg, son.reg, new ImmOprand(addrLen)));
 			}
 		}
 	}

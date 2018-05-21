@@ -1,9 +1,12 @@
+import BackEnd.CodeGen;
 import FrontEnd.*;
 import GeneralDataStructure.LinearIR;
+import GeneralDataStructure.MyListClass.MyList;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
 import java.io.*;
+import java.util.ArrayList;
 
 public class Main {
     public static void main (String[] args) throws IOException, Exception {
@@ -48,5 +51,13 @@ public class Main {
         IRBuilder irBuilder = new IRBuilder();
         LinearIR irCode = irBuilder.generateIR(root);
         irCode.print();
+
+        CodeGen codeGenerator = new CodeGen(irCode);
+        MyList<String> codes = codeGenerator.generateCode();
+
+        System.out.println();
+        for (int i = 0; i < codes.size(); ++i) {
+            System.out.println(codes.get(i));
+        }
     }
 }

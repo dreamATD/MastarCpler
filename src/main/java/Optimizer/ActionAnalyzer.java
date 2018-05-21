@@ -11,15 +11,16 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 public class ActionAnalyzer {
-	ArrayList<BasicBlock> blocks;
-	ArrayList<HashSet<String>> ueVar;
-	ArrayList<HashSet<String>> varKill;
-	ArrayList<HashSet<String>> liveOut;
+	private ArrayList<BasicBlock> blocks;
+	private ArrayList<HashSet<String>> ueVar;
+	private ArrayList<HashSet<String>> varKill;
+	private ArrayList<HashSet<String>> liveOut;
 
 	public ActionAnalyzer(ArrayList<BasicBlock> blockList) {
 		blocks = blockList;
 		ueVar = new ArrayList<>();
 		varKill = new ArrayList<>();
+		liveOut = new ArrayList<>();
 	}
 
 	public ArrayList<HashSet<String>> buildLiveOut() {

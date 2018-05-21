@@ -1,22 +1,24 @@
 package GeneralDataStructure.TypeSystem;
 
-public class ClassTypeRef extends SingleTypeRef {
+import static Utilizer.ConstVar.addrLen;
+
+public class ClassTypeRef extends SpecialTypeRef {
 	ClassDefTypeRef belong;
 	public ClassTypeRef(){
 		size = 0;
 	}
 	public ClassTypeRef(String className) {
 		typeId = className;
-		size = 0;
+		size = addrLen;
 	}
 	public ClassTypeRef(String className, ClassDefTypeRef b) {
 		typeId = className;
-		size = b.getSize();
+		size = addrLen;
 		belong = b;
 	}
 	public void setBelongClass(ClassDefTypeRef belong) {
 		this.belong = belong;
-		this.size = belong.getSize();
+		this.size = addrLen;
 	}
 	public ClassDefTypeRef getBelongClass() {
 		return belong;

@@ -36,7 +36,7 @@ public class ScopeBuilder {
 		if (!(type instanceof FuncTypeRef) || !((FuncTypeRef) type).getReturnType().equalsSingleType("int")) throw new NoMainFuncError(new Location(0, 0));
 	}
 	/*
-	* for the whole codes or class
+	* for the whole funcs or class
 	* */
 	void specialScopeResolver(SpecialScope<TypeRef> curScope, Node curNode) throws SyntaxError {
 		curNode.belongTo = curScope;
