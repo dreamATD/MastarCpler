@@ -11,4 +11,7 @@ public class MemAccess extends Oprand {
 	@Override public void set(String v) {
 		ac = v;
 	}
+	@Override public MemAccess copy() {
+		return new MemAccess(ac);
+	}
 }

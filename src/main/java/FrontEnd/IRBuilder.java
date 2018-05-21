@@ -106,11 +106,11 @@ public class IRBuilder extends AstVisitor {
 	}
 
 	private String classFuncLabel(String className, String funcName) {
-		return "%" + className + "$" + funcName;
+		return className + "$" + funcName;
 	}
 
 	private String funcLabel(String funcName) {
-		return "@" + funcName;
+		return funcName;
 	}
 
 	private String getGlobalName(String name) {
@@ -166,7 +166,7 @@ public class IRBuilder extends AstVisitor {
 
 		if (curScope instanceof GeneralScope) {
 			var = new Info(nod.reg.get(), nod.type);
-			linearCode.insertVar(nod.id, sz);
+			linearCode.insertVar(nod.reg.get(), sz);
 		}
 		else if (curScope instanceof ClassScope) var = new Info("%this$" + classType.getOffset(nod.id), nod.type);
 		else {
@@ -174,7 +174,7 @@ public class IRBuilder extends AstVisitor {
 			if (isFuncParam) curFunc.addParam(nod.reg.get(), sz);
 			else curFunc.addLocalVar(nod.reg.get(), sz);
 		}
-		curScope.addItem(nod.id, var);
+		curScope.addItem(nod.reg.get(), var);
 
 
 		if (nod.sons.size() == 0) return;
@@ -190,7 +190,7 @@ public class IRBuilder extends AstVisitor {
 				updateTempReg(son.reg.get(), nod.reg.get(), ((Register) nod.reg).getMemPos());
 				son.reg = nod.reg;
 			}
-			else insertQuad(new MovQuad("mov", new Register(var.getRegName()), son.reg));
+			else insertQuad(new MovQuad("mov", new Register(var.getRegName()), son.reg.copy()));
 		}
 	}
 
@@ -268,11 +268,11 @@ public class IRBuilder extends AstVisitor {
 			case "!" :
 				left = nod.sons.get(0);
 				visit(left);
-				insertQuad(new Quad("tbr", left.reg, new LabelName(Integer.toString(labelFalse)), new LabelName(Integer.toString(labelTrue))));
+				insertQuad(new Quad("tbr", left.reg.copy(), new LabelName(Integer.toString(labelFalse)), new LabelName(Integer.toString(labelTrue))));
 				break;
 			default:
 				visit(nod);
-				insertQuad(new Quad("cbr", nod.reg, new LabelName(Integer.toString(labelTrue)), new LabelName(Integer.toString(labelFalse))));
+				insertQuad(new Quad("cbr", nod.reg.copy(), new LabelName(Integer.toString(labelTrue)), new LabelName(Integer.toString(labelFalse))));
 				break;
 
 		}
@@ -346,8 +346,8 @@ public class IRBuilder extends AstVisitor {
 
 	@Override public void visit(RetStatNode nod) throws Exception {
 		visitChild(nod);
-		if (nod.sons.size() > 0) insertQuad(new Quad("ret", nod.sons.get(0).reg));
-		else insertQuad(new Quad("ret"));
+		if (nod.sons.size() > 0) insertQuad(new RetQuad("ret", nod.sons.get(0).reg.copy()));
+		else insertQuad(new RetQuad("ret"));
 	}
 
 	@Override public void visit(BrkStatNode nod) throws Exception {
@@ -392,16 +392,16 @@ public class IRBuilder extends AstVisitor {
 				if (isTempReg(right.reg.get())) {
 					updateTempReg(right.reg.get(), left.reg.get(), ((Register) left.reg).getMemPos());
 				} else {
-					insertQuad(new MovQuad("mov", left.reg, right.reg));
+					insertQuad(new MovQuad("mov", left.reg.copy(), right.reg.copy()));
 				}
 				break;
 			case "+":
 				if (!certain) {
 					if (left.type instanceof IntTypeRef)
-						insertQuad(new A3Quad("add", nod.reg, left.reg, right.reg));
+						insertQuad(new A3Quad("add", nod.reg, left.reg.copy(), right.reg.copy()));
 					else if (left.type instanceof StringTypeRef) {
-						insertQuad(new ParamQuad("param", left.reg));
-						insertQuad(new ParamQuad("param", right.reg));
+						insertQuad(new ParamQuad("param", left.reg.copy()));
+						insertQuad(new ParamQuad("param", right.reg.copy()));
 						insertQuad(new CallQuad("call", nod.reg, new FuncName(funcLabel("stringCat")), new ImmOprand(2)));
 					}
 				}
@@ -413,56 +413,56 @@ public class IRBuilder extends AstVisitor {
 				}
 				break;
 			case "-":
-				if (!certain) insertQuad(new A3Quad("sub", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new A3Quad("sub", nod.reg, left.reg.copy(), right.reg.copy()));
 				else nod.reg = new ImmOprand(((ImmOprand) left.reg).getVal() - ((ImmOprand)right.reg).getVal());
 				break;
 			case "*":
-				if (!certain) insertQuad(new A3Quad("mul", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new A3Quad("mul", nod.reg, left.reg.copy(), right.reg.copy()));
 				else nod.reg = new ImmOprand(((ImmOprand) left.reg).getVal() * ((ImmOprand)right.reg).getVal());
 				break;
 			case "/":
-				if (!certain) insertQuad(new A3Quad("div", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new A3Quad("div", nod.reg, left.reg.copy(), right.reg.copy()));
 				else nod.reg = new ImmOprand(((ImmOprand) left.reg).getVal() / ((ImmOprand)right.reg).getVal());
 				break;
 			case "%":
-				if (!certain) insertQuad(new A3Quad("mod", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new A3Quad("mod", nod.reg, left.reg.copy(), right.reg.copy()));
 				else nod.reg = new ImmOprand(((ImmOprand) left.reg).getVal() % ((ImmOprand)right.reg).getVal());
 				break;
 			case "<<":
-				if (!certain) insertQuad(new A3Quad("lsh", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new A3Quad("lsh", nod.reg, left.reg.copy(), right.reg.copy()));
 				else nod.reg = new ImmOprand(((ImmOprand) left.reg).getVal() << ((ImmOprand)right.reg).getVal());
 				break;
 			case ">>":
-				if (!certain) insertQuad(new A3Quad("rsh", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new A3Quad("rsh", nod.reg, left.reg.copy(), right.reg.copy()));
 				else nod.reg = new ImmOprand(((ImmOprand) left.reg).getVal() >> ((ImmOprand)right.reg).getVal());
 				break;
 			case "&":
-				if (!certain) insertQuad(new A3Quad("and", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new A3Quad("and", nod.reg, left.reg.copy(), right.reg.copy()));
 				else nod.reg = new ImmOprand(((ImmOprand) left.reg).getVal() & ((ImmOprand)right.reg).getVal());
 				break;
 			case "|":
-				if (!certain) insertQuad(new A3Quad("or", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new A3Quad("or", nod.reg, left.reg.copy(), right.reg.copy()));
 				else nod.reg = new ImmOprand(((ImmOprand) left.reg).getVal() | ((ImmOprand)right.reg).getVal());
 				break;
 			case "^":
-				if (!certain) insertQuad(new A3Quad("xor", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new A3Quad("xor", nod.reg, left.reg.copy(), right.reg.copy()));
 				else nod.reg = new ImmOprand(((ImmOprand) left.reg).getVal() ^ ((ImmOprand)right.reg).getVal());
 				break;
 			case "==":
-				if (!certain) insertQuad(new A3Quad("equ", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new A3Quad("equ", nod.reg, left.reg.copy(), right.reg.copy()));
 				else
 					nod.reg = new BoolImmOprand(left.reg.get().equals(right.reg.get()) ? 1 : 0);
 				break;
 			case "!=":
-				if (!certain) insertQuad(new A3Quad("neq", nod.reg, left.reg, right.reg));
+				if (!certain) insertQuad(new A3Quad("neq", nod.reg, left.reg.copy(), right.reg.copy()));
 				else nod.reg = new BoolImmOprand(!left.reg.get().equals(right.reg.get()) ? 1 : 0);
 				break;
 			case "<":
 				if (!certain) {
-					if (left.type instanceof IntTypeRef) insertQuad(new A3Quad("les", nod.reg, left.reg, right.reg));
+					if (left.type instanceof IntTypeRef) insertQuad(new A3Quad("les", nod.reg, left.reg.copy(), right.reg.copy()));
 					else if (left.type instanceof StringTypeRef) {
-						insertQuad(new ParamQuad("param", left.reg));
-						insertQuad(new ParamQuad("param", right.reg));
+						insertQuad(new ParamQuad("param", left.reg.copy()));
+						insertQuad(new ParamQuad("param", right.reg.copy()));
 						insertQuad(new CallQuad("call", nod.reg, new FuncName(funcLabel("stringLes")), new ImmOprand(2)));
 					}
 				}
@@ -472,10 +472,10 @@ public class IRBuilder extends AstVisitor {
 				break;
 			case "<=":
 				if (!certain) {
-					if (left.type instanceof IntTypeRef) insertQuad(new A3Quad("leq", nod.reg, left.reg, right.reg));
+					if (left.type instanceof IntTypeRef) insertQuad(new A3Quad("leq", nod.reg, left.reg.copy(), right.reg.copy()));
 					else if (left.type instanceof StringTypeRef) {
-						insertQuad(new ParamQuad("param", left.reg));
-						insertQuad(new ParamQuad("param", right.reg));
+						insertQuad(new ParamQuad("param", left.reg.copy()));
+						insertQuad(new ParamQuad("param", right.reg.copy()));
 						insertQuad(new CallQuad("call", nod.reg, new FuncName(funcLabel("stringLeq")), new ImmOprand(2)));
 					}
 				}
@@ -485,10 +485,10 @@ public class IRBuilder extends AstVisitor {
 				break;
 			case ">":
 				if (!certain) {
-					if (left.type instanceof IntTypeRef) insertQuad(new A3Quad("gre", nod.reg, left.reg, right.reg));
+					if (left.type instanceof IntTypeRef) insertQuad(new A3Quad("gre", nod.reg, left.reg.copy(), right.reg.copy()));
 					else if (left.type instanceof StringTypeRef) {
-						insertQuad(new ParamQuad("param", right.reg));
-						insertQuad(new ParamQuad("param", left.reg));
+						insertQuad(new ParamQuad("param", right.reg.copy()));
+						insertQuad(new ParamQuad("param", left.reg.copy()));
 						insertQuad(new CallQuad("call", nod.reg, new FuncName(funcLabel("stringLes")), new ImmOprand(2)));
 					}
 				}
@@ -498,10 +498,10 @@ public class IRBuilder extends AstVisitor {
 				break;
 			case ">=":
 				if (certain) {
-					if (left.type instanceof IntTypeRef) insertQuad(new A3Quad("geq", nod.reg, left.reg, right.reg));
+					if (left.type instanceof IntTypeRef) insertQuad(new A3Quad("geq", nod.reg, left.reg.copy(), right.reg.copy()));
 					else if (left.type instanceof StringTypeRef) {
-						insertQuad(new ParamQuad("param", right.reg));
-						insertQuad(new ParamQuad("param", left.reg));
+						insertQuad(new ParamQuad("param", right.reg.copy()));
+						insertQuad(new ParamQuad("param", left.reg.copy()));
 						insertQuad(new CallQuad("call", nod.reg, new FuncName(funcLabel("stringLeq")), new ImmOprand(2)));
 					}
 				}

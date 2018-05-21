@@ -125,6 +125,7 @@ public class FuncSSABuilder {
 		HashSet<BasicBlock> workList;
 		for (String data: global) {
 			workList = varDomain.get(data);
+			if (workList == null) continue;
 			for (BasicBlock block: workList) {
 				for (BasicBlock sucBlock: domainEdge.get(block.getIdx())) {
 					if (!sucBlock.containsPhi(data)) {
@@ -157,8 +158,9 @@ public class FuncSSABuilder {
 				tmp.add(rt);
 			} else if (c instanceof A3Quad || c instanceof MovQuad || c instanceof CallQuad) {
 				String rt = c.getRtName();
-				if (c.getR1() instanceof Register && !nameStack.isEmpty()) c.setR1(nameStack.get(c.getR1Name()).peek());
-				if (c.getR2() instanceof Register && !nameStack.isEmpty()) c.setR2(nameStack.get(c.getR2Name()).peek());
+				Stack<String> s1 = nameStack.get(c.getR1Name()), s2 = nameStack.get(c.getR2Name());
+				if (c.getR1() instanceof Register && s1 != null) c.setR1(s1.peek());
+				if (c.getR2() instanceof Register && s2 != null) c.setR2(s2.peek());
 				c.setRt(newName(rt));
 				tmp.add(rt);
 			}

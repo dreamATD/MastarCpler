@@ -11,4 +11,7 @@ public class FuncName extends Oprand {
 	@Override public void set(String f) {
 		func = f;
 	}
+	@Override public FuncName copy() {
+		return new FuncName(func);
+	}
 }

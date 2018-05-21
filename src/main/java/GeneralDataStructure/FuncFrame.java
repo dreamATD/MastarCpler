@@ -218,10 +218,16 @@ public class FuncFrame {
 	}
 
 	public String[] getFirst6Params() {
-		String[] ret = new String[6];
+		int cnt = 0;
+		String[] tmp = new String[6];
 		for (Map.Entry<String, Long> entry: params.entrySet()) {
-			if (entry.getValue() <= 0) ret[-entry.getValue().intValue()] = entry.getKey();
+			if (entry.getValue() <= 0) {
+				++cnt;
+				tmp[-entry.getValue().intValue()] = entry.getKey();
+			}
 		}
+		String[] ret = new String[cnt];
+		for (int i = 0; i < cnt; ++i) ret[i] = tmp[i];
 		return ret;
 	}
 }

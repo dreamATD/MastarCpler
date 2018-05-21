@@ -19,4 +19,7 @@ public class ImmOprand extends Oprand {
 	public int getSize() {
 		return this instanceof BoolImmOprand ? ConstVar.boolLen : ConstVar.intLen;
 	}
+	@Override public ImmOprand copy() {
+		return new ImmOprand(val);
+	}
 }

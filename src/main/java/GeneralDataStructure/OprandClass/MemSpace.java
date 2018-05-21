@@ -11,4 +11,7 @@ public class MemSpace extends Oprand {
 	@Override public void set(String str) {
 		sp = str;
 	}
+	@Override public MemSpace copy() {
+		return new MemSpace(sp);
+	}
 }

@@ -8,9 +8,15 @@ public class Register extends Oprand {
 	public Register(String n) {
 		name = n;
 	}
-	public Register(String n, String e) {
+	public Register(String n, String m) {
 		name = n;
-		memPos = e;
+		memPos = m;
+	}
+	public Register(String n, String m, String e, boolean w) {
+		name = n;
+		memPos = m;
+		entity = e;
+		willUse = w;
 	}
 	@Override public String get() {
 		return name;
@@ -45,5 +51,8 @@ public class Register extends Oprand {
 
 	public String getEntity() {
 		return entity;
+	}
+	@Override public Register copy() {
+		return new Register(name, memPos, entity, willUse);
 	}
 }

@@ -14,8 +14,8 @@ public class LinearIR {
 		funcs = new ArrayList<>();
 		globals = new ArrayList<>();
 		varSize = new HashMap<>();
-		globals.add("@getInt");
-		varSize.put("@getInt", ConstVar.intLen);
+		globals.add("getInt");
+		varSize.put("getInt", ConstVar.intLen);
 	}
 	public void insertFunc(FuncFrame func) {
 		funcs.add(func);

@@ -237,11 +237,11 @@ public class RegDistributor {
 				Oprand r1 = c.getR1();
 				Oprand r2 = c.getR2();
 				for (int k = 0; k < funcParams.length; ++k) {
-					if (!dyed[k] && r1 instanceof Register && ((Register) r1).getMemPos().equals(funcParams[k])) {
+					if (!dyed[k] && r1 instanceof Register && funcParams[k].equals(((Register) r1).getMemPos())) {
 						dyed[k] = true;
 						col[activeSet.find(nameIdx.get(r1.get()))] = k;
 					}
-					if (!dyed[k] && r2 instanceof Register && ((Register) r2).getMemPos().equals(funcParams[k])) {
+					if (!dyed[k] && r2 instanceof Register && funcParams[k].equals(((Register) r2).getMemPos())) {
 						dyed[k] = true;
 						col[activeSet.find(nameIdx.get(r2.get()))] = k;
 					}

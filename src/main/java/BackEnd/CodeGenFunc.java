@@ -87,15 +87,17 @@ public class CodeGenFunc {
 			} else if (c instanceof MovQuad) {
 				updateMov(c);
 			} else if (c instanceof ParamQuad) {
-				tmpParams.add(c.getR1Name());
+				tmpParams.add(c.getRtName());
 			} else if (c instanceof CallQuad) {
 				updateCall(c);
+			} else if (c instanceof RetQuad) {
+				updateRet(c);
 			}
 			modifyQuadRegLive(c);
 		}
 
 		if (useRbp) {
-			result.add(format("pop", "rbp"));
+			result.add(format("pop"));
 			result.addFirst(format("mov", "rbp", "rsp"));
 			result.addFirst(format("push", "rbp"));
 		}
@@ -230,9 +232,12 @@ public class CodeGenFunc {
 		if (rspVal % sz != 0) {
 			long newRsp = (rspVal + sz - 1) / sz * sz;
 			subRsp(newRsp - rspVal);
-			rspVal = newRsp + sz;
+			rspVal = newRsp;
 		}
-		result.add(format("push", reg));
+		rspVal += sz;
+		if (Character.isDigit(reg.charAt(0))) result.add(format("pushl", reg));
+		else if (reg.charAt(0) == 't' || reg.charAt(0) == 'f') result.add(format("pushb", reg));
+		else result.add(format("push", reg));
 	}
 
 	private void updateCall(Quad c) {
@@ -249,6 +254,7 @@ public class CodeGenFunc {
 						push(reg, ConstVar.intLen);
 					}
 					if (val != null) {
+						if (val == 0) result.add(format("xor", reg, reg));
 						result.add(format("mov", reg, Long.toString(val)));
 					} else {
 						result.add(format("mov", reg, tr));
@@ -258,9 +264,8 @@ public class CodeGenFunc {
 				push(tr, ConstVar.intLen);
 			}
 		}
+		tmpParams.clear();
 
-		addRsp(rspVal - oldRsp);
-		rspVal = oldRsp;
 		if (c.getRt() != null) {
 			Register rt = (Register) c.getRt();
 			String nt = rt.get();
@@ -273,7 +278,19 @@ public class CodeGenFunc {
 		boolean raxUse = regLive.contains("rax");
 		if (raxUse) push("rax", varSize.get(regStore.get("rax").iterator().next()));
 		translate(c);
-		if (raxUse) result.add(format("pop"));
+		addRsp(rspVal - oldRsp);
+		rspVal = oldRsp;
+	}
+
+	private void updateRet(Quad c) {
+		Oprand rt = c.getRt();
+		if (rt != null) {
+			Long val = values.get(c.getRtName());
+			if (rt instanceof ImmOprand && ((ImmOprand) rt).getVal() == 0 ||
+					rt instanceof Register && val != null && val == 0) result.add(format("xor", "rax", "rax"));
+			else result.add(format("mov", "rax", c.getRtName()));
+		}
+		result.add(format("ret"));
 	}
 
 	private void update(HashSet<String> entities, String reg, HashSet<String> regSt) {

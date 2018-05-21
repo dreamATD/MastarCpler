@@ -11,4 +11,7 @@ public class StringLiteral extends Oprand {
 	@Override public void set(String s) {
 		str = s;
 	}
+	@Override public StringLiteral copy() {
+		return new StringLiteral(str);
+	}
 }

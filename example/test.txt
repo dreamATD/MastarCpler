@@ -1,5 +1,9 @@
+int func(int a, int b, int c, int d, int e, int f, int g) {
+    return a + b + c + d + e + f + g;
+}
+
 int main() {
-    int a = getInt(), b = getInt(), c = getInt();
+    int a = func(1, 1, 1, 1, 1, 1, 1), b = getInt(), c = getInt();
     c = a + b;
     a = c + b;
     a = c + b;

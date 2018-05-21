@@ -11,4 +11,7 @@ public class LabelName extends Oprand {
 	@Override public void set(String l) {
 		label = l;
 	}
+	@Override public LabelName copy() {
+		return new LabelName(label);
+	}
 }
