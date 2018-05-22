@@ -62,6 +62,7 @@ public class ActionAnalyzer {
 				int oldSize = l.size();
 				for (int j = 0; j < succs.size(); ++j) {
 					int succIdx = succs.get(j).getIdx();
+					SetOperation.selfUnion(l, ueVar.get(succIdx));
 					SetOperation.selfUnion(l, SetOperation.minus(liveOut.get(succIdx), varKill.get(succIdx)));
 				}
 				if (l.size() > oldSize) changed = true;

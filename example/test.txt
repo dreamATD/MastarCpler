@@ -11,8 +11,8 @@ int main() {
     if (!(a == b || c == a)) {
         a = b + 1;
     } else {
-        b = a + 1;
+        a = c + 1;
     }
-    ++b;
+    b = a;
     return 0;
 }

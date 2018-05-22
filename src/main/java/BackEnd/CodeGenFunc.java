@@ -92,6 +92,14 @@ public class CodeGenFunc {
 				updateCall(c);
 			} else if (c instanceof RetQuad) {
 				updateRet(c);
+			} else if (c instanceof JumpQuad) {
+				updateJump(c);
+			} else if (c instanceof CJumpQuad) {
+				updateCondJump(c, codes.get(i + 1));
+			} else if (c instanceof CondQuad) {
+				updateCond(c);
+			} else if (c instanceof PhiQuad) {
+				modifySize(((Register) c.getRt()).getEntity(), varSize.get(((PhiQuad) c).getParams().get(0).get()));
 			}
 			modifyQuadRegLive(c);
 		}
@@ -189,8 +197,8 @@ public class CodeGenFunc {
 			values.put(nt, calc(c.getOp(), getValue(r1), getValue(r2)));
 			return;
 		} else {
-			if (certain1) c.changeR1(new ImmOprand(values.get(n1)));
-			if (certain2) c.changeR2(new ImmOprand(values.get(n2)));
+			if (certain1) c.changeR1(new ImmOprand(getValue(r1)));
+			if (certain2) c.changeR2(new ImmOprand(getValue(r2)));
 			translate(c);
 		}
 		modifySize((rt).getEntity(), varSize.get(((Register) r1).getEntity()));
@@ -293,6 +301,20 @@ public class CodeGenFunc {
 		result.add(format("ret"));
 	}
 
+	private void updateJump(Quad c) {
+		translate(c);
+	}
+
+	private void updateCond(Quad c) {
+		translate(c);
+	}
+
+	private void updateCondJump(Quad c, Quad cNext) {
+		if (cNext.getLabel().equals(c.getR1Name())) c.changeRt(c.getR2());
+		else c.changeRt(c.getR1());
+		translate(c);
+	}
+
 	private void update(HashSet<String> entities, String reg, HashSet<String> regSt) {
 		for (String data: entities) getEntityExist(data).add(reg);
 		regSt.addAll(entities);
@@ -365,18 +387,12 @@ public class CodeGenFunc {
 	}
 
 	private void translate(Quad c) {
-		String nt = c.getRtName(), n1 = c.getR1Name(), n2 = c.getR2Name();
+		String nt = c.getRt() == null ? null : c.getRtName();
+		String n1 = c.getR1() == null ? null : c.getR1Name();
+		String n2 = c.getR2() == null ? null : c.getR2Name();
 		switch (c.getOp()) {
 			case "add":
-				if (c.getR1() instanceof ImmOprand && ((ImmOprand) c.getR1()).getVal() == 1) {
-					result.add(format("mov", nt, n2));
-					result.add(format("inc", nt));
-				} else if (c.getR2() instanceof ImmOprand && ((ImmOprand) c.getR2()).getVal() == 1) {
-					result.add(format("mov", nt, n1));
-					result.add(format("inc", nt));
-				} else {
-					result.add(format("lea", nt, String.format("[%s]", n1 + "+" + n2)));
-				}
+				result.add(format("lea", nt, String.format("[%s]", n1 + "+" + n2)));
 				break;
 			case "sub":
 				if (c.getR1() instanceof ImmOprand && ((ImmOprand) c.getR1()).getVal() == 0) {
@@ -447,6 +463,55 @@ public class CodeGenFunc {
 				result.add(format("call", c.getR1Name()));
 				if (c.getRt() != null)
 					result.add(format("mov", c.getRtName(), "rax"));
+				break;
+			case "equ":
+				result.add(format("cmp", c.getR1Name(), c.getR2Name()));
+				result.add(format("sete", c.getRtName()));
+				break;
+			case "neq":
+				result.add(format("cmp", c.getR1Name(), c.getR2Name()));
+				result.add(format("setne", c.getRtName()));
+				break;
+			case "les":
+				result.add(format("cmp", c.getR1Name(), c.getR2Name()));
+				result.add(format("setl", c.getRtName()));
+				break;
+			case "leq":
+				result.add(format("cmp", c.getR1Name(), c.getR2Name()));
+				result.add(format("setle", c.getRtName()));
+				break;
+			case "gre":
+				result.add(format("cmp", c.getR1Name(), c.getR2Name()));
+				result.add(format("setg", c.getRtName()));
+				break;
+			case "geq":
+				result.add(format("cmp", c.getR1Name(), c.getR2Name()));
+				result.add(format("setge", c.getRtName()));
+				break;
+			case "cmp":
+				result.add(format("cmp", c.getR1Name(), c.getR2Name()));
+				break;
+			case "jump":
+				result.add(format("jmp", c.getRtName()));
+				break;
+			case "je":
+				result.add(format("je", c.getRtName()));
+				break;
+			case "jne":
+				result.add(format("jne", c.getRtName()));
+				break;
+			case "jl":
+				result.add(format("jl", c.getRtName()));
+				break;
+			case "jle":
+				result.add(format("jle", c.getRtName()));
+				break;
+			case "jg":
+				result.add(format("jg", c.getRtName()));
+				break;
+			case "jge":
+				result.add(format("jge", c.getRtName()));
+				break;
 		}
 	}
 

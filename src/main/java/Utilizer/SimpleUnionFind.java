@@ -16,7 +16,7 @@ public class SimpleUnionFind {
 
 	public int find(int x) {
 		if (f[x] == x) return x;
-		f[x] = find(x);
+		f[x] = find(f[x]);
 		return f[x];
 	}
 

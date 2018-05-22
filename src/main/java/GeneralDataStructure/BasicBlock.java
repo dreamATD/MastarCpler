@@ -59,7 +59,7 @@ public class BasicBlock {
 		for (int i = 0; i < codes.size(); ++i) {
 			Quad c = codes.get(i);
 			if (! (c instanceof PhiQuad)) break;
-			String rt = c.getRtName();
+			String rt = c.getRtName().split("_")[0];
 			if (nameList.contains(rt)) c.addPhiParams(nameStack.get(rt).peek());
 		}
 	}

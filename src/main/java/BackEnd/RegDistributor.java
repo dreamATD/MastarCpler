@@ -22,7 +22,6 @@ public class RegDistributor {
 
 	private String[] funcParams;
 	private boolean [][] matrix;
-	private boolean [] exist;
 	private int[] value, col;
 	private int nVar;
 
@@ -41,7 +40,6 @@ public class RegDistributor {
 
 	private void removeNode(int x) {
 		nameIdx.remove(global.get(x));
-		exist[x] = false;
 	}
 
 	private void link(int u, int v) {
@@ -77,12 +75,10 @@ public class RegDistributor {
 
 		activeSet = new SimpleUnionFind(nVar);
 		matrix = new boolean[nVar][nVar];
-		exist = new boolean[nVar];
 		value = new int[nVar];
 		col = new int[nVar];
 
 		for (int i = 0; i < nVar; ++i) {
-			exist[i] = true;
 			col[i] = -1;
 		}
 	}
@@ -109,8 +105,6 @@ public class RegDistributor {
 						int fu = activeSet.find(nameIdx.get(rt));
 						int fv = activeSet.find(nameIdx.get(params.get(k).get()));
 						activeSet.merge(nameIdx.get(rt), nameIdx.get(params.get(k).get()));
-						if (fv != activeSet.find(fv)) Tool.swap(fu, fv);
-						removeNode(fu);
 					}
 				}
 			}
@@ -183,12 +177,11 @@ public class RegDistributor {
 				if (c instanceof MovQuad && c.getR1() instanceof Register) {
 					String nu = c.getRtName(), nv = c.getR1Name();
 					int u = nameIdx.get(nu), v = nameIdx.get(nv);
-					if (!matrix[u][v]) {
-						int fu = activeSet.find(u);
-						int fv = activeSet.find(v);
-						activeSet.merge(u, v);
-						if (activeSet.find(v) != fv) Tool.<Integer>swap(u, v);
-						removeNode(fu);
+					int fu = activeSet.find(u);
+					int fv = activeSet.find(v);
+					if (!matrix[fu][fv] && fu != fv) {
+						activeSet.merge(fu, fv);
+						if (activeSet.find(fv) != fv) Tool.<Integer>swap(fu, fv);
 						changed = true;
 
 						/* Rebuild graph. */
@@ -307,20 +300,20 @@ public class RegDistributor {
 		for (int i = 0; i < blocks.size(); ++i) {
 			codes = blocks.get(i).getCodes();
 
-			/* Remove phi. */
+			/* Remove phi. *//*
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
 				if (!(c instanceof PhiQuad)) {
 					codes.removeBefore(j);
 					break;
 				}
-			}
+			}*/
 
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
 				Oprand rt = c.getRt(), r1 = c.getR1(), r2 = c.getR2();
+				if (c instanceof PhiQuad) continue;
 				if (rt instanceof Register) {
-					int t = activeSet.find(nameIdx.get(rt.get()));
 					int nrt = col[activeSet.find(nameIdx.get(rt.get()))];
 					rt.set(regList[nrt]);
 				}

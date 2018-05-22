@@ -241,6 +241,7 @@ public class IRBuilder extends AstVisitor {
 		for (int i = 1; i < nod.sons.size(); ++i) {
 			visit(nod.sons.get(i));
 		}
+		insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(ifElseEndLabel))));
 		updateNextStatLabel(ifElseEndLabel);
 		ifElseEndLabel = -1;
 	}
@@ -550,17 +551,17 @@ public class IRBuilder extends AstVisitor {
 		switch(nod.id) {
 			case "++":
 				nod.reg = sonReg;
-				insertQuad(new A3Quad("add", sonReg, sonReg, new ImmOprand(1)));
+				insertQuad(new A3Quad("add", sonReg.copy(), sonReg.copy(), new ImmOprand(1)));
 				break;
 			case "--":
 				nod.reg = sonReg;
-				insertQuad(new A3Quad("sub", sonReg, sonReg, new ImmOprand(1)));
+				insertQuad(new A3Quad("sub", sonReg.copy(), sonReg.copy(), new ImmOprand(1)));
 				break;
 			case "~": case "!":
 				if (!son.isCertain()) {
 					nod.reg = tmp = new Register(getTempName());
 					long val = (1L << 31) - 1;
-					insertQuad(new A3Quad("not", tmp, sonReg, new ImmOprand(0L)));
+					insertQuad(new A3Quad("not", tmp, sonReg.copy(), new ImmOprand(0L)));
 				} else {
 					nod.beCertain();
 					if (son.type instanceof IntTypeRef) {

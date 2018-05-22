@@ -175,4 +175,7 @@ public class Quad {
 	public void changeR2(Oprand nr2) {
 		r2 = nr2;
 	}
+	public void changeRt(Oprand nrt) {
+		rt = nrt;
+	}
 }

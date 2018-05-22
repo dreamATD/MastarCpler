@@ -102,9 +102,8 @@ public class FuncSSABuilder {
 	}
 
 	private void addPhi() {
-		HashSet<String> varKill = new HashSet<>();
-
 		for (BasicBlock u: blockList) {
+			HashSet<String> varKill = new HashSet<>();
 			MyList<Quad> codes = u.getCodes();
 			for (int i = 0; i < codes.size(); ++i) {
 				Quad c = codes.get(i);
@@ -158,9 +157,10 @@ public class FuncSSABuilder {
 				c.setRt(newName(rt));
 				tmp.add(rt);
 			} else if (c instanceof A3Quad || c instanceof MovQuad || c instanceof CallQuad || c instanceof CondQuad || c instanceof ParamQuad) {
-				Stack<String> s1 = nameStack.get(c.getR1Name()), s2 = nameStack.get(c.getR2Name());
-				if (c.getR1() instanceof Register && s1 != null) c.setR1(s1.peek());
-				if (c.getR2() instanceof Register && s2 != null) c.setR2(s2.peek());
+				if (c.getR1() instanceof Register && nameStack.containsKey(c.getR1Name()))
+					c.setR1(nameStack.get(c.getR1Name()).peek());
+				if (c.getR2() instanceof Register && nameStack.containsKey(c.getR2Name()))
+					c.setR2(nameStack.get(c.getR2Name()).peek());
 				if (c instanceof CondQuad || c instanceof ParamQuad) continue;
 				String rt = c.getRtName();
 				c.setRt(newName(rt));
@@ -169,7 +169,7 @@ public class FuncSSABuilder {
 		}
 
 		for (int i = 0; i < u.succs.size(); ++i) {
-			u.addPhiParams(tmp, nameStack);
+			u.succs.get(i).addPhiParams(tmp, nameStack);
 		}
 
 		ArrayList<BasicBlock> domSucc = rmmDom.get(u.getIdx());

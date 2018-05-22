@@ -1,6 +1,9 @@
 package GeneralDataStructure;
 
+import GeneralDataStructure.QuadClass.CJumpQuad;
+import GeneralDataStructure.QuadClass.JumpQuad;
 import GeneralDataStructure.QuadClass.Quad;
+import GeneralDataStructure.QuadClass.RetQuad;
 import GeneralDataStructure.ScopeClass.LocalScope;
 import GeneralDataStructure.ScopeClass.SpecialScope;
 import javafx.util.Pair;
@@ -160,7 +163,6 @@ public class FuncFrame {
 				if (i == 0) first = block;
 				block.add(code);
 
-				INBLOCK:
 				for (int j = i + 1; j < size; ++j) {
 					Quad code2 = codes.get(j);
 					if (code2.getLabel() != null) {
@@ -169,21 +171,20 @@ public class FuncFrame {
 					}
 					block.add(code2);
 					BasicBlock block1, block2;
-					switch (code2.getOp()) {
-						case "cbr": case "tbr":
-							block1 = map.find(code2.getR1Name());
-							block2 = map.find(code2.getR2Name());
-							block.addSuccs(block1, block2);
-							block1.addPreps(block);
-							block2.addPreps(block);
-							break INBLOCK;
-						case "jump":
-							block1 = map.find(code2.getRtName());
-							block.addSuccs(block1);
-							block1.addPreps(block);
-							break INBLOCK;
-						case "ret":
-							break INBLOCK;
+					if (code2 instanceof CJumpQuad) {
+						block1 = map.find(code2.getR1Name());
+						block2 = map.find(code2.getR2Name());
+						block.addSuccs(block1, block2);
+						block1.addPreps(block);
+						block2.addPreps(block);
+						break;
+					} else if (code2 instanceof JumpQuad) {
+						block1 = map.find(code2.getRtName());
+						block.addSuccs(block1);
+						block1.addPreps(block);
+						break;
+					} else if (code2 instanceof RetQuad) {
+						break;
 					}
 				}
 				if (block.succs.isEmpty()) ends.add(block);
