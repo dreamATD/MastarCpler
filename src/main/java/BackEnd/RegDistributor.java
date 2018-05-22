@@ -169,9 +169,9 @@ public class RegDistributor {
 					} else {
 						c.setLive(false);
 					}
-					if (c.getR1() instanceof Register) liveNow.add(c.getR1Name());
-					if (c.getR2() instanceof Register) liveNow.add(c.getR2Name());
 				}
+				if (c.getR1() instanceof Register) liveNow.add(c.getR1Name());
+				if (c.getR2() instanceof Register) liveNow.add(c.getR2Name());
 			}
 		}
 	}
@@ -212,14 +212,12 @@ public class RegDistributor {
 			MyList<Quad> codes = blocks.get(i).getCodes();
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
-				if (c instanceof A3Quad || c instanceof MovQuad || c instanceof ParamQuad) {
-					Oprand r1 = c.getR1(), r2 = c.getR2();
-					if (r1 instanceof Register) {
-						++value[activeSet.find(nameIdx.get(r1.get()))];
-					}
-					if (r2 instanceof Register) {
-						++value[activeSet.find(nameIdx.get(r2.get()))];
-					}
+				Oprand r1 = c.getR1(), r2 = c.getR2();
+				if (r1 instanceof Register) {
+					++value[activeSet.find(nameIdx.get(r1.get()))];
+				}
+				if (r2 instanceof Register) {
+					++value[activeSet.find(nameIdx.get(r2.get()))];
 				}
 			}
 		}

@@ -8,5 +8,11 @@ int main() {
     a = c + b;
     a = c + b;
     b = c + a;
+    if (!(a == b || c == a)) {
+        a = b + 1;
+    } else {
+        b = a + 1;
+    }
+    ++b;
     return 0;
 }

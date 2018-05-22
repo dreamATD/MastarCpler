@@ -193,21 +193,21 @@ public class FuncFrame {
 		buildBbList();
 	}
 
-	/* In BFS order. */
+	/* In DFS order. */
 	public void buildBbList() {
-		LinkedList<BasicBlock> q = new LinkedList<>();
-		Set<String> inQueue = new HashSet<>();
+		Stack<BasicBlock> st = new Stack<>();
+		Set<String> vis = new HashSet<>();
 
-		q.push(first);
-		while (q.size() > 0) {
-			BasicBlock u = q.pop();
+		st.push(first);
+		while (st.size() > 0) {
+			BasicBlock u = st.pop();
 			bbList.add(u);
 			for (int i = 0; i < u.succs.size(); ++i) {
 				BasicBlock v = u.succs.get(i);
 				String name = v.name;
-				if (!inQueue.contains(name)) {
-					inQueue.add(name);
-					q.push(v);
+				if (!vis.contains(name)) {
+					vis.add(name);
+					st.push(v);
 				}
 			}
 		}

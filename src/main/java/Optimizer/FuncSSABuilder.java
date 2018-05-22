@@ -108,11 +108,12 @@ public class FuncSSABuilder {
 			MyList<Quad> codes = u.getCodes();
 			for (int i = 0; i < codes.size(); ++i) {
 				Quad c = codes.get(i);
-				if (c instanceof A3Quad || c instanceof MovQuad || c instanceof CallQuad) {
-					String x = c.getRtName();
+				if (c instanceof A3Quad || c instanceof MovQuad || c instanceof CallQuad || c instanceof CondQuad || c instanceof ParamQuad) {
 					if (c.getR1() instanceof Register && !varKill.contains(c.getR1Name())) global.add(c.getR1Name());
-					if (c.getR2() instanceof Register && c instanceof A3Quad && !varKill.contains(c.getR2Name()))
+					if (c.getR2() instanceof Register && !varKill.contains(c.getR2Name()))
 						global.add(c.getR2Name());
+					if (c instanceof CondQuad || c instanceof ParamQuad) continue;
+					String x = c.getRtName();
 					varKill.add(x);
 					if (!varDomain.containsKey(x)) {
 						varDomain.put(x, new HashSet<>());
@@ -156,11 +157,12 @@ public class FuncSSABuilder {
 				String rt = c.getRtName();
 				c.setRt(newName(rt));
 				tmp.add(rt);
-			} else if (c instanceof A3Quad || c instanceof MovQuad || c instanceof CallQuad) {
-				String rt = c.getRtName();
+			} else if (c instanceof A3Quad || c instanceof MovQuad || c instanceof CallQuad || c instanceof CondQuad || c instanceof ParamQuad) {
 				Stack<String> s1 = nameStack.get(c.getR1Name()), s2 = nameStack.get(c.getR2Name());
 				if (c.getR1() instanceof Register && s1 != null) c.setR1(s1.peek());
 				if (c.getR2() instanceof Register && s2 != null) c.setR2(s2.peek());
+				if (c instanceof CondQuad || c instanceof ParamQuad) continue;
+				String rt = c.getRtName();
 				c.setRt(newName(rt));
 				tmp.add(rt);
 			}

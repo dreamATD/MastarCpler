@@ -31,22 +31,34 @@ import java.util.ArrayList;
 * not       rt r1     ( xor r1 (1<<31)-1 )
 * neg       rt r1     ( sub 0  neg       )
 *
+* CondQuad
+* cmp          r1 r2
+*
+* CJumpQuad
+* je           r1 r2
+* jne          r1 r2
+* jl           r1 r2
+* jle          r1 r2
+* jg           r1 r2
+* jge          r1 r2
+*
 * PhiQuad
 * phi       rt phiList
 *
 * Quad:
 * loadAI    rt r1 r2
-*
 * nop
 *
-* tbr       rt labelTrue labelFalse
-* cbr       rt labelTrue labelFalse
+* JumpQuad
 * jump      label
+*
+* RetQuad
 * ret       rt
 * ret
 *
-* param rt
-* call  rt
+* param        r1
+* call      rt func
+* call    null func
 *
 * */
 
@@ -123,19 +135,14 @@ public class Quad {
 		}
 		System.out.println();
 	}
-	public boolean isJump() {
-		switch(op) {
-			case "tbr": case "cbr": case "jump" : return true;
-			default: return false;
-		}
-	}
 	public void updateLabel(LabelTable labels) {
 		switch (op) {
 			case "jump":
 				rt.set(labels.get(Integer.parseInt(rt.get())));
 				break;
-			case "tbr":
-			case "cbr":
+			case "je": case "jne":
+			case "jl": case "jle":
+			case "jg": case "jge":
 				r1.set(labels.get(Integer.parseInt(r1.get())));
 				r2.set(labels.get(Integer.parseInt(r2.get())));
 				break;

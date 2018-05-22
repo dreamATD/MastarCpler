@@ -3,8 +3,9 @@ package Optimizer;
 import GeneralDataStructure.BasicBlock;
 import GeneralDataStructure.FuncFrame;
 import GeneralDataStructure.MyListClass.MyList;
-import GeneralDataStructure.QuadClass.A3Quad;
-import GeneralDataStructure.QuadClass.Quad;
+import GeneralDataStructure.OprandClass.Oprand;
+import GeneralDataStructure.OprandClass.Register;
+import GeneralDataStructure.QuadClass.*;
 import Utilizer.SetOperation;
 
 import java.util.ArrayList;
@@ -34,13 +35,17 @@ public class ActionAnalyzer {
 			HashSet<String> curUeVar = ueVar.get(i);
 			HashSet<String> curVarKill = varKill.get(i);
 			for (int j = 0; j < codes.size(); ++j) {
-				Quad code = codes.get(j);
-				if (!(code instanceof A3Quad)) continue;
-
-				String x = code.getRtName(), y = code.getR1Name(), z = code.getR2Name();
-				if (!curVarKill.contains(y)) curUeVar.add(y);
-				if (!curVarKill.contains(z)) curUeVar.add(z);
-				curVarKill.add(x);
+				Quad c = codes.get(j);
+				if (c instanceof A3Quad || c instanceof MovQuad || c instanceof CallQuad
+						|| c instanceof CondQuad || c instanceof ParamQuad) {
+					if (c.getR1() instanceof Register && !curVarKill.contains(c.getR1Name()))
+						curUeVar.add(c.getR1Name());
+					if (c.getR2() instanceof Register && !curVarKill.contains(c.getR2Name()))
+						curUeVar.add(c.getR2Name());
+					if (c instanceof CondQuad || c instanceof ParamQuad) continue;
+					String x = c.getRtName();
+					curVarKill.add(x);
+				}
 			}
 		}
 

@@ -87,7 +87,7 @@ public class CodeGenFunc {
 			} else if (c instanceof MovQuad) {
 				updateMov(c);
 			} else if (c instanceof ParamQuad) {
-				tmpParams.add(c.getRtName());
+				tmpParams.add(c.getR1Name());
 			} else if (c instanceof CallQuad) {
 				updateCall(c);
 			} else if (c instanceof RetQuad) {
