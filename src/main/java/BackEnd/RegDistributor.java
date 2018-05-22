@@ -165,9 +165,6 @@ public class RegDistributor {
 					}
 					if (liveNow.contains(nt)) {
 						liveNow.remove(nt);
-						c.setLive(true);
-					} else {
-						c.setLive(false);
 					}
 				}
 				if (c.getR1() instanceof Register) liveNow.add(c.getR1Name());
