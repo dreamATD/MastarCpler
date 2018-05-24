@@ -12,8 +12,11 @@ import java.util.*;
 
 public class FuncFrame {
 	String name;
+	/*
+	* To matching variables with their offset.
+	* */
 	HashMap<String, Long> localVars;
-	HashMap<String, Long> params; // -1 indicates it's in reg.
+	HashMap<String, Long> params; // < 0 indicates it's in reg.
 	HashMap<String, Integer> varSize;
 	ArrayList<BasicBlock> ends;
 	BasicBlock first;
@@ -25,7 +28,7 @@ public class FuncFrame {
 
 	int retSize;
 
-	public FuncFrame(String funcName, LocalScope<Info> scope, SpecialScope<Info> env) {
+	public FuncFrame(String funcName) {
 		name = funcName;
 		localVars = new HashMap<>();
 		params = new HashMap<>();

@@ -14,4 +14,7 @@ public class StringLiteral extends Oprand {
 	@Override public StringLiteral copy() {
 		return new StringLiteral(str);
 	}
+	public int getLen() {
+		return str.length();
+	}
 }

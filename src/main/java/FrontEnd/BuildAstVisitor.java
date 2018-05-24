@@ -317,29 +317,16 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 		}
 		int i = -1;
 		int size = ctx.expression().size();
-		TypeExprNode res = null, tmp, del = null;
-		for (int dim = 0; dim <= dimension; ++dim) {
-			tmp = res;
-			res = new TypeExprNode();
-			if (tmp != null) res.sons.add(tmp);
-			res.loc = new Location(ctx.start);
-			if (ctx.simpleTypeId() != null) {
-				if (dim > 0) {
-					if (i < size) res.sons.add(visit(ctx.expression(i)));
-					else res.sons.add(new EmptyExprNode());
-				}
-				else res.type = TypeRef.buildTypeRef(ctx.simpleTypeId().getText());
-			} else {
-				if (dim > 0) {
-					if (i < size) res.sons.add(visit(ctx.expression(i)));
-					else res.sons.add(new EmptyExprNode());
-				}
-				else {
-					res.type = TypeRef.buildTypeRef(ctx.classId().getText());
-				}
-			}
-			i++;
+		TypeExprNode res = new TypeExprNode(), tmp = res;
+		for (int dim = 0; dim < dimension; ++dim) {
+			if (dim < size) tmp.sons.add(visit(ctx.expression(dim)));
+			else tmp.sons.add(new EmptyExprNode());
+			TypeExprNode son = new TypeExprNode();
+			tmp.sons.add(son);
+			tmp = son;
 		}
+		if (ctx.classId() != null) tmp.type = TypeRef.buildTypeRef(ctx.classId().getText());
+		else tmp.type = TypeRef.buildTypeRef(ctx.simpleTypeId().getText());
 		return res;
 	}
 	@Override public Node visitUnaryMulExpr(MxStarParser.UnaryMulExprContext ctx) {

@@ -275,8 +275,7 @@ class RightUnaryExprNode extends UnaryExprNode {
 	}
 }
 class NewExprNode extends ExprNode {
-//	ArrayTypeRef type;
-//	List<ExprNode> DefinedExprList;
+//	TypeExprNode newSpace;
 	NewExprNode() {
 		super();
 	}
@@ -285,6 +284,8 @@ class NewExprNode extends ExprNode {
 	}
 }
 class TypeExprNode extends ExprNode {
+	//TypeExprNode type;
+	//ExprNode len;
 	TypeExprNode() {
 		super();
 	}

@@ -93,7 +93,8 @@ public class CodeGenFunc {
 			} else if (c instanceof RetQuad) {
 				updateRet(c);
 			} else if (c instanceof JumpQuad) {
-				updateJump(c);
+				if (i + 1 < codes.size()) updateJump(c, codes.get(i + 1));
+				else updateJump(c, null);
 			} else if (c instanceof CJumpQuad) {
 				updateCondJump(c, codes.get(i + 1));
 			} else if (c instanceof CondQuad) {
@@ -301,8 +302,8 @@ public class CodeGenFunc {
 		result.add(format("ret"));
 	}
 
-	private void updateJump(Quad c) {
-		translate(c);
+	private void updateJump(Quad c, Quad cNext) {
+		if (cNext == null || !c.getRtName().equals(cNext.getLabel())) translate(c);
 	}
 
 	private void updateCond(Quad c) {

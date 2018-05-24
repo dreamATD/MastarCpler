@@ -212,7 +212,7 @@ public class SemanticChecker extends AstVisitor {
 		if (nod.sons.isEmpty()) {
 			if (!checkTypeEntity(nod.type)) throw new NoDefinedTypeError(nod.loc);
 		} else {
-			nod.type = new ArrayTypeRef((VarTypeRef) nod.sons.get(0).type);
+			nod.type = new ArrayTypeRef((VarTypeRef) nod.sons.get(1).type);
 		}
 	}
 	@Override void visit(FuncExprNode nod) throws Exception {

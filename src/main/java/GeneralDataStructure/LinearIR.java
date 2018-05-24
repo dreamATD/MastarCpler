@@ -1,6 +1,7 @@
 package GeneralDataStructure;
 
 import Utilizer.ConstVar;
+import javafx.util.Pair;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,6 +10,9 @@ public class LinearIR {
 	ArrayList<FuncFrame> funcs;
 	ArrayList<String> globals;
 	HashMap<String, Integer> varSize;
+
+	ArrayList<Pair<String, Integer>> uninitMem;
+	ArrayList<Pair<String, ArrayList<Byte>>> initMem;
 
 	public LinearIR() {
 		funcs = new ArrayList<>();
@@ -40,5 +44,22 @@ public class LinearIR {
 	}
 	public HashMap<String, Integer> getVarSize() {
 		return varSize;
+	}
+	public ArrayList<Pair<String, Integer>> getUninitMem() {
+		return getUninitMem();
+	}
+	public ArrayList<Pair<String, ArrayList<Byte>>> getInitMem() {
+		return initMem;
+	}
+	public void addUninitMem(String name, int len) {
+		uninitMem.add(new Pair<>(name, len));
+	}
+	public void addInitMem(String name, ArrayList<Byte> list) {
+		initMem.add(new Pair<>(name, list));
+	}
+	public void addInitMem(String name, byte[] list) {
+		ArrayList<Byte> b = new ArrayList<>();
+		for (byte by: list) b.add(by);
+		initMem.add(new Pair<>(name, b));
 	}
 }
