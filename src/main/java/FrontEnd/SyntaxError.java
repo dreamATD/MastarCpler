@@ -143,3 +143,11 @@ class ThisBeAssigned extends SyntaxError {
     }
     @Override public String toString() {return "ThisBeAssigned";}
 }
+class ThisOutOfClass extends SyntaxError {
+    ThisOutOfClass(Location l) {
+        super(l);
+    }
+    @Override public String toString() {
+        return "ThisOutOfClass";
+    }
+}

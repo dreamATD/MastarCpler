@@ -42,6 +42,12 @@ public class IRBuilder extends AstVisitor {
 	SymbolTable<Long> generalVarInt;
 	SymbolTable<Long> generalVarBool;
 
+	/*
+	* related to the class
+	* */
+	HashMap<String, Long> classObj;
+	long classObjSize;
+
 	public IRBuilder() {
 		linearCode = new LinearIR();
 		labelCnt = 0;
@@ -86,7 +92,7 @@ public class IRBuilder extends AstVisitor {
 		curCodeList.add(ins);
 	}
 
-	public void updateLabel(LabelTable labels, ArrayList<Quad> code) {
+	private void updateLabel(LabelTable labels, ArrayList<Quad> code) {
 		for (int i = 0; i < code.size(); ++i) {
 			Quad qua = code.get(i);
 			qua.updateLabel(labels);
@@ -134,7 +140,6 @@ public class IRBuilder extends AstVisitor {
 		return "%" + Integer.toString(labelCnt++);
 	}
 
-
 	public void visitChild(Node nod) throws Exception {
 		if (nod == null) return;
 		for (int i = 0; i < nod.sons.size(); ++i) {
@@ -142,108 +147,7 @@ public class IRBuilder extends AstVisitor {
 		}
 	}
 
-	@Override public void visit(CodeNode nod) throws Exception {
-		varState = VarDefStatus.GeneralVar;
-		for (int i = 0; i < nod.sons.size(); ++i) {
-			Node son = nod.sons.get(i);
-			visit(son);
-		}
-	}
-
-	@Override public void visit(VarDefNode nod) throws Exception {
-		Node son;
-		int sz = nod.type.getSize();
-		String name = nod.reg.get();
-
-		switch (varState) {
-			case ClassObj   : break;
-			case FuncParam  : curFunc.addParam(name, sz);
-			case LovalVar   :
-				curFunc.addLocalVar(name, sz);
-
-				if (nod.sons.isEmpty()) break;
-				son = nod.sons.get(0);
-				visit(son);
-				if (isTempReg(son.reg.get())) {
-					updateTempReg(son.reg.get(), name, name);
-				} else insertQuad(new MovQuad("mov", nod.reg, son.reg.copy()));
-				break;
-			case GeneralVar :
-				linearCode.insertVar(name, sz);
-
-				if (nod.sons.isEmpty()) {
-					linearCode.addUninitMem(name, nod.type.getSize());
-					break;
-				}
-				son = nod.sons.get(0);
-				visit(son);
-				TypeRef type = nod.type;
-				if (type instanceof StringTypeRef) {
-					StringLiteral sonReg = (StringLiteral) son.reg;
-					linearCode.addInitMem(name, sonReg.get().getBytes());
-				} else if (type instanceof IntTypeRef || type instanceof BoolTypeRef) {
-					ImmOprand sonReg = (ImmOprand) son.reg;
-					linearCode.addInitMem(name, ByteBuffer.allocate(ConstVar.intLen).putLong(sonReg.getVal()).array());
-				}
-				break;
-		}
-	}
-
-	@Override public void visit(ClassDefNode nod) throws Exception {
-		VarDefStatus tmp = varState;
-		varState = VarDefStatus.ClassObj;
-		for (int i = 0; i < nod.sons.size(); ++i) {
-			Node son = nod.sons.get(i);
-			if (son instanceof FuncDefNode) {
-				visit(son);
-			} else visit(son);
-		}
-		varState = tmp;
-	}
-
-	@Override public void visit(FuncDefNode nod) throws Exception {
-		VarDefStatus tmp = varState;
-		curFunc = new FuncFrame(nod.inClass == null ? funcLabel(nod.id) : classFuncLabel(nod.inClass, nod.id));
-
-		int size = nod.sons.size();
-		for (int i = 0; i < size; ++i) {
-			Node son = nod.sons.get(i);
-			if (i < size - 1) varState = VarDefStatus.FuncParam;
-			else varState = VarDefStatus.LovalVar;
-			visit(son);
-		}
-		if (!nextStatLabel.isEmpty()) insertQuad(new Quad("nop"));
-		if (!(nod.type instanceof VoidTypeRef))
-			curFunc.setRetSize(nod.type.getSize());
-		insertFunc(curFunc);
-
-		varState = tmp;
-	}
-
-	@Override public void visit(ConsFuncDefNode nod) throws Exception {
-		VarDefStatus tmp = varState;
-		curFunc = new FuncFrame(funcLabel(nod.id));
-
-		int size = nod.sons.size();
-		for (int i = 0; i < size; ++i) {
-			if (i < size - 1) varState = VarDefStatus.FuncParam;
-			else varState = VarDefStatus.LovalVar;
-			Node son = nod.sons.get(i);
-			visit(son);
-
-		}
-		insertFunc(curFunc);
-		varState = tmp;
-	}
-
-	@Override public void visit(IfElseStatNode nod) throws Exception {
-		ifElseEndLabel.push(labelCnt++);
-		visitChild(nod);
-		insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(ifElseEndLabel.peek()))));
-		updateNextStatLabel(ifElseEndLabel.pop());
-	}
-
-	void generateCondition(Node nod, int labelTrue, int labelFalse) throws Exception {
+	private void generateCondition(Node nod, int labelTrue, int labelFalse) throws Exception {
 		Node left = nod.sons.get(0);
 		Node right = nod.sons.size() > 1 ? nod.sons.get(1) : null;
 
@@ -290,6 +194,227 @@ public class IRBuilder extends AstVisitor {
 				insertQuad(new CJumpQuad(op, lt, lf));
 		}
 	}
+
+	private void updateTempReg(String name, String newName, String mem) {
+		for (int i = curCodeList.size() - 1; i >= 0; --i) {
+			Quad code = curCodeList.get(i);
+			if (code.getRt() instanceof Register && code.getRtName().equals(name)) {
+				code.setRt(newName);
+				((Register) code.getRt()).setMemPos(mem);
+				break;
+			}
+		}
+	}
+
+	private Oprand calcBinary(String op, Oprand left, Oprand right) {
+		if (left instanceof ImmOprand) {
+			long lv = ((ImmOprand) left).getVal(), rv = ((ImmOprand) right).getVal();
+			long ans;
+			switch (op) {
+				case "+" : ans = lv +  rv; break;
+				case "-" : ans = lv -  rv; break;
+				case "*" : ans = lv *  rv; break;
+				case "/" : ans = lv /  rv; break;
+				case "%" : ans = lv %  rv; break;
+				case "<<": ans = lv << rv; break;
+				case ">>": ans = lv >> rv; break;
+				case "&" : ans = lv &  rv; break;
+				case "|" : ans = lv |  rv; break;
+				case "^" : ans = lv ^  rv; break;
+				default: switch (op) {
+					case "&&": ans = lv &  rv; break;
+					case "||": ans = lv |  rv; break;
+					case "<" : ans = lv <  rv ? 1 : 0; break;
+					case ">" : ans = lv >  rv ? 1 : 0; break;
+					case "<=": ans = lv <= rv ? 1 : 0; break;
+					case ">=": ans = lv >= rv ? 1 : 0; break;
+					case "==": ans = lv == rv ? 1 : 0; break;
+					case "!=": ans = lv != rv ? 1 : 0; break;
+					default: ans = 0;
+				}
+					return new BoolImmOprand(ans);
+			}
+			return new ImmOprand(ans);
+		} else {
+			String lv = left.get(), rv = right.get();
+			String str;
+			switch (op) {
+				case "+" : str = lv +  rv; break;
+				default:
+					long ans;
+					int tmp = lv.compareTo(rv);
+					switch (op) {
+						case "<" : ans = tmp <  0 ? 1 : 0; break;
+						case ">" : ans = tmp >  0 ? 1 : 0; break;
+						case "<=": ans = tmp <= 0 ? 1 : 0; break;
+						case ">=": ans = tmp >= 0 ? 1 : 0; break;
+						case "==": ans = tmp == 0 ? 1 : 0; break;
+						case "!=": ans = tmp != 0 ? 1 : 0; break;
+						default: ans = 0;
+					}
+					return new BoolImmOprand(ans);
+			}
+			return new StringLiteral(str);
+		}
+	}
+
+	private Oprand calcUnary(String op, Oprand son) {
+		long val = ((ImmOprand) son).getVal(), ans;
+		switch (op) {
+			case "~": ans = ~val; break;
+			case "-": ans = -val; break;
+			case "+": ans =  val; break;
+			default :
+				ans = (~val) & 1;
+				return new BoolImmOprand(ans);
+		}
+		return new ImmOprand(ans);
+	}
+
+	private void generateStringFunc(String funcName, Oprand ans, Oprand left, Oprand right) {
+		insertQuad(new ParamQuad("param", left));
+		insertQuad(new ParamQuad("param", right));
+		insertQuad(new CallQuad("call", ans, new FuncName(funcLabel(funcName)), new ImmOprand(2)));
+	}
+
+	private void addClassObj(String var, int sz) {
+		if (classObjSize % sz != 0) classObjSize = (classObjSize + sz - 1) / sz * sz;
+		classObj.put(var, classObjSize);
+		classObjSize += sz;
+	}
+
+	private void generateObjFunc(Node nod, String classId, Oprand base) throws Exception {
+		visitChild(nod);
+
+		int n = nod.sons.size() - 1;
+		String func = classId + '$' + nod.id;
+		insertQuad(new ParamQuad("param", base));
+		for (int i = 0; i < n; ++i) insertQuad(new ParamQuad("param", nod.sons.get(i).reg.copy()));
+		nod.reg = nod.type instanceof VoidTypeRef ? null : new Register(getTempName());
+		insertQuad(new CallQuad("call", nod.reg, new FuncName(func), new ImmOprand(n + 1)));
+	}
+
+	@Override public void visit(CodeNode nod) throws Exception {
+		varState = VarDefStatus.GeneralVar;
+		for (int i = 0; i < nod.sons.size(); ++i) {
+			Node son = nod.sons.get(i);
+			visit(son);
+		}
+	}
+
+	@Override public void visit(VarDefNode nod) throws Exception {
+		Node son;
+		int sz = nod.type.getSize();
+		String name = nod.reg.get();
+
+		switch (varState) {
+			case ClassObj   : addClassObj(name, sz); break;
+			case FuncParam  : curFunc.addParam(name, sz);
+			case LovalVar   :
+				curFunc.addLocalVar(name, sz);
+
+				if (nod.sons.isEmpty()) break;
+				son = nod.sons.get(0);
+				visit(son);
+				if (isTempReg(son.reg.get())) {
+					updateTempReg(son.reg.get(), name, name);
+				} else insertQuad(new MovQuad("mov", nod.reg, son.reg.copy()));
+				break;
+			case GeneralVar :
+				linearCode.insertVar(name, sz);
+
+				if (nod.sons.isEmpty()) {
+					linearCode.addUninitMem(name, nod.type.getSize());
+					break;
+				}
+				son = nod.sons.get(0);
+				visit(son);
+				TypeRef type = nod.type;
+				if (type instanceof StringTypeRef) {
+					StringLiteral sonReg = (StringLiteral) son.reg;
+					linearCode.addInitMem(name, sonReg.get().getBytes());
+				} else if (type instanceof IntTypeRef || type instanceof BoolTypeRef) {
+					ImmOprand sonReg = (ImmOprand) son.reg;
+					linearCode.addInitMem(name, ByteBuffer.allocate(ConstVar.intLen).putLong(sonReg.getVal()).array());
+				} else if (type instanceof ArrayTypeRef) {
+
+				} else if (type instanceof ClassTypeRef) {
+
+				}
+				break;
+		}
+	}
+
+	@Override public void visit(ClassDefNode nod) throws Exception {
+		VarDefStatus tmp = varState;
+		varState = VarDefStatus.ClassObj;
+
+		classObj = new HashMap<>();
+		for (int i = 0; i < nod.sons.size(); ++i) {
+			Node son = nod.sons.get(i);
+			if (son instanceof VarDefNode) visit(son);
+		}
+
+		for (int i = 0; i < nod.sons.size(); ++i) {
+			Node son = nod.sons.get(i);
+			if (son instanceof FuncDefNode) visit(son);
+		}
+
+		varState = tmp;
+	}
+
+	@Override public void visit(FuncDefNode nod) throws Exception {
+		VarDefStatus tmp = varState;
+
+		if (nod.inClass == null) {
+			curFunc = new FuncFrame(funcLabel(nod.id));
+			curFunc.setClassObj(new HashMap<>());
+		} else {
+			curFunc = new FuncFrame(classFuncLabel(nod.inClass, nod.id));
+			curFunc.setClassObj(classObj);
+			curFunc.addParam("%this", addrLen);
+		}
+		int size = nod.sons.size();
+		for (int i = 0; i < size; ++i) {
+			Node son = nod.sons.get(i);
+			if (i < size - 1) varState = VarDefStatus.FuncParam;
+			else varState = VarDefStatus.LovalVar;
+			visit(son);
+		}
+		if (!nextStatLabel.isEmpty()) insertQuad(new Quad("nop"));
+		if (!(nod.type instanceof VoidTypeRef))
+			curFunc.setRetSize(nod.type.getSize());
+
+		insertFunc(curFunc);
+
+		varState = tmp;
+	}
+
+	@Override public void visit(ConsFuncDefNode nod) throws Exception {
+		VarDefStatus tmp = varState;
+		curFunc = new FuncFrame(classFuncLabel(nod.id, nod.id));
+		curFunc.setClassObj(classObj);
+		curFunc.addParam("%this", addrLen);
+
+		int size = nod.sons.size();
+		for (int i = 0; i < size; ++i) {
+			if (i < size - 1) varState = VarDefStatus.FuncParam;
+			else varState = VarDefStatus.LovalVar;
+			Node son = nod.sons.get(i);
+			visit(son);
+
+		}
+		insertFunc(curFunc);
+		varState = tmp;
+	}
+
+	@Override public void visit(IfElseStatNode nod) throws Exception {
+		ifElseEndLabel.push(labelCnt++);
+		visitChild(nod);
+		insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(ifElseEndLabel.peek()))));
+		updateNextStatLabel(ifElseEndLabel.pop());
+	}
+
 
 	@Override public void visit(IfStatNode nod) throws Exception {
 		Node ifCond = nod.sons.get(0);
@@ -376,75 +501,6 @@ public class IRBuilder extends AstVisitor {
 
 	@Override public void visit(NullStatNode nod) throws Exception {
 		insertQuad(new Quad("nop"));
-	}
-
-	private void updateTempReg(String name, String newName, String mem) {
-		for (int i = curCodeList.size() - 1; i >= 0; --i) {
-			Quad code = curCodeList.get(i);
-			if (code.getRt() instanceof Register && code.getRtName().equals(name)) {
-				code.setRt(newName);
-				((Register) code.getRt()).setMemPos(mem);
-				break;
-			}
-		}
-	}
-
-	private Oprand calcBinary(String op, Oprand left, Oprand right) {
-		if (left instanceof ImmOprand) {
-			long lv = ((ImmOprand) left).getVal(), rv = ((ImmOprand) right).getVal();
-			long ans;
-			switch (op) {
-				case "+" : ans = lv +  rv; break;
-				case "-" : ans = lv -  rv; break;
-				case "*" : ans = lv *  rv; break;
-				case "/" : ans = lv /  rv; break;
-				case "%" : ans = lv %  rv; break;
-				case "<<": ans = lv << rv; break;
-				case ">>": ans = lv >> rv; break;
-				case "&" : ans = lv &  rv; break;
-				case "|" : ans = lv |  rv; break;
-				case "^" : ans = lv ^  rv; break;
-				default: switch (op) {
-					case "&&": ans = lv &  rv; break;
-					case "||": ans = lv |  rv; break;
-					case "<" : ans = lv <  rv ? 1 : 0; break;
-					case ">" : ans = lv >  rv ? 1 : 0; break;
-					case "<=": ans = lv <= rv ? 1 : 0; break;
-					case ">=": ans = lv >= rv ? 1 : 0; break;
-					case "==": ans = lv == rv ? 1 : 0; break;
-					case "!=": ans = lv != rv ? 1 : 0; break;
-					default: ans = 0;
-				}
-				return new BoolImmOprand(ans);
-			}
-			return new ImmOprand(ans);
-		} else {
-			String lv = left.get(), rv = right.get();
-			String str;
-			switch (op) {
-				case "+" : str = lv +  rv; break;
-				default:
-					long ans;
-					int tmp = lv.compareTo(rv);
-					switch (op) {
-						case "<" : ans = tmp <  0 ? 1 : 0; break;
-						case ">" : ans = tmp >  0 ? 1 : 0; break;
-						case "<=": ans = tmp <= 0 ? 1 : 0; break;
-						case ">=": ans = tmp >= 0 ? 1 : 0; break;
-						case "==": ans = tmp == 0 ? 1 : 0; break;
-						case "!=": ans = tmp != 0 ? 1 : 0; break;
-						default: ans = 0;
-					}
-					return new BoolImmOprand(ans);
-			}
-			return new StringLiteral(str);
-		}
-	}
-
-	private void generateStringFunc(String funcName, Oprand ans, Oprand left, Oprand right) {
-		insertQuad(new ParamQuad("param", left));
-		insertQuad(new ParamQuad("param", right));
-		insertQuad(new CallQuad("call", ans, new FuncName(funcLabel(funcName)), new ImmOprand(2)));
 	}
 
 	@Override public void visit(BinaryExprNode nod) throws Exception {
@@ -536,19 +592,6 @@ public class IRBuilder extends AstVisitor {
 		}
 	}
 
-	private Oprand calcUnary(String op, Oprand son) {
-		long val = ((ImmOprand) son).getVal(), ans;
-		switch (op) {
-			case "~": ans = ~val; break;
-			case "-": ans = -val; break;
-			case "+": ans =  val; break;
-			default :
-				ans = (~val) & 1;
-				return new BoolImmOprand(ans);
-		}
-		return new ImmOprand(ans);
-	}
-
 	@Override void visit(LeftUnaryExprNode nod) throws Exception {
 		visitChild(nod);
 		Node son = nod.sons.get(0);
@@ -629,53 +672,67 @@ public class IRBuilder extends AstVisitor {
 
 	@Override public void visit(FuncExprNode nod) throws Exception {
 		visitChild(nod);
+
 		int n = nod.sons.size();
+		String fun = funcLabel(nod.id);
 		for (int i = 0; i < n; ++i) {
 			insertQuad(new ParamQuad("param", nod.sons.get(i).reg.copy()));
 		}
-		String fun = nod.inClass == null ? funcLabel(nod.id): classFuncLabel(nod.inClass, nod.id);
-		if (!(nod.type instanceof VoidTypeRef)) {
-			nod.reg = new Register(getTempName());
-			insertQuad(new CallQuad("call", nod.reg, new FuncName(fun), new ImmOprand(n)));
-		} else {
-			insertQuad(new CallQuad("call", null, new FuncName(fun), new ImmOprand(n)));
-		}
+
+		nod.reg = nod.type instanceof VoidTypeRef ? null : new Register(getTempName());
+		insertQuad(new CallQuad("call", nod.reg, new FuncName(fun), new ImmOprand(n)));
 	}
 
 	@Override void visit(ArrExprNode nod) throws Exception {
 		visitChild(nod);
 		Node son = nod.sons.get(0);
 		Node idx = nod.sons.get(1);
-		if (nod.type instanceof SingleTypeRef) {
-			nod.reg = new MemAccess(son.reg.get() + '$' + idx.reg.get() + 'x' + nod.type.getSize());
-		} else {
-			nod.reg = new MemAccess(son.reg.get() + '$' + idx.reg.get() + 'x' + addrLen);
-		}
+		if (nod.type instanceof SingleTypeRef)
+			nod.reg = new MemAccess(son.reg.copy(), idx.reg.copy(), new ImmOprand(nod.type.getSize()));
+		else
+			nod.reg = new MemAccess(son.reg.copy(), idx.reg.copy(), new ImmOprand(addrLen));
 	}
 
 	@Override void visit(ObjAccExprNode nod) throws Exception {
 		Node son = nod.sons.get(0);
 		Node mem = nod.sons.get(1);
 		visit(son);
-		if (mem instanceof VarExprNode) {
-			nod.reg = new MemAccess(son.reg.get() + '$' + ((ClassTypeRef) son.type).getBelongClass().getOffset(mem.id));
+		if (mem instanceof VarExprNode) return;
+		if (son.type instanceof ClassTypeRef) {
+			generateObjFunc(mem, ((ClassTypeRef) son.type).getTypeId(), son.reg.copy());
+			nod.reg = mem.reg;
+		} else if (son.type instanceof StringTypeRef) {
+			nod.reg = new Register(getTempName());
+			switch (mem.id) {
+				case "length":
+					insertQuad(new ParamQuad("param", son.reg.copy()));
+					insertQuad(new CallQuad("call", nod.reg, new FuncName("str$strlen"), new ImmOprand(1)));
+					break;
+				case "subString":
+					Node left = mem.sons.get(0), right = mem.sons.get(1);
+					visit(left);
+					visit(right);
+					insertQuad(new ParamQuad("param", left.reg.copy()));
+					insertQuad(new ParamQuad("param", right.reg.copy()));
+					insertQuad(new CallQuad("call", nod.reg, new FuncName("str$substring"), new ImmOprand(2)));
+					break;
+				case "parseInt":
+					insertQuad(new CallQuad("call", nod.reg, new FuncName("str$parseInt"), new ImmOprand(0)));
+					break;
+				case "ord":
+					Node memSon = mem.sons.get(0);
+					visit(memSon);
+					insertQuad(new ParamQuad("param", memSon.reg.copy()));
+					insertQuad(new CallQuad("call", nod.reg, new FuncName("str$ord"), new ImmOprand(1)));
+			}
 		} else {
-			if (son.type instanceof ClassTypeRef) {
-				visit(mem);
-				nod.reg = mem.reg;
-			}
-			else {
-				nod.reg = new Register(getTempName());
-				insertQuad(new Quad("loadAI", nod.reg, son.reg, new ImmOprand(addrLen)));
-			}
+			nod.reg = new Register(getTempName());
+			insertQuad(new LoadQuad("load", nod.reg, son.reg.copy(), new ImmOprand(addrLen)));
 		}
 	}
 
 	@Override public void visit(VarExprNode nod) throws Exception {
-		if (nod.id.equals("this")) {
-			nod.reg = new Register("%this");
-			return;
-		}
+		if (nod.id.equals("this")) return;
 
 		/*
 		* to initialize general variables

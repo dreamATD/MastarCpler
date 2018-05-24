@@ -3,7 +3,6 @@ package GeneralDataStructure.TypeSystem;
 import static Utilizer.ConstVar.addrLen;
 
 public class ClassTypeRef extends SpecialTypeRef {
-	ClassDefTypeRef belong;
 	public ClassTypeRef(){
 		size = 0;
 	}
@@ -15,13 +14,6 @@ public class ClassTypeRef extends SpecialTypeRef {
 		typeId = className;
 		size = addrLen;
 		belong = b;
-	}
-	public void setBelongClass(ClassDefTypeRef belong) {
-		this.belong = belong;
-		this.size = addrLen;
-	}
-	public ClassDefTypeRef getBelongClass() {
-		return belong;
 	}
 	public ClassTypeRef copy() {
 		return new ClassTypeRef(typeId, belong);

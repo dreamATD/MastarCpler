@@ -17,6 +17,8 @@ public class FuncFrame {
 	* */
 	HashMap<String, Long> localVars;
 	HashMap<String, Long> params; // < 0 indicates it's in reg.
+	HashMap<String, Long> classObj; // useful only when it is a class function.
+
 	HashMap<String, Integer> varSize;
 	ArrayList<BasicBlock> ends;
 	BasicBlock first;
@@ -32,6 +34,7 @@ public class FuncFrame {
 		name = funcName;
 		localVars = new HashMap<>();
 		params = new HashMap<>();
+		classObj = new HashMap<>();
 		ends = new ArrayList<>();
 		bbList = new ArrayList<>();
 		paramSize = 8;
@@ -131,6 +134,14 @@ public class FuncFrame {
 
 	public HashMap<String, Integer> getVarSize() {
 		return varSize;
+	}
+
+	public HashMap<String, Long> getClassObj() {
+		return classObj;
+	}
+
+	public void setClassObj(HashMap<String, Long> map) {
+		classObj = map;
 	}
 
 	public void buildCFG(ArrayList<Quad> codes) {
