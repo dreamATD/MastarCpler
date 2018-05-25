@@ -3,6 +3,7 @@ package Optimizer;
 import GeneralDataStructure.BasicBlock;
 import GeneralDataStructure.FuncFrame;
 import GeneralDataStructure.MyListClass.MyList;
+import GeneralDataStructure.OprandClass.MemAccess;
 import GeneralDataStructure.OprandClass.Oprand;
 import GeneralDataStructure.OprandClass.Register;
 import GeneralDataStructure.QuadClass.*;
@@ -24,6 +25,19 @@ public class ActionAnalyzer {
 		liveOut = new ArrayList<>();
 	}
 
+	private void checkOprand(Oprand r, HashSet<String> curUeVar, HashSet<String> curVarKill) {
+		if (r == null) return;
+		String n = r.get();
+		if (r instanceof Register && !curVarKill.contains(n))
+			curUeVar.add(n);
+		else if (r instanceof MemAccess) {
+			checkOprand(((MemAccess) r).getBase(), curUeVar, curVarKill);
+			checkOprand(((MemAccess) r).getOffset(), curUeVar, curVarKill);
+			checkOprand(((MemAccess) r).getOffsetCnt(), curUeVar, curVarKill);
+			checkOprand(((MemAccess) r).getOffsetSize(), curUeVar, curVarKill);
+		}
+	}
+
 	public ArrayList<HashSet<String>> buildLiveOut() {
 		MyList<Quad> codes;
 		for (int i = 0; i < blocks.size(); ++i) {
@@ -36,13 +50,11 @@ public class ActionAnalyzer {
 			HashSet<String> curVarKill = varKill.get(i);
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
-				if (c instanceof A3Quad || c instanceof MovQuad || c instanceof CallQuad
-						|| c instanceof CondQuad || c instanceof ParamQuad) {
-					if (c.getR1() instanceof Register && !curVarKill.contains(c.getR1Name()))
-						curUeVar.add(c.getR1Name());
-					if (c.getR2() instanceof Register && !curVarKill.contains(c.getR2Name()))
-						curUeVar.add(c.getR2Name());
-					if (c instanceof CondQuad || c instanceof ParamQuad) continue;
+				checkOprand(c.getR1(), curUeVar, curVarKill);
+				checkOprand(c.getR2(), curUeVar, curVarKill);
+				if (c.getRt() instanceof MemAccess)
+					checkOprand(c.getRt(), curUeVar, curVarKill);
+				if (c.getRt() instanceof Register) {
 					String x = c.getRtName();
 					curVarKill.add(x);
 				}

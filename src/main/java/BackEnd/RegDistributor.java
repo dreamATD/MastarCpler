@@ -3,6 +3,7 @@ package BackEnd;
 import GeneralDataStructure.BasicBlock;
 import GeneralDataStructure.FuncFrame;
 import GeneralDataStructure.MyListClass.MyList;
+import GeneralDataStructure.OprandClass.MemAccess;
 import GeneralDataStructure.OprandClass.Oprand;
 import GeneralDataStructure.OprandClass.Register;
 import GeneralDataStructure.QuadClass.*;
@@ -116,10 +117,30 @@ public class RegDistributor {
 		liveOut = analyzer.buildLiveOut();
 	}
 
-	void updateRegLive(Register r, HashSet<String> liveNow) {
-		r.setEntity(r.get());
-		if (liveNow.contains(r.get())) r.setWillUse(true);
-		else r.setWillUse(false);
+	private void updateRegLive(Oprand r, HashSet<String> liveNow) {
+		if (r == null) return;
+
+		String n = r.get();
+		if (r instanceof Register) {
+			((Register) r).setEntity(n);
+			if (liveNow.contains(r.get())) ((Register) r).setWillUse(true);
+			else ((Register) r).setWillUse(false);
+		} else if (r instanceof MemAccess) {
+			updateRegLive(((MemAccess) r).getBase(), liveNow);
+			updateRegLive(((MemAccess) r).getOffset(), liveNow);
+			updateRegLive(((MemAccess) r).getOffsetCnt(), liveNow);
+			updateRegLive(((MemAccess) r).getOffsetSize(), liveNow);
+		}
+	}
+
+	private void addLiveNow(Oprand r, HashSet<String> liveNow) {
+		if (r instanceof Register) liveNow.add(r.get());
+		else if (r instanceof MemAccess) {
+			addLiveNow(((MemAccess) r).getBase(), liveNow);
+			addLiveNow(((MemAccess) r).getOffset(), liveNow);
+			addLiveNow(((MemAccess) r).getOffsetCnt(), liveNow);
+			addLiveNow(((MemAccess) r).getOffsetSize(), liveNow);
+		}
 	}
 
 	private void buildGraph() {
@@ -135,34 +156,28 @@ public class RegDistributor {
 			HashSet<String> liveNow = liveOut.get(i);
 			for (int j = codes.size() - 1; j >= 0; --j) {
 				Quad c = codes.get(j);
-				if (c.getRt() instanceof Register) {
-					updateRegLive((Register) c.getRt(), liveNow);
-				}
-				if (c.getR1() instanceof Register) {
-					updateRegLive((Register) c.getR1(), liveNow);
-				}
-				if (c.getR2() instanceof Register) {
-					updateRegLive((Register) c.getR2(), liveNow);
-				}
-				if (c instanceof A3Quad || c instanceof MovQuad || c instanceof CallQuad) {
-					if (c.getRt() == null) continue;
+				updateRegLive(c.getRt(), liveNow);
+				updateRegLive(c.getR1(), liveNow);
+				updateRegLive(c.getR2(), liveNow);
+				if (!(c instanceof PhiQuad) && c.getRt() instanceof Register) {
 					String nt = c.getRtName();
 					int u = activeSet.find(nameIdx.get(nt));
 					for (String data: liveNow) {
 						if (data.equals(nt)) continue;
 						int v = activeSet.find(nameIdx.get(data));
-						if (matrix[u][v] || (c instanceof MovQuad && data.equals(c.getR1Name()))) continue;
+						if (matrix[u][v] || (c instanceof MovQuad && c.getRt() instanceof Register && data.equals(c.getR1Name())))
+							continue;
 						matrix[u][v] = matrix[v][u] = true;
 						edge.get(u).add(v);
 						edge.get(v).add(u);
 						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
 					}
-					if (liveNow.contains(nt)) {
-						liveNow.remove(nt);
-					}
+					liveNow.remove(nt);
 				}
-				if (c.getR1() instanceof Register) liveNow.add(c.getR1Name());
-				if (c.getR2() instanceof Register) liveNow.add(c.getR2Name());
+				addLiveNow(c.getR1(), liveNow);
+				addLiveNow(c.getR2(), liveNow);
+				if (c.getRt() instanceof MemAccess)
+					addLiveNow(c.getRt(), liveNow);
 			}
 		}
 	}
@@ -174,7 +189,7 @@ public class RegDistributor {
 			codes = blocks.get(i).getCodes();
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
-				if (c instanceof MovQuad && c.getR1() instanceof Register) {
+				if (c instanceof MovQuad && c.getR1() instanceof Register && c.getRt() instanceof Register) {
 					String nu = c.getRtName(), nv = c.getR1Name();
 					int u = nameIdx.get(nu), v = nameIdx.get(nv);
 					int fu = activeSet.find(u);
@@ -213,6 +228,20 @@ public class RegDistributor {
 		}
 	}
 
+	private void forceDyeOprand(Oprand r, boolean[] dyed, int k) {
+		if (r == null) return;
+
+		if (!dyed[k] && r instanceof Register && funcParams[k].equals(((Register) r).getMemPos())) {
+			dyed[k] = true;
+			col[activeSet.find(nameIdx.get(r.get()))] = k;
+		} else if (r instanceof MemAccess) {
+			forceDyeOprand(((MemAccess) r).getBase(), dyed, k);
+			forceDyeOprand(((MemAccess) r).getOffset(), dyed, k);
+			forceDyeOprand(((MemAccess) r).getOffsetCnt(), dyed, k);
+			forceDyeOprand(((MemAccess) r).getOffsetSize(), dyed, k);
+		}
+	}
+
 	private void dyeGraph() {
 
 		boolean[] dyed = new boolean[6];
@@ -224,15 +253,12 @@ public class RegDistributor {
 				Quad c = codes.get(j);
 				Oprand r1 = c.getR1();
 				Oprand r2 = c.getR2();
+				Oprand rt = c.getRt();
 				for (int k = 0; k < funcParams.length; ++k) {
-					if (!dyed[k] && r1 instanceof Register && funcParams[k].equals(((Register) r1).getMemPos())) {
-						dyed[k] = true;
-						col[activeSet.find(nameIdx.get(r1.get()))] = k;
-					}
-					if (!dyed[k] && r2 instanceof Register && funcParams[k].equals(((Register) r2).getMemPos())) {
-						dyed[k] = true;
-						col[activeSet.find(nameIdx.get(r2.get()))] = k;
-					}
+					forceDyeOprand(r1, dyed, k);
+					forceDyeOprand(r2, dyed, k);
+					if (rt instanceof MemAccess)
+						forceDyeOprand(rt, dyed, k);
 				}
 			}
 		}
@@ -249,8 +275,8 @@ public class RegDistributor {
 		for (int i = 0; i < sortList.size(); ++i) {
 			int u = sortList.get(i);
 			tmp.clear();
-			for (int v: edge.get(u)) {
-				if (col[v] >= 0) tmp.add(col[v]);
+			for (int v: edge.get(u)) if (col[v] >= 0) {
+				tmp.add(col[v]);
 			}
 			Collections.sort(tmp);
 			Tool.unique(tmp);
@@ -263,9 +289,7 @@ public class RegDistributor {
 			}
 			if (col[u] == -1) {
 				if (j < colCnt) col[u] = j;
-				else {
-					col[u] = outCol; // Can't be dyed.
-				}
+				else col[u] = outCol; // Can't be dyed.
 			}
 		}
 
@@ -273,8 +297,8 @@ public class RegDistributor {
 			int u = entry.getValue();
 			if (col[u] == -1) { // whose degree is less than colCnt.
 				tmp.clear();
-				for (int v : edge.get(u)) {
-					if (col[v] >= 0) tmp.add(col[v]);
+				for (int v : edge.get(u)) if (col[v] >= 0) {
+					tmp.add(col[v]);
 				}
 				Collections.sort(tmp);
 				Tool.unique(tmp);
@@ -287,11 +311,21 @@ public class RegDistributor {
 				}
 				if (col[u] == -1) {
 					if (j < colCnt) col[u] = j;
-					else {
-						col[u] = outCol; // Can't be dyed.
-					}
+					else col[u] = outCol; // Can't be dyed.
 				}
 			}
+		}
+	}
+
+	private void rebuildOprand(Oprand r) {
+		if (r instanceof Register) {
+			int nr = col[activeSet.find(nameIdx.get(r.get()))];
+			r.set(regList[nr]);
+		} else if (r instanceof MemAccess) {
+			rebuildOprand(((MemAccess) r).getBase());
+			rebuildOprand(((MemAccess) r).getOffset());
+			rebuildOprand(((MemAccess) r).getOffsetCnt());
+			rebuildOprand(((MemAccess) r).getOffsetSize());
 		}
 	}
 
@@ -313,18 +347,9 @@ public class RegDistributor {
 				Quad c = codes.get(j);
 				Oprand rt = c.getRt(), r1 = c.getR1(), r2 = c.getR2();
 				if (c instanceof PhiQuad) continue;
-				if (rt instanceof Register) {
-					int nrt = col[activeSet.find(nameIdx.get(rt.get()))];
-					rt.set(regList[nrt]);
-				}
-				if (r1 instanceof Register) {
-					int nr1 = col[activeSet.find(nameIdx.get(r1.get()))];
-					r1.set(regList[nr1]);
-				}
-				if (r2 instanceof Register) {
-					int nr2 = col[activeSet.find(nameIdx.get(r2.get()))];
-					r2.set(regList[nr2]);
-				}
+				rebuildOprand(r1);
+				rebuildOprand(r2);
+				rebuildOprand(rt);
 			}
 		}
 

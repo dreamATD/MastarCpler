@@ -2,6 +2,8 @@ package Optimizer;
 
 import GeneralDataStructure.*;
 import GeneralDataStructure.MyListClass.MyList;
+import GeneralDataStructure.OprandClass.MemAccess;
+import GeneralDataStructure.OprandClass.Oprand;
 import GeneralDataStructure.OprandClass.Register;
 import GeneralDataStructure.QuadClass.*;
 import Utilizer.SetOperation;
@@ -101,17 +103,31 @@ public class FuncSSABuilder {
 		}
 	}
 
+	private void addPhiCheckOprand(Oprand r, HashSet<String> varKill) {
+		if (r == null) return;
+
+		String n = r.get();
+		if (r instanceof Register && !varKill.contains(n)) global.add(n);
+		else if (r instanceof MemAccess) {
+			addPhiCheckOprand(((MemAccess) r).getBase(), varKill);
+			addPhiCheckOprand(((MemAccess) r).getOffset(), varKill);
+			addPhiCheckOprand(((MemAccess) r).getOffsetCnt(), varKill);
+			addPhiCheckOprand(((MemAccess) r).getOffsetSize(), varKill);
+		}
+	}
+
 	private void addPhi() {
 		for (BasicBlock u: blockList) {
 			HashSet<String> varKill = new HashSet<>();
 			MyList<Quad> codes = u.getCodes();
 			for (int i = 0; i < codes.size(); ++i) {
 				Quad c = codes.get(i);
-				if (c instanceof A3Quad || c instanceof MovQuad || c instanceof CallQuad || c instanceof CondQuad || c instanceof ParamQuad) {
-					if (c.getR1() instanceof Register && !varKill.contains(c.getR1Name())) global.add(c.getR1Name());
-					if (c.getR2() instanceof Register && !varKill.contains(c.getR2Name()))
-						global.add(c.getR2Name());
-					if (c instanceof CondQuad || c instanceof ParamQuad) continue;
+				if (c instanceof PhiQuad) continue;
+				addPhiCheckOprand(c.getR1(), varKill);
+				addPhiCheckOprand(c.getR2(), varKill);
+				if (c.getRt() instanceof MemAccess)
+					addPhiCheckOprand(c.getRt(), varKill);
+				if (c.getRt() instanceof Register) {
 					String x = c.getRtName();
 					varKill.add(x);
 					if (!varDomain.containsKey(x)) {
@@ -147,6 +163,20 @@ public class FuncSSABuilder {
 		return res;
 	}
 
+	private void renameVarCheckOprand(Oprand r) {
+		if (r == null) return;
+
+		String n = r.get();
+		if (r instanceof Register && nameStack.containsKey(n))
+			r.set(nameStack.get(n).peek());
+		else if (r instanceof MemAccess) {
+			renameVarCheckOprand(((MemAccess) r).getBase());
+			renameVarCheckOprand(((MemAccess) r).getOffset());
+			renameVarCheckOprand(((MemAccess) r).getOffsetCnt());
+			renameVarCheckOprand(((MemAccess) r).getOffsetSize());
+		}
+	}
+
 	private void renameVar(BasicBlock u) {
 		HashSet<String> tmp = new HashSet<>();
 		MyList<Quad> codes = u.getCodes();
@@ -156,15 +186,16 @@ public class FuncSSABuilder {
 				String rt = c.getRtName();
 				c.setRt(newName(rt));
 				tmp.add(rt);
-			} else if (c instanceof A3Quad || c instanceof MovQuad || c instanceof CallQuad || c instanceof CondQuad || c instanceof ParamQuad) {
-				if (c.getR1() instanceof Register && nameStack.containsKey(c.getR1Name()))
-					c.setR1(nameStack.get(c.getR1Name()).peek());
-				if (c.getR2() instanceof Register && nameStack.containsKey(c.getR2Name()))
-					c.setR2(nameStack.get(c.getR2Name()).peek());
-				if (c instanceof CondQuad || c instanceof ParamQuad) continue;
-				String rt = c.getRtName();
-				c.setRt(newName(rt));
-				tmp.add(rt);
+			} else {
+				renameVarCheckOprand(c.getR1());
+				renameVarCheckOprand(c.getR2());
+				if (c.getRt() instanceof MemAccess)
+					renameVarCheckOprand(c.getRt());
+				if (c.getRt() instanceof Register) {
+					String rt = c.getRtName();
+					c.setRt(newName(rt));
+					tmp.add(rt);
+				}
 			}
 		}
 
@@ -180,7 +211,8 @@ public class FuncSSABuilder {
 		for (int i = 0; i < codes.size(); ++i) {
 			Quad c = codes.get(i);
 			if (c instanceof PhiQuad || c instanceof A3Quad || c instanceof MovQuad) {
-				nameStack.get(c.getRtName().split("_")[0]).pop();
+				if (c.getRt() instanceof Register)
+					nameStack.get(c.getRtName().split("_")[0]).pop();
 			}
 		}
 	}

@@ -8,7 +8,6 @@ import java.util.ArrayList;
 
 /*
 * A2Quad:
-* new       rt [mem]
 * mov       rt r1
 *
 * A3Quad:
@@ -45,8 +44,6 @@ import java.util.ArrayList;
 * PhiQuad
 * phi       rt phiList
 *
-* Quad:
-* loadAI    rt r1 r2
 * nop
 *
 * JumpQuad
@@ -56,7 +53,10 @@ import java.util.ArrayList;
 * ret       rt
 * ret
 *
+* ParamQuad
 * param        r1
+*
+* CallQuad
 * call      rt func
 * call    null func
 *

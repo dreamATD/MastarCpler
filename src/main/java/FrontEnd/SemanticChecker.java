@@ -268,7 +268,7 @@ public class SemanticChecker extends AstVisitor {
 			String c = classStack.get(classStack.size() - 1);
 			nod.type = new ClassTypeRef(c);
 			((ClassTypeRef) nod.type).setBelongClass((ClassDefTypeRef) genScope.findItem(c));
-			nod.reg = new Register("%this");
+			nod.reg = new Register("%this", "%this");
 			return;
 		}
 		Pair<Scope<TypeRef>, TypeRef> ret = nod.belongTo.matchVarName(nod.id);

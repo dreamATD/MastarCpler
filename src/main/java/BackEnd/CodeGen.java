@@ -10,6 +10,7 @@ import java.util.HashMap;
 
 public class CodeGen {
 	private ArrayList<String> globals;
+	private ArrayList<String> externs;
 	private ArrayList<FuncFrame> funcs;
 	private MyList<String> codes;
 	private HashMap<String, Integer> globalSize;
@@ -18,11 +19,18 @@ public class CodeGen {
 		funcs = ir.getText();
 		codes = new MyList<>();
 		globalSize = ir.getVarSize();
+		externs = ir.getExterns();
+		externs.add("memcpy");
+		externs.add("malloc");
 	}
 	public MyList<String> generateCode() {
 		codes.add("default rel");
 		for (int i = 0; i < globals.size(); ++i) {
 			codes.add("global " + globals.get(i));
+		}
+
+		for (int i = 0; i < externs.size(); ++i) {
+			codes.add("extern " + externs.get(i));
 		}
 
 		codes.add("SECTION .text");

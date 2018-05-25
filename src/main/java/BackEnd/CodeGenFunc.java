@@ -153,13 +153,13 @@ public class CodeGenFunc {
 		Long offset1 = localVars.get(rm);
 		Long offset2 = params.get(rm);
 		if (offset1 == null && offset2 == null)
-			return String.format(translateSize(varSize.get(re)) + " [rel ]");
+			return String.format("qword" + " [rel ]");
 		if (offset2 != null && offset2 <= 0) return regList[-offset2.intValue()];
 		Long offset = offset1 == null ? offset2 : offset1;
 
 		useRbp = true;
 		String tmp = offset > 0 ? '+' + Long.toHexString(offset) : offset == 0 ? "" : "-" + Long.toHexString(-offset);
-		return translateSize(varSize.get(re)) + " [" + "rbp" + tmp + ']';
+		return "qword" + " [" + "rbp" + tmp + ']';
 	}
 
 	private void modifySize(String re, int sz) {

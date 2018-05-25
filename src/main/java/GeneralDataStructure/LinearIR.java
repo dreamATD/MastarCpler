@@ -8,8 +8,9 @@ import java.util.HashMap;
 
 public class LinearIR {
 	ArrayList<FuncFrame> text;
-	ArrayList<FuncFrame> initArray;
+	ArrayList<FuncFrame> init;
 	ArrayList<String> globals;
+	ArrayList<String> externs;
 	HashMap<String, Integer> varSize;
 
 	ArrayList<Pair<String, Integer>> uninitMem;
@@ -17,11 +18,12 @@ public class LinearIR {
 
 	public LinearIR() {
 		text = new ArrayList<>();
-		initArray = new ArrayList<>();
+		init = new ArrayList<>();
 		globals = new ArrayList<>();
 		varSize = new HashMap<>();
 		globals.add("getInt");
 		varSize.put("getInt", ConstVar.intLen);
+		externs = new ArrayList<>();
 	}
 	public void insertTextFunc(FuncFrame func) {
 		text.add(func);
@@ -31,6 +33,9 @@ public class LinearIR {
 	public void insertVar(String str, Integer sz) {
 		globals.add(str);
 		varSize.put(str, sz);
+	}
+	public void insertInitFunc(FuncFrame func) {
+		init.add(func);
 	}
 	public void print() {
 		System.out.println("General Symbols: ");
@@ -63,5 +68,11 @@ public class LinearIR {
 		ArrayList<Byte> b = new ArrayList<>();
 		for (byte by: list) b.add(by);
 		initMem.add(new Pair<>(name, b));
+	}
+	public void insertExterns(String func) {
+		externs.add(func);
+	}
+	public ArrayList<String> getExterns() {
+		return externs;
 	}
 }
