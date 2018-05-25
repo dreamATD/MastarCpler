@@ -169,16 +169,23 @@ public class FuncFrame {
 				map.insert(label, new BasicBlock(label));
 			}
 		}
+
+		BasicBlock lastBB = null;
+		Quad last = null;
 		for (int i = 0; i < size; ++i) {
 			Quad code = codes.get(i);
 			String label = code.getLabel();
 			if (label != null) {
 				BasicBlock block = map.find(label);
 				if (i == 0) first = block;
+				if (last != null && !(last instanceof JumpQuad) && !(last instanceof CJumpQuad))
+					lastBB.addSuccs(block);
 				block.add(code);
 
+				Quad code2 = code;
 				for (int j = i + 1; j < size; ++j) {
-					Quad code2 = codes.get(j);
+					last = code2;
+					code2 = codes.get(j);
 					if (code2.getLabel() != null) {
 						i = j - 1;
 						break;
@@ -201,8 +208,10 @@ public class FuncFrame {
 						break;
 					}
 				}
+
 				if (block.succs.isEmpty()) ends.add(block);
 				block.setIdx(cnt++);
+				lastBB = block;
 			}
 		}
 		buildBbList();

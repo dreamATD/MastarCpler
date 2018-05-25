@@ -3,7 +3,6 @@ package FrontEnd;
 import GeneralDataStructure.*;
 import GeneralDataStructure.OprandClass.*;
 import GeneralDataStructure.QuadClass.*;
-import GeneralDataStructure.ScopeClass.*;
 import GeneralDataStructure.TypeSystem.*;
 import Utilizer.ConstVar;
 import javafx.util.Pair;
@@ -13,6 +12,7 @@ import java.util.*;
 
 import static GeneralDataStructure.OprandClass.Register.isTempReg;
 import static Utilizer.ConstVar.addrLen;
+import static Utilizer.ConstVar.intLen;
 
 enum VarDefStatus {GeneralVar, FuncParam, ClassObj, LovalVar}
 
@@ -33,20 +33,25 @@ public class IRBuilder extends AstVisitor {
 	private Stack<Integer> brkLabel;
 	private Stack<Pair<Integer, Boolean>> ctnLabel;
 
-	VarDefStatus varState;
+	private VarDefStatus varState;
 
 	/*
 	* related to values of general variables
 	* */
-	SymbolTable<String> generalVarStr;
-	SymbolTable<Long> generalVarInt;
-	SymbolTable<Long> generalVarBool;
+	private SymbolTable<String> generalVarStr;
+	private SymbolTable<Long> generalVarInt;
+	private SymbolTable<Long> generalVarBool;
 
 	/*
 	* related to the class
 	* */
-	HashMap<String, Long> classObj;
-	long classObjSize;
+	private HashMap<String, Long> classObj;
+	private long classObjSize;
+
+	/*
+	* related to the general variable new expression
+	* */
+	String genPointer;
 
 	public IRBuilder() {
 		linearCode = new LinearIR();
@@ -77,7 +82,7 @@ public class IRBuilder extends AstVisitor {
 		curFunc.sortLocalVar();
 		curFunc.buildCFG(curCodeList);
 		curCodeList.clear();
-		linearCode.insertFunc(fun);
+		linearCode.insertTextFunc(fun);
 	}
 
 	private void insertQuad(Quad ins) {
@@ -134,6 +139,10 @@ public class IRBuilder extends AstVisitor {
 
 	private String funcLabel(String funcName) {
 		return funcName;
+	}
+
+	private String initFuncLabel(String funcName) {
+		return "$init_" + funcName;
 	}
 
 	private String getTempName() {
@@ -294,6 +303,15 @@ public class IRBuilder extends AstVisitor {
 		insertQuad(new CallQuad("call", nod.reg, new FuncName(func), new ImmOprand(n + 1)));
 	}
 
+	private void generateNewFunc(Oprand ret, Oprand len) {
+		insertQuad(new ParamQuad("param", len));
+		insertQuad(new CallQuad("call", ret, new FuncName("_Znam"), new ImmOprand(1)));
+	}
+
+	private void generateLoop(Oprand low, Oprand hig, Quad... codeArray) {
+
+	}
+
 	@Override public void visit(CodeNode nod) throws Exception {
 		varState = VarDefStatus.GeneralVar;
 		for (int i = 0; i < nod.sons.size(); ++i) {
@@ -328,18 +346,19 @@ public class IRBuilder extends AstVisitor {
 					break;
 				}
 				son = nod.sons.get(0);
-				visit(son);
 				TypeRef type = nod.type;
 				if (type instanceof StringTypeRef) {
+					visit(son);
 					StringLiteral sonReg = (StringLiteral) son.reg;
 					linearCode.addInitMem(name, sonReg.get().getBytes());
 				} else if (type instanceof IntTypeRef || type instanceof BoolTypeRef) {
+					visit(son);
 					ImmOprand sonReg = (ImmOprand) son.reg;
 					linearCode.addInitMem(name, ByteBuffer.allocate(ConstVar.intLen).putLong(sonReg.getVal()).array());
-				} else if (type instanceof ArrayTypeRef) {
-
-				} else if (type instanceof ClassTypeRef) {
-
+				} else {
+					curFunc = new FuncFrame(initFuncLabel(name));
+					genPointer = name;
+					visit(son);
 				}
 				break;
 		}
@@ -641,14 +660,23 @@ public class IRBuilder extends AstVisitor {
 	}
 
 	@Override void visit(NewExprNode nod) throws Exception {
-		Oprand var = new Register(getTempName());
 		Node son = nod.sons.get(0);
 
-		if (son.type instanceof ClassTypeRef) son.reg = new ImmOprand(((ClassTypeRef) son.type).getBelongClass().getSize());
-		else visit(son);
-		nod.reg = new Register(getTempName());
-		insertQuad(new ParamQuad("param", son.reg.copy()));
-		insertQuad(new CallQuad("call", nod.reg, new FuncName("_Znam"), new ImmOprand(1)));
+		if (son.type instanceof ClassTypeRef) {
+			son.reg = new ImmOprand(((ClassTypeRef) son.type).getBelongClass().getSize());
+			nod.reg = new Register(getTempName());
+			insertQuad(new ParamQuad("param", son.reg));
+			insertQuad(new CallQuad("call", nod.reg, new FuncName("_Znam"), new ImmOprand(1)));
+			insertQuad(new ParamQuad("param", nod.reg.copy()));
+
+			String className = ((ClassTypeRef) son.type).getTypeId();
+			String funcName = className + '$' + className;
+			insertQuad(new CallQuad("call", null, new FuncName(funcName), new ImmOprand(1)));
+
+			if (varState == VarDefStatus.GeneralVar) {
+				insertQuad(new RetQuad("ret", nod.reg.copy()));
+			}
+		} else visit(son);
 	}
 
 	@Override public void visit(TypeExprNode nod) throws Exception {
@@ -658,15 +686,19 @@ public class IRBuilder extends AstVisitor {
 		} else {
 			Node len = nod.sons.get(0);
 			Node typ = nod.sons.get(1);
-			visit(len);
-			visit(typ);
-			if (len.isCertain() && typ.isCertain()) {
-				nod.reg = new ImmOprand(((ImmOprand) len.reg).getVal() * ((ImmOprand) typ.reg).getVal());
+
+			if (len instanceof EmptyExprNode) {
+				nod.reg = new ImmOprand(addrLen + intLen);
+				return;
+			} else if (len.isCertain()) {
+				nod.reg = new Register(getTempName());
+				int val = ((Long) ((ImmOprand) len.reg).getVal()).intValue();
+				for (int i = 0; i < val; ++i) visit(typ);
+				generateNewFunc(nod.reg, typ.reg.copy());
 			} else {
 				nod.reg = new Register(getTempName());
-				insertQuad(new A3Quad("mul", nod.reg, len.reg.copy(), typ.reg.copy()));
+				generateLoop(0, len.reg, )
 			}
-
 		}
 	}
 

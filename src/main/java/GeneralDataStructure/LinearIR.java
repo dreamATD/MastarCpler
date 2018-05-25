@@ -7,7 +7,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class LinearIR {
-	ArrayList<FuncFrame> funcs;
+	ArrayList<FuncFrame> text;
+	ArrayList<FuncFrame> initArray;
 	ArrayList<String> globals;
 	HashMap<String, Integer> varSize;
 
@@ -15,14 +16,15 @@ public class LinearIR {
 	ArrayList<Pair<String, ArrayList<Byte>>> initMem;
 
 	public LinearIR() {
-		funcs = new ArrayList<>();
+		text = new ArrayList<>();
+		initArray = new ArrayList<>();
 		globals = new ArrayList<>();
 		varSize = new HashMap<>();
 		globals.add("getInt");
 		varSize.put("getInt", ConstVar.intLen);
 	}
-	public void insertFunc(FuncFrame func) {
-		funcs.add(func);
+	public void insertTextFunc(FuncFrame func) {
+		text.add(func);
 		globals.add(func.getName());
 		varSize.put(func.getName(), func.getRetSize());
 	}
@@ -32,15 +34,15 @@ public class LinearIR {
 	}
 	public void print() {
 		System.out.println("General Symbols: ");
-		for (int i = 0; i < funcs.size(); ++i) {
-			funcs.get(i).print();
+		for (int i = 0; i < text.size(); ++i) {
+			text.get(i).print();
 		}
 	}
 	public ArrayList<String> getGlobals() {
 		return globals;
 	}
-	public ArrayList<FuncFrame> getFuncs() {
-		return funcs;
+	public ArrayList<FuncFrame> getText() {
+		return text;
 	}
 	public HashMap<String, Integer> getVarSize() {
 		return varSize;

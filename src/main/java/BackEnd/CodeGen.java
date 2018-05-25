@@ -15,7 +15,7 @@ public class CodeGen {
 	private HashMap<String, Integer> globalSize;
 	public CodeGen(LinearIR ir) {
 		globals = ir.getGlobals();
-		funcs = ir.getFuncs();
+		funcs = ir.getText();
 		codes = new MyList<>();
 		globalSize = ir.getVarSize();
 	}
