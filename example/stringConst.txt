@@ -1,0 +1,5 @@
+string b = "aaa";
+int main() {
+    string t = "bbb";
+    println("abcc");
+}

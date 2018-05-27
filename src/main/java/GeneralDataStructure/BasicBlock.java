@@ -52,19 +52,20 @@ public class BasicBlock {
 	}
 
 	public void addPhi(String x) {
-		codes.addFirst(new PhiQuad("phi", new Register(x), new ArrayList<>()));
+		codes.addFirst(new PhiQuad("phi", new Register(x, x), new ArrayList<>()));
+		codes.get(0).setLabel(name);
 	}
 
 	public void addPhiParams(HashSet<String> nameList, HashMap<String, Stack<String>> nameStack) {
 		for (int i = 0; i < codes.size(); ++i) {
 			Quad c = codes.get(i);
 			if (! (c instanceof PhiQuad)) break;
-			String rt = c.getRtName().split("_")[0];
+			String rt = ((Register) c.getRt()).getMemPos();
 			if (nameList.contains(rt)) c.addPhiParams(nameStack.get(rt).peek());
 		}
 	}
 
-	String getName() {
+	public String getName() {
 		return name;
 	}
 

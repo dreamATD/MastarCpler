@@ -178,15 +178,14 @@ public class FuncFrame {
 			if (label != null) {
 				BasicBlock block = map.find(label);
 				if (i == 0) first = block;
-				if (last != null && !(last instanceof JumpQuad) && !(last instanceof CJumpQuad))
+				if (last != null && !(last instanceof JumpQuad) && !(last instanceof CJumpQuad) && !(last instanceof RetQuad))
 					lastBB.addSuccs(block);
-				block.add(code);
 
 				Quad code2 = code;
-				for (int j = i + 1; j < size; ++j) {
+				for (int j = i; j < size; ++j) {
 					last = code2;
 					code2 = codes.get(j);
-					if (code2.getLabel() != null) {
+					if (i != j && code2.getLabel() != null) {
 						i = j - 1;
 						break;
 					}
@@ -198,19 +197,21 @@ public class FuncFrame {
 						block.addSuccs(block1, block2);
 						block1.addPreps(block);
 						block2.addPreps(block);
+						last = code2;
 						break;
 					} else if (code2 instanceof JumpQuad) {
 						block1 = map.find(code2.getRtName());
 						block.addSuccs(block1);
 						block1.addPreps(block);
+						last = code2;
 						break;
 					} else if (code2 instanceof RetQuad) {
+						last = code2;
 						break;
 					}
 				}
 
 				if (block.succs.isEmpty()) ends.add(block);
-				block.setIdx(cnt++);
 				lastBB = block;
 			}
 		}
@@ -225,8 +226,9 @@ public class FuncFrame {
 		st.push(first);
 		while (st.size() > 0) {
 			BasicBlock u = st.pop();
+			u.setIdx(bbList.size());
 			bbList.add(u);
-			for (int i = 0; i < u.succs.size(); ++i) {
+			for (int i = u.succs.size() - 1; i >= 0; --i) {
 				BasicBlock v = u.succs.get(i);
 				String name = v.name;
 				if (!vis.contains(name)) {

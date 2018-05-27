@@ -16,8 +16,8 @@ import java.util.ArrayList;
 * mul       rt r1 r2
 * div       rt r1 r2
 * mod       rt r1 r2
-* lsh       rt r1 r2
-* rsh       rt r1 r2
+* sal       rt r1 r2
+* sar       rt r1 r2
 * and       rt r1 r2
 * or        rt r1 r2
 * xor       rt r1 r2
@@ -148,6 +148,9 @@ public class Quad {
 				break;
 		}
 	}
+	public void setOp(String op) {
+		this.op = op;
+	}
 	public void setR1(String r1) {
 		this.r1.set(r1);
 	}
@@ -168,6 +171,9 @@ public class Quad {
 
 	public boolean isLive() {
 		return futureLive;
+	}
+	public void changeOp(String op) {
+		this.op = op;
 	}
 	public void changeR1(Oprand nr1) {
 		r1 = nr1;

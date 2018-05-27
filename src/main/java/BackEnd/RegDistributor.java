@@ -14,6 +14,8 @@ import Utilizer.Tool;
 import java.util.*;
 
 public class RegDistributor {
+	private String funcName;
+	private ArrayList<String> globalVars;
 	private ArrayList<BasicBlock> blocks;
 	private SimpleUnionFind activeSet;
 	private ArrayList<String> global;
@@ -30,13 +32,16 @@ public class RegDistributor {
 
 	private String[] regList = {"rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r10", "r11", "r12", "r13", "r14", "r15", "rbx", "rbp", "rsp"};
 
-	private boolean checkRegister(Oprand opr) {
-		return opr instanceof Register && !(nameIdx.containsKey(opr.get()));
-	}
-
 	private void addRegister(Oprand opr) {
-		nameIdx.put(opr.get(), nVar++);
-		global.add(opr.get());
+		if (opr instanceof Register && !(nameIdx.containsKey(opr.get()))) {
+			nameIdx.put(opr.get(), nVar++);
+			global.add(opr.get());
+		} else if (opr instanceof MemAccess) {
+			addRegister(((MemAccess) opr).getBase());
+			addRegister(((MemAccess) opr).getOffset());
+			addRegister(((MemAccess) opr).getOffsetCnt());
+			addRegister(((MemAccess) opr).getOffsetSize());
+		}
 	}
 
 	private void removeNode(int x) {
@@ -55,11 +60,13 @@ public class RegDistributor {
 		matrix[u][v] = matrix[v][u] = false;
 	}
 
-	public RegDistributor(FuncFrame func) {
+	public RegDistributor(FuncFrame func, ArrayList<String> globalVars) {
+		funcName = func.getName();
 		blocks = func.getBbList();
 		global = new ArrayList<>();
 		nameIdx = new HashMap<>();
 		edge = new ArrayList<>();
+		this.globalVars = globalVars;
 		funcParams = func.getFirst6Params();
 		colCnt = 22;
 		outCol = 22;
@@ -68,9 +75,9 @@ public class RegDistributor {
 			MyList<Quad> codes = blocks.get(i).getCodes();
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
-				if (checkRegister(c.getRt())) addRegister(c.getRt());
-				if (checkRegister(c.getR1())) addRegister(c.getR1());
-				if (checkRegister(c.getR2())) addRegister(c.getR2());
+				addRegister(c.getRt());
+				addRegister(c.getR1());
+				addRegister(c.getR2());
 			}
 		}
 
@@ -102,10 +109,10 @@ public class RegDistributor {
 				if (c instanceof PhiQuad) {
 					String rt = c.getRtName();
 					ArrayList<Register> params = ((PhiQuad) c).getParams();
-					for (int k = 0; k < params.size(); ++k) {
+					for (Register v: params) {
 						int fu = activeSet.find(nameIdx.get(rt));
-						int fv = activeSet.find(nameIdx.get(params.get(k).get()));
-						activeSet.merge(nameIdx.get(rt), nameIdx.get(params.get(k).get()));
+						int fv = activeSet.find(nameIdx.get(v.get()));
+						activeSet.merge(fu, fv);
 					}
 				}
 			}
@@ -179,6 +186,20 @@ public class RegDistributor {
 				if (c.getRt() instanceof MemAccess)
 					addLiveNow(c.getRt(), liveNow);
 			}
+			if (i == 0) {
+				for (String su: globalVars) if (nameIdx.containsKey(su)) {
+					int u = activeSet.find(nameIdx.get(su));
+					for (String sv: liveNow) {
+						int v = activeSet.find(nameIdx.get(sv));
+						if (matrix[u][v] || u == v)
+							continue;
+						matrix[u][v] = matrix[v][u] = true;
+						edge.get(u).add(v);
+						edge.get(v).add(u);
+						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
+					}
+				}
+			}
 		}
 	}
 
@@ -201,9 +222,12 @@ public class RegDistributor {
 
 						/* Rebuild graph. */
 						HashSet<Integer> edgeList = edge.get(fu);
-						for (int  p: edgeList) {
-							cut(p, fu);
-							link(p, fv);
+						while (edgeList.size() > 0) {
+							for (int p: edgeList) {
+								cut(p, fu);
+								link(p, fv);
+								break;
+							}
 						}
 					}
 				}
@@ -214,15 +238,24 @@ public class RegDistributor {
 
 	private void calcVal() {
 		for (int i = 0; i < blocks.size(); ++i) {
-			MyList<Quad> codes = blocks.get(i).getCodes();
+			BasicBlock block = blocks.get(i);
+			ArrayList<BasicBlock> succs = block.getSuccs();
+			int loop = 1;
+			for (BasicBlock v: succs) {
+				if (v.getIdx() == i) {
+					loop = 100;
+					break;
+				}
+			}
+			MyList<Quad> codes = block.getCodes();
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
 				Oprand r1 = c.getR1(), r2 = c.getR2();
 				if (r1 instanceof Register) {
-					++value[activeSet.find(nameIdx.get(r1.get()))];
+					value[activeSet.find(nameIdx.get(r1.get()))] += loop;
 				}
 				if (r2 instanceof Register) {
-					++value[activeSet.find(nameIdx.get(r2.get()))];
+					value[activeSet.find(nameIdx.get(r2.get()))] += loop;
 				}
 			}
 		}
@@ -346,10 +379,10 @@ public class RegDistributor {
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
 				Oprand rt = c.getRt(), r1 = c.getR1(), r2 = c.getR2();
+				rebuildOprand(rt);
 				if (c instanceof PhiQuad) continue;
 				rebuildOprand(r1);
 				rebuildOprand(r2);
-				rebuildOprand(rt);
 			}
 		}
 

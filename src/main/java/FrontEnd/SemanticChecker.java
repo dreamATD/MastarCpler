@@ -1,5 +1,6 @@
 package FrontEnd;
 
+import GeneralDataStructure.OprandClass.GeneralMemAccess;
 import GeneralDataStructure.OprandClass.ImmOprand;
 import GeneralDataStructure.OprandClass.MemAccess;
 import GeneralDataStructure.OprandClass.Register;
@@ -95,8 +96,10 @@ public class SemanticChecker extends AstVisitor {
 		Scope<TypeRef> curScope = nod.belongTo;
 		if (curScope instanceof ClassScope) nod.inClass = classStack.peek();
 		if (!curScope.addItem(nod.id, nod.type)) throw new ReDefinedError(nod.loc);
-		String name = '%' + nod.id + nod.belongTo.getName();
-		nod.reg = new Register(name, name);
+		String name = "V_" + nod.id + nod.belongTo.getName();
+		if (curScope instanceof GeneralScope) {
+			nod.reg = new GeneralMemAccess(name);
+		} else nod.reg = new Register(name, name);
 	}
 	@Override void visit(ClassDefNode nod) throws Exception {
 		classStack.push(nod.id);
@@ -104,8 +107,13 @@ public class SemanticChecker extends AstVisitor {
 		for (int i = 0; i < nod.sons.size(); ++i) {
 			Node son = nod.sons.get(i);
 			if (!(son instanceof VarDefStatNode)) visit(son);
-			else if (son.type instanceof ClassTypeRef) {
-				if (genScope.findItem(((ClassTypeRef) son.type).getTypeId()) == null) throw new NoDefinedTypeError(son.loc);
+			else {
+				if (son.type instanceof ClassTypeRef && genScope.findItem(((ClassTypeRef) son.type).getTypeId()) == null) throw new NoDefinedTypeError(son.loc);
+				for (int j = 0; j < son.sons.size(); ++j) {
+					Node grandson = son.sons.get(j);
+					String name = "V_" + grandson.id + grandson.belongTo.getName();
+					grandson.reg = new Register(name, name);
+				}
 			}
 		}
 		nod.type = genScope.findItem(nod.id);
@@ -246,11 +254,12 @@ public class SemanticChecker extends AstVisitor {
 			return;
 		}
 		if (!(sonNode.type instanceof SpecialTypeRef)) throw new NoCastExpr(nod.loc);
-		ClassDefTypeRef tmp = (ClassDefTypeRef) genScope.findItem(((ClassTypeRef) sonNode.type).getTypeId());
+
+		ClassDefTypeRef tmp = (ClassDefTypeRef) genScope.findItem(((SpecialTypeRef) sonNode.type).getTypeId());
 
 		if (objNode instanceof VarExprNode) {
 			if (sonNode.id.equals("this"))
-				nod.reg = new Register("%" + objNode.id + curClassScope.getName());
+				nod.reg = new Register("V_" + objNode.id + curClassScope.getName());
 			else
 				nod.reg = new MemAccess(sonNode.reg.copy(), new ImmOprand(((ClassTypeRef) sonNode.type).getBelongClass().getOffset(objNode.id)));
 		}
@@ -259,7 +268,7 @@ public class SemanticChecker extends AstVisitor {
 			visit(objNode.sons.get(i));
 		}
 		nod.type = classCheckObj(tmp, objNode);
-		objNode.inClass = ((ClassTypeRef) sonNode.type).getTypeId();
+		objNode.inClass = ((SpecialTypeRef) sonNode.type).getTypeId();
 		objNode.type = nod.type;
 	}
 	@Override void visit(VarExprNode nod) throws Exception {
@@ -268,15 +277,19 @@ public class SemanticChecker extends AstVisitor {
 			String c = classStack.get(classStack.size() - 1);
 			nod.type = new ClassTypeRef(c);
 			((ClassTypeRef) nod.type).setBelongClass((ClassDefTypeRef) genScope.findItem(c));
-			nod.reg = new Register("%this", "%this");
+			nod.reg = new Register("V_this", "V_this");
 			return;
 		}
 		Pair<Scope<TypeRef>, TypeRef> ret = nod.belongTo.matchVarName(nod.id);
 		if (ret == null) throw new NoDefinedVarError(nod.loc);
 		String name;
 		if (ret.getKey() instanceof ClassScope) nod.inClass = classStack.peek();
-		name = "%" + nod.id + ret.getKey().getName();
-		nod.reg = new Register(name, name);
+		name = "V_" + nod.id + ret.getKey().getName();
+		if (ret.getKey() instanceof GeneralScope) {
+			nod.reg = new GeneralMemAccess(name);
+		} else {
+			nod.reg = new Register(name, name);
+		}
 		nod.type = ret.getValue();
 	}
 }

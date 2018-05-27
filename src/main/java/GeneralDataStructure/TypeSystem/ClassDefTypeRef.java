@@ -20,7 +20,7 @@ public class ClassDefTypeRef extends TypeRef {
 		}
 	}
 	public void insertObj(String key, TypeRef tp) {
-		if (size % tp.size != 0) size = (size + tp.size - 1) / tp.size * tp.size;
+		if (tp.size > 0 && size % tp.size != 0) size = (size + tp.size - 1) / tp.size * tp.size;
 		objs.put(key, new Pair<>(tp, (long) size));
 		if (tp instanceof VarTypeRef) size += tp.size; // for class and string
 	}

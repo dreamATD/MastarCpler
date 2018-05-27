@@ -10,7 +10,8 @@ import java.util.ArrayList;
 
 public class Main {
     public static void main (String[] args) throws IOException, Exception {
-        InputStream is = new FileInputStream ("example/test.txt");
+        String fileName = "stringConst";
+        InputStream is = new FileInputStream ("example/" + fileName + ".txt");
         ANTLRInputStream input = new ANTLRInputStream (is);
         MxStarLexer lexer = new MxStarLexer (input);
         CommonTokenStream tokens = new CommonTokenStream (lexer);
@@ -50,14 +51,22 @@ public class Main {
 //        System.out.println();
         IRBuilder irBuilder = new IRBuilder();
         LinearIR irCode = irBuilder.generateIR(root);
-        irCode.print();
+//        irCode.print();
 
         CodeGen codeGenerator = new CodeGen(irCode);
-        MyList<String> codes = codeGenerator.generateCode();
+        ArrayList<String> codes = codeGenerator.generateCode();
 
-        System.out.println();
+//        System.out.println();
+        String content = "";
         for (int i = 0; i < codes.size(); ++i) {
-            System.out.println(codes.get(i));
+            content += codes.get(i) + '\n';
         }
+
+        File file = new File("output/" + fileName + ".asm");
+        OutputStream out = new FileOutputStream(file);
+        if (!file.exists()) file.createNewFile();
+        out.write(content.getBytes());
+        out.flush();
+        out.close();
     }
 }

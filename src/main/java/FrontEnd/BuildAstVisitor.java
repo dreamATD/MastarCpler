@@ -324,9 +324,11 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 			TypeExprNode son = new TypeExprNode();
 			tmp.sons.add(son);
 			tmp = son;
+			son.loc = new Location(ctx.start);
 		}
 		if (ctx.classId() != null) tmp.type = TypeRef.buildTypeRef(ctx.classId().getText());
 		else tmp.type = TypeRef.buildTypeRef(ctx.simpleTypeId().getText());
+		res.loc = new Location(ctx.start);
 		return res;
 	}
 	@Override public Node visitUnaryMulExpr(MxStarParser.UnaryMulExprContext ctx) {

@@ -59,6 +59,14 @@ public class MyList<T> {
 		moveIterTo(idx);
 		return curIter.data;
 	}
+	public T getLast() {
+		if (size == 0) return null;
+		return tail.last.data;
+	}
+	public T getFirst() {
+		if (size == 0) return null;
+		return head.next.data;
+	}
 	public void removeBefore(int k) {
 		moveIterTo(k);
 		size = size - k;
@@ -77,6 +85,14 @@ public class MyList<T> {
 		curIter = curIter.last; // For the sake of loop.
 		curIdx--;
 	}
+	public void removeLast() {
+		--size;
+		if (curIdx == size) {
+			--curIdx;
+			curIter = curIter.last;
+		}
+		ListNode.link(tail.last.last, tail);
+	}
 	public void addAll(MyList<T> other) {
 		for (int i = 0; i < other.size(); ++i) {
 			add(other.get(i));
@@ -90,5 +106,8 @@ public class MyList<T> {
 		ListNode.link(tmp, curIter);
 		++curIdx;
 		++size;
+	}
+	public boolean isEmpty() {
+		return size == 0;
 	}
 }

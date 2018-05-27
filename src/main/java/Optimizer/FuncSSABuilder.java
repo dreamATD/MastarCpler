@@ -155,7 +155,7 @@ public class FuncSSABuilder {
 
 
 	private String newName(String name) {
-		String res = name + '_' + Integer.toString(varCnt++);
+		String res = name + '$' + Integer.toString(varCnt++);
 		if (!nameStack.containsKey(name)) {
 			nameStack.put(name, new Stack<>());
 		}
@@ -211,8 +211,12 @@ public class FuncSSABuilder {
 		for (int i = 0; i < codes.size(); ++i) {
 			Quad c = codes.get(i);
 			if (c instanceof PhiQuad || c instanceof A3Quad || c instanceof MovQuad) {
-				if (c.getRt() instanceof Register)
-					nameStack.get(c.getRtName().split("_")[0]).pop();
+				if (c.getRt() instanceof Register) {
+					String name = c.getRtName();
+					int t = name.indexOf("$");
+					String nn = name.substring(0, t);
+					nameStack.get(name.substring(0, t)).pop();
+				}
 			}
 		}
 	}
