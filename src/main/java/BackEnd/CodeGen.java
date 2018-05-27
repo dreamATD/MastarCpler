@@ -306,7 +306,7 @@ public class CodeGen {
 		codes.add("SECTION .rodata");
 		for (Pair<String, String> data: roData) {
 			codes.add(data.getKey() + ": ");
-			codes.add(String.format("%-8s dq %s", " ", data.getValue()));
+			codes.add(String.format("%-8s db %s", " ", data.getValue()));
 		}
 
 		codes.add("\n" +
