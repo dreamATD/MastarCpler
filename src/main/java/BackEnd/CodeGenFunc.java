@@ -52,7 +52,7 @@ public class CodeGenFunc {
 	/*
 	* related to kick out
 	* */
-	private int outReg = 13;
+	private int outReg = 12;
 
 	/*
 	* related to moving parameters in stack into register

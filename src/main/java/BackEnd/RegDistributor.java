@@ -77,8 +77,8 @@ public class RegDistributor {
 		first6Params = func.getFirst6Params();
 		lastParams = func.getLastParams();
 		movList = new MyList<>();
-		colCnt = 13;
-		outCol = 13;
+		colCnt = 12;
+		outCol = 12;
 
 		for (int i = 0; i < blocks.size(); ++i) {
 			MyList<Quad> codes = blocks.get(i).getCodes();
