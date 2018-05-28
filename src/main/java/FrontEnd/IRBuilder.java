@@ -478,6 +478,7 @@ public class IRBuilder extends AstVisitor {
 		if (!nextStatLabel.isEmpty()) insertQuad(new Quad("nop"));
 		if (!(nod.type instanceof VoidTypeRef))
 			curFunc.setRetSize(nod.type.getSize());
+		else curFunc.setRetSize(0);
 
 		insertFunc(curFunc);
 

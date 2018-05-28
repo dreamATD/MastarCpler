@@ -17,6 +17,7 @@ import java.util.*;
 import static java.lang.Integer.min;
 
 public class CodeGenFunc {
+	private FuncFrame func;
 	private HashMap<String, Long> values;
 	private HashMap<String, Long> params;
 	private HashMap<String, Long> localVars;
@@ -59,7 +60,10 @@ public class CodeGenFunc {
 	* */
 	private HashMap<String, String> paramsInStack;
 
+	private Format retFormat;
+
 	public CodeGenFunc(FuncFrame func, HashMap<String, Integer> globalSize) {
+		this.func = func;
 		ArrayList<BasicBlock> blocks = func.getBbList();
 		values = new HashMap<>();
 		entityExist = new HashMap<>();
@@ -83,6 +87,17 @@ public class CodeGenFunc {
 
 		for (int i = 0; i < blocks.size(); ++i) {
 			codes.addAll(blocks.get(i).getCodes());
+		}
+
+		for (int i = 0; i < codes.size(); ++i) {
+			Quad c = codes.get(i);
+			Oprand rt = c.getRt();
+			Oprand r1 = c.getR1();
+			Oprand r2 = c.getR2();
+
+			addCalleeSaveRegister(rt);
+			addCalleeSaveRegister(r1);
+			addCalleeSaveRegister(r2);
 		}
 
 		for (int i = 0; i < regList.length; ++i) regStore.put(regList[i], new HashSet<>());
@@ -165,7 +180,15 @@ public class CodeGenFunc {
 	}
 
 	public ArrayList<String> generateCode() {
-		subRsp((localParamSize & 15) == 8 ? localParamSize : localParamSize + 8);
+		rspVal += calleeSaveReg.size() * 8;
+		long old = rspVal;
+		if ((rspVal & 15) == 8) {
+			subRspFirst((localParamSize & 15) == 8 ? localParamSize : localParamSize + 8);
+		}
+		else {
+			subRspFirst((localParamSize & 15) == 0 ? localParamSize : localParamSize + 8);
+		}
+		retFormat = new Format("add", "rsp", Long.toString(rspVal - old));
 
 		for (int i = 0; i < codes.size(); ++i) {
 			Quad c = codes.get(i);
@@ -192,10 +215,6 @@ public class CodeGenFunc {
 			loadRegister(r2);
 			if (rt instanceof MemAccess) loadRegister(rt);
 			storeRegister(rt);
-
-			addCalleeSaveRegister(rt);
-			addCalleeSaveRegister(r1);
-			addCalleeSaveRegister(r2);
 
 			if (c instanceof A3Quad) {
 				updateA3Quad(c);
@@ -235,7 +254,7 @@ public class CodeGenFunc {
 			for (int i = 0; i < regs.length; ++i) {
 				addFirstResult(new Format("push", regs[i]));
 			}
-			for (int i = regs.length - 1; i >= 0; --i) {
+			if (func.getRetSize() == 0) for (int i = regs.length - 1; i >= 0; --i) {
 				addResult(new Format("pop", regs[i]));
 			}
 		}
@@ -250,6 +269,12 @@ public class CodeGenFunc {
 		}
 
 		return resCode;
+	}
+
+	private  void subRspFirst(long offset) {
+		if (offset == 0) return;
+		addFirstResult(new Format("sub", "rsp", Long.toString(offset)));
+		rspVal += offset;
 	}
 
 	private  void subRsp(long offset) {
@@ -682,6 +707,12 @@ public class CodeGenFunc {
 					if (r1 instanceof ImmOprand && ((ImmOprand) r1).getVal() == 0) addResult(new Format("xor", "rax", "rax"));
 					else if (!n1.equals("rax")) addResult(new Format("mov", "rax", n1));
 				}
+				String[] regs = new String[calleeSaveReg.size()];
+				calleeSaveReg.toArray(regs);
+				for (int i = regs.length - 1; i >= 0; --i) {
+					addResult(new Format("pop", regs[i]));
+				}
+				addResult(retFormat);
 				addResult(new Format("ret"));
 				break;
 		}

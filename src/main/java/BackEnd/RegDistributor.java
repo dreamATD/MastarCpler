@@ -442,10 +442,14 @@ public class RegDistributor {
 					HashSet set = col.get(id);
 					if (set.size() > 1) {
 						set.remove(cnt++);
+						set.size();
 					}
 				} else if (c instanceof CallQuad) cnt = 0;
 			}
+		}
 
+		for (int i = 0; i < blocks.size(); ++i) {
+			codes = blocks.get(i).getCodes();
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
 				Oprand rt = c.getRt(), r1 = c.getR1(), r2 = c.getR2();
