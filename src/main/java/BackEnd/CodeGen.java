@@ -25,7 +25,6 @@ public class CodeGen {
 		globals.add("S_parseInt");
 		globals.add("S_ord");
 		globals.add("F_print");
-		globals.add("F_getString");
 		globals.add("F_printlnPc");
 		globals.add("F_getString");
 		globals.add("F_getInt");
@@ -38,6 +37,8 @@ public class CodeGen {
 
 		externs = ir.getExterns();
 		externs.add("__sprintf_chk");
+		externs.add("_IO_getc");
+		externs.add("stdin");
 		externs.add("puts");
 		externs.add("scanf");
 		externs.add("_IO_putc");
@@ -71,31 +72,27 @@ public class CodeGen {
 		codes.add("S_substring:\n" +
 				"        push    r13\n" +
 				"        push    r12\n" +
-				"        mov     r12, rdi\n" +
+				"        mov     r13, rdi\n" +
 				"        push    rbp\n" +
-				"        mov     ebp, edx\n" +
+				"        mov     rbp, rdx\n" +
 				"        push    rbx\n" +
-				"        sub     ebp, esi\n" +
-				"        mov     ebx, esi\n" +
-				"        mov     r13d, edx\n" +
-				"        lea     edi, [rbp+1H]\n" +
+				"        sub     rbp, rsi\n" +
+				"        mov     rbx, rsi\n" +
+				"        mov     r12, rdx\n" +
+				"        lea     rdi, [rbp+1H]\n" +
 				"        sub     rsp, 8\n" +
-				"        movsxd  rdi, edi\n" +
 				"        call    malloc\n" +
-				"        cmp     r13d, ebx\n" +
+				"        cmp     r12, rbx\n" +
 				"        mov     rcx, rax\n" +
 				"        jle     L_001\n" +
-				"        lea     edx, [rbp-1H]\n" +
-				"        movsxd  rsi, ebx\n" +
+				"        lea     rsi, [r13+rbx]\n" +
+				"        mov     rdx, rbp\n" +
 				"        mov     rdi, rax\n" +
-				"        add     rsi, r12\n" +
-				"        add     rdx, 1\n" +
 				"        call    memcpy\n" +
 				"        mov     rcx, rax\n" +
-				"L_001:  movsxd  rbp, ebp\n" +
-				"        mov     rax, rcx\n" +
-				"        mov     byte [rcx+rbp], 0\n" +
+				"L_001:  mov     byte [rcx+rbp], 0\n" +
 				"        add     rsp, 8\n" +
+				"        mov     rax, rcx\n" +
 				"        pop     rbx\n" +
 				"        pop     rbp\n" +
 				"        pop     r12\n" +
@@ -103,16 +100,12 @@ public class CodeGen {
 				"        ret\n" +
 				"\n" +
 				"\n" +
+				"        nop\n" +
 				"\n" +
-				"\n" +
-				"\n" +
-				"\n" +
-				"\n" +
-				"ALIGN   16\n" +
-				"\n" +
+				"ALIGN   16" +
 				"S_parseInt:\n" +
 				"        sub     rsp, 24\n" +
-				"        mov     esi, L_007\n" +
+				"        mov     esi, L_008\n" +
 				"\n" +
 				"\n" +
 				"        mov     rax, qword [fs:abs 28H]\n" +
@@ -134,7 +127,6 @@ public class CodeGen {
 				"ALIGN   16\n" +
 				"\n" +
 				"S_ord:\n" +
-				"        movsxd  rsi, esi\n" +
 				"        movsx   rax, byte [rdi+rsi]\n" +
 				"        ret\n" +
 				"\n" +
@@ -143,7 +135,8 @@ public class CodeGen {
 				"\n" +
 				"\n" +
 				"\n" +
-				"ALIGN   8\n" +
+				"\n" +
+				"ALIGN   16\n" +
 				"\n" +
 				"F_print:\n" +
 				"        push    rbx\n" +
@@ -174,7 +167,7 @@ public class CodeGen {
 				"\n" +
 				"F_getString:\n" +
 				"        sub     rsp, 280\n" +
-				"        mov     edi, L_008\n" +
+				"        mov     edi, L_009\n" +
 				"\n" +
 				"\n" +
 				"        mov     rax, qword [fs:abs 28H]\n" +
@@ -213,7 +206,7 @@ public class CodeGen {
 				"F_getString:\n" +
 				"        mov     rsi, rdi\n" +
 				"        xor     eax, eax\n" +
-				"        mov     edi, L_008\n" +
+				"        mov     edi, L_009\n" +
 				"        jmp     scanf\n" +
 				"\n" +
 				"\n" +
@@ -221,38 +214,49 @@ public class CodeGen {
 				"\n" +
 				"ALIGN   16\n" +
 				"F_getInt:\n" +
-				"        sub     rsp, 24\n" +
-				"        mov     edi, L_009\n" +
+				"        push    rbx\n" +
 				"\n" +
 				"\n" +
-				"        mov     rax, qword [fs:abs 28H]\n" +
-				"        mov     qword [rsp+8H], rax\n" +
-				"        xor     eax, eax\n" +
-				"        lea     rsi, [rsp+4H]\n" +
-				"        call    scanf\n" +
-				"        mov     rdx, qword [rsp+8H]\n" +
 				"\n" +
 				"\n" +
-				"        xor     rdx, qword [fs:abs 28H]\n" +
-				"        mov     eax, dword [rsp+4H]\n" +
-				"        jnz     L_006\n" +
-				"        add     rsp, 24\n" +
+				"ALIGN   8\n" +
+				"L_006:  mov     rdi, qword [rel stdin]\n" +
+				"        call    _IO_getc\n" +
+				"        lea     edx, [rax-30H]\n" +
+				"        cmp     dl, 9\n" +
+				"        ja      L_006\n" +
+				"        movsx   rdx, al\n" +
+				"        xor     ebx, ebx\n" +
+				"\n" +
+				"\n" +
+				"\n" +
+				"\n" +
+				"ALIGN   8\n" +
+				"L_007:  mov     rdi, qword [rel stdin]\n" +
+				"        lea     rax, [rbx+rbx*4]\n" +
+				"        lea     rbx, [rdx+rax*2-30H]\n" +
+				"        call    _IO_getc\n" +
+				"        movsx   rdx, al\n" +
+				"        sub     eax, 48\n" +
+				"        cmp     al, 9\n" +
+				"        jbe     L_007\n" +
+				"        mov     rax, rbx\n" +
+				"        pop     rbx\n" +
 				"        ret\n" +
 				"\n" +
-				"L_006:  call    __stack_chk_fail\n" +
 				"\n" +
 				"\n" +
 				"\n" +
 				"\n" +
 				"\n" +
-				"ALIGN   16\n" +
+				"ALIGN   8\n" +
 				"\n" +
 				"F_toString:\n" +
 				"\n" +
-				"        db 41H, 89H, 0F0H\n" +
+				"        db 49H, 89H, 0F0H\n" +
 				"\n" +
 				"        db 0B9H\n" +
-				"        dd L_009\n" +
+				"        dd L_008\n" +
 				"\n" +
 				"\n" +
 				"\n" +
@@ -264,6 +268,7 @@ public class CodeGen {
 				"\n" +
 				"        db 0E9H\n" +
 				"        dd __sprintf_chk-$-5H\n" +
+				"\n" +
 				"\n" +
 				"\n");
 
@@ -313,14 +318,11 @@ public class CodeGen {
 				"\n" +
 				"SECTION .rodata.str1.1 \n" +
 				"\n" +
-				"L_007:\n" +
+				"L_008:\n" +
 				"        db 25H, 6CH, 64H, 00H\n" +
 				"\n" +
-				"L_008:\n" +
-				"        db 25H, 73H, 00H\n" +
-				"\n" +
 				"L_009:\n" +
-				"        db 25H, 64H, 00H");
+				"        db 25H, 73H, 00H\n");
 
 		return codes;
 	}
