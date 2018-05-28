@@ -14,6 +14,7 @@ public class CodeGen {
 	private ArrayList<String> globals;
 	private ArrayList<String> externs;
 	private ArrayList<FuncFrame> funcs;
+	private ArrayList<FuncFrame> initFuncs;
 	private ArrayList<String> codes;
 	private HashMap<String, Integer> globalSize;
 	private ArrayList<Pair<String, String>> initMem;
@@ -32,6 +33,7 @@ public class CodeGen {
 
 
 		funcs = ir.getText();
+		initFuncs = ir.getInit();
 		codes = new ArrayList<>();
 		globalSize = ir.getVarSize();
 
@@ -69,28 +71,29 @@ public class CodeGen {
 
 		codes.add("SECTION .text");
 
-		codes.add("S_substring:\n" +
+		codes.add("\n" +
+				"S_substring:\n" +
 				"        push    r13\n" +
 				"        push    r12\n" +
 				"        mov     r13, rdi\n" +
 				"        push    rbp\n" +
-				"        mov     rbp, rdx\n" +
 				"        push    rbx\n" +
-				"        sub     rbp, rsi\n" +
+				"        mov     rbp, rdx\n" +
 				"        mov     rbx, rsi\n" +
 				"        mov     r12, rdx\n" +
-				"        lea     rdi, [rbp+1H]\n" +
+				"        mov     edi, 256\n" +
 				"        sub     rsp, 8\n" +
+				"        sub     r12, rsi\n" +
 				"        call    malloc\n" +
-				"        cmp     r12, rbx\n" +
+				"        cmp     rbp, rbx\n" +
 				"        mov     rcx, rax\n" +
 				"        jle     L_001\n" +
 				"        lea     rsi, [r13+rbx]\n" +
-				"        mov     rdx, rbp\n" +
+				"        mov     rdx, r12\n" +
 				"        mov     rdi, rax\n" +
 				"        call    memcpy\n" +
 				"        mov     rcx, rax\n" +
-				"L_001:  mov     byte [rcx+rbp], 0\n" +
+				"L_001:  mov     byte [rcx+r12], 0\n" +
 				"        add     rsp, 8\n" +
 				"        mov     rax, rcx\n" +
 				"        pop     rbx\n" +
@@ -100,12 +103,16 @@ public class CodeGen {
 				"        ret\n" +
 				"\n" +
 				"\n" +
-				"        nop\n" +
 				"\n" +
-				"ALIGN   16" +
+				"\n" +
+				"\n" +
+				"\n" +
+				"\n" +
+				"ALIGN   16\n" +
+				"\n" +
 				"S_parseInt:\n" +
 				"        sub     rsp, 24\n" +
-				"        mov     esi, L_008\n" +
+				"        mov     esi, L_011\n" +
 				"\n" +
 				"\n" +
 				"        mov     rax, qword [fs:abs 28H]\n" +
@@ -166,24 +173,19 @@ public class CodeGen {
 				"ALIGN   16\n" +
 				"\n" +
 				"F_getString:\n" +
-				"        sub     rsp, 280\n" +
-				"        mov     edi, L_009\n" +
-				"\n" +
-				"\n" +
-				"        mov     rax, qword [fs:abs 28H]\n" +
-				"        mov     qword [rsp+108H], rax\n" +
+				"        push    rbx\n" +
+				"        mov     edi, 256\n" +
+				"        call    malloc\n" +
+				"        mov     edi, L_012\n" +
+				"        mov     rbx, rax\n" +
+				"        mov     rsi, rax\n" +
 				"        xor     eax, eax\n" +
-				"        mov     rsi, rsp\n" +
 				"        call    scanf\n" +
-				"        mov     rdx, qword [rsp+108H]\n" +
-				"\n" +
-				"\n" +
-				"        xor     rdx, qword [fs:abs 28H]\n" +
-				"        jnz     L_005\n" +
-				"        add     rsp, 280\n" +
+				"        mov     rax, rbx\n" +
+				"        pop     rbx\n" +
 				"        ret\n" +
 				"\n" +
-				"L_005:  call    __stack_chk_fail\n" +
+				"\n" +
 				"\n" +
 				"\n" +
 				"\n" +
@@ -203,16 +205,6 @@ public class CodeGen {
 				"\n" +
 				"ALIGN   16\n" +
 				"\n" +
-				"F_getString:\n" +
-				"        mov     rsi, rdi\n" +
-				"        xor     eax, eax\n" +
-				"        mov     edi, L_009\n" +
-				"        jmp     scanf\n" +
-				"\n" +
-				"\n" +
-				"        nop\n" +
-				"\n" +
-				"ALIGN   16\n" +
 				"F_getInt:\n" +
 				"        push    rbx\n" +
 				"\n" +
@@ -220,11 +212,11 @@ public class CodeGen {
 				"\n" +
 				"\n" +
 				"ALIGN   8\n" +
-				"L_006:  mov     rdi, qword [rel stdin]\n" +
+				"L_005:  mov     rdi, qword [rel stdin]\n" +
 				"        call    _IO_getc\n" +
 				"        lea     edx, [rax-30H]\n" +
 				"        cmp     dl, 9\n" +
-				"        ja      L_006\n" +
+				"        ja      L_005\n" +
 				"        movsx   rdx, al\n" +
 				"        xor     ebx, ebx\n" +
 				"\n" +
@@ -232,14 +224,14 @@ public class CodeGen {
 				"\n" +
 				"\n" +
 				"ALIGN   8\n" +
-				"L_007:  mov     rdi, qword [rel stdin]\n" +
+				"L_006:  mov     rdi, qword [rel stdin]\n" +
 				"        lea     rax, [rbx+rbx*4]\n" +
 				"        lea     rbx, [rdx+rax*2-30H]\n" +
 				"        call    _IO_getc\n" +
 				"        movsx   rdx, al\n" +
 				"        sub     eax, 48\n" +
 				"        cmp     al, 9\n" +
-				"        jbe     L_007\n" +
+				"        jbe     L_006\n" +
 				"        mov     rax, rbx\n" +
 				"        pop     rbx\n" +
 				"        ret\n" +
@@ -252,28 +244,84 @@ public class CodeGen {
 				"ALIGN   8\n" +
 				"\n" +
 				"F_toString:\n" +
+				"        push    rbx\n" +
+				"        mov     rbx, rdi\n" +
+				"        mov     edi, 256\n" +
+				"        call    malloc\n" +
+				"        xor     esi, esi\n" +
+				"        test    rbx, rbx\n" +
+				"        mov     r8, rax\n" +
+				"        mov     rdi, qword 6666666666666667H\n" +
+				"        jnz     L_008\n" +
+				"        jmp     L_010\n" +
 				"\n" +
-				"        db 49H, 89H, 0F0H\n" +
-				"\n" +
-				"        db 0B9H\n" +
-				"        dd L_008\n" +
 				"\n" +
 				"\n" +
 				"\n" +
-				"        db 48H, 0C7H, 0C2H, 0FFH, 0FFH, 0FFH, 0FFH\n" +
 				"\n" +
-				"        db 0BEH, 01H, 00H, 00H, 00H\n" +
+				"ALIGN   8\n" +
+				"L_007:  mov     rsi, rax\n" +
+				"L_008:  mov     rax, rbx\n" +
+				"        imul    rdi\n" +
+				"        mov     rax, rbx\n" +
+				"        sar     rax, 63\n" +
+				"        sar     rdx, 2\n" +
+				"        sub     rdx, rax\n" +
+				"        lea     rax, [rdx+rdx*4]\n" +
+				"        add     rax, rax\n" +
+				"        sub     rbx, rax\n" +
+				"        lea     rax, [rsi+1H]\n" +
+				"        add     ebx, 48\n" +
+				"        test    rdx, rdx\n" +
+				"        mov     byte [r8+rsi], bl\n" +
+				"        mov     rbx, rdx\n" +
+				"        jnz     L_007\n" +
+				"        test    esi, esi\n" +
+				"        jz      L_010\n" +
+				"        movsxd  rax, esi\n" +
+				"        mov     rdi, r8\n" +
+				"        xor     edx, edx\n" +
+				"        add     rax, r8\n" +
 				"\n" +
-				"        db 31H, 0C0H\n" +
 				"\n" +
-				"        db 0E9H\n" +
-				"        dd __sprintf_chk-$-5H\n" +
+				"\n" +
+				"\n" +
+				"ALIGN   8\n" +
+				"L_009:  movzx   ecx, byte [rdi]\n" +
+				"        movzx   r9d, byte [rax]\n" +
+				"        add     edx, 1\n" +
+				"        add     rdi, 1\n" +
+				"        sub     rax, 1\n" +
+				"        mov     byte [rdi-1H], r9b\n" +
+				"        mov     byte [rax+1H], cl\n" +
+				"        mov     ecx, esi\n" +
+				"        sub     ecx, edx\n" +
+				"        cmp     ecx, edx\n" +
+				"        jg      L_009\n" +
+				"L_010:  mov     rax, r8\n" +
+				"        pop     rbx\n" +
+				"        ret\n" +
 				"\n" +
 				"\n" +
 				"\n");
 
 		for (int i = 0; i < funcs.size(); ++i) {
 			FuncFrame func = funcs.get(i);
+			FuncSSABuilder ssaBuilder = new FuncSSABuilder(func);
+			ssaBuilder.buildSSAFunc();
+//			System.out.println();
+//			func.print();
+			RegDistributor distributor = new RegDistributor(func, globals);
+			distributor.regDistribute();
+//			System.out.println();
+//			func.print();
+			CodeGenFunc funcGenerator = new CodeGenFunc(func, globalSize);
+			codes.addAll(funcGenerator.generateCode());
+			codes.add("");
+		}
+
+		for (int i = 0; i < initFuncs.size(); ++i) {
+			FuncFrame func = initFuncs.get(i);
 			FuncSSABuilder ssaBuilder = new FuncSSABuilder(func);
 			ssaBuilder.buildSSAFunc();
 //			System.out.println();
@@ -318,11 +366,18 @@ public class CodeGen {
 				"\n" +
 				"SECTION .rodata.str1.1 \n" +
 				"\n" +
-				"L_008:\n" +
+				"L_011:\n" +
 				"        db 25H, 6CH, 64H, 00H\n" +
 				"\n" +
-				"L_009:\n" +
+				"L_012:\n" +
 				"        db 25H, 73H, 00H\n");
+
+		codes.add("");
+		codes.add("SECTION .init align=8");
+
+		for (int i = 0; i < initFuncs.size(); ++i) {
+			codes.add(String.format("%-8s%s", "dq", initFuncs.get(i).getName()));
+		}
 
 		return codes;
 	}

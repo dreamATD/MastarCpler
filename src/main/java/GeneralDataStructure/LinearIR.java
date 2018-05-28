@@ -71,6 +71,9 @@ public class LinearIR {
 	public ArrayList<Pair<String, String>> getRoData() {
 		return roData;
 	}
+	public ArrayList<FuncFrame> getInit() {
+		return init;
+	}
 	public void addUninitMem(String name, int len) {
 		uninitMem.add(new Pair<>(name, len));
 	}

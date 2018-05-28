@@ -334,7 +334,7 @@ public class IRBuilder extends AstVisitor {
 
 	private void generateNewFunc(Oprand ret, Oprand len) {
 		insertQuad(new ParamQuad("param", len));
-		insertQuad(new CallQuad("call", ret, new FuncName("_Znam"), new ImmOprand(1)));
+		insertQuad(new CallQuad("call", ret, new FuncName("malloc"), new ImmOprand(1)));
 	}
 
 	private String getLoopRegisterName() {
@@ -382,7 +382,7 @@ public class IRBuilder extends AstVisitor {
 				curFunc.addLocalVar(name, sz);
 				if (nod.type instanceof StringTypeRef) {
 					insertQuad(new ParamQuad("param", new ImmOprand(256)));
-					insertQuad(new CallQuad("call", nod.reg, new FuncName("_Znam"), new ImmOprand(1)));
+					insertQuad(new CallQuad("call", nod.reg, new FuncName("malloc"), new ImmOprand(1)));
 					visit(nod.sons.get(0));
 					if (!nod.sons.isEmpty()) {
 						generateStringFunc("strcpy", null, nod.reg.copy(), nod.sons.get(0).reg.copy());
@@ -784,7 +784,7 @@ public class IRBuilder extends AstVisitor {
 			nod.reg = new Register(getTempName());
 			son.reg = new ImmOprand(((ClassTypeRef) son.type).getBelongClass().getSize());
 			insertQuad(new ParamQuad("param", son.reg));
-			insertQuad(new CallQuad("call", nod.reg, new FuncName("_Znam"), new ImmOprand(1)));
+			insertQuad(new CallQuad("call", nod.reg, new FuncName("malloc"), new ImmOprand(1)));
 			insertQuad(new ParamQuad("param", nod.reg.copy()));
 
 			String className = ((ClassTypeRef) son.type).getTypeId();

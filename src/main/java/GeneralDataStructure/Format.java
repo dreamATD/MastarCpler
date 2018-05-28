@@ -39,7 +39,7 @@ public class Format {
 		if (r1 != null) res += r1 + ", ";
 		if (r2 != null) res += r2 + ", ";
 		if (r3 != null) res += r3 + ", ";
-		res = res.substring(0, res.length() - 2);
+		if (op != null)res = res.substring(0, res.length() - 2);
 		return res;
 	}
 
