@@ -186,7 +186,7 @@ public class RegDistributor {
 						matrix[u][v] = matrix[v][u] = true;
 						edge.get(u).add(v);
 						edge.get(v).add(u);
-						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
+//						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
 					}
 					liveNow.remove(nt);
 				}
@@ -205,7 +205,7 @@ public class RegDistributor {
 						matrix[u][v] = matrix[v][u] = true;
 						edge.get(u).add(v);
 						edge.get(v).add(u);
-						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
+//						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
 					}
 				}
 			}
