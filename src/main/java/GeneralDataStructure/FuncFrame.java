@@ -244,16 +244,33 @@ public class FuncFrame {
 	}
 
 	public String[] getFirst6Params() {
-		int cnt = 0;
-		String[] tmp = new String[6];
+		if (params.size() == 0) return null;
+		String[] ret = new String[params.size() >= 6 ? 6 : params.size()];
 		for (Map.Entry<String, Long> entry: params.entrySet()) {
 			if (entry.getValue() <= 0) {
-				++cnt;
-				tmp[-entry.getValue().intValue()] = entry.getKey();
+				ret[-entry.getValue().intValue()] = entry.getKey();
 			}
 		}
-		String[] ret = new String[cnt];
-		for (int i = 0; i < cnt; ++i) ret[i] = tmp[i];
 		return ret;
+	}
+
+	public String[] getLastParams() {
+		if (params.size() <= 6) return null;
+		String[] ret = new String[params.size() - 6];
+		int cnt = 0;
+		for (Map.Entry<String, Long> entry: params.entrySet()) {
+			if (entry.getValue() > 0) {
+				ret[cnt++] = entry.getKey();
+			}
+		}
+		return ret;
+	}
+
+	public boolean containsParam(String str) {
+		return params.containsKey(str);
+	}
+
+	public boolean containsLocalVar(String str) {
+		return localVars.containsKey(str);
 	}
 }

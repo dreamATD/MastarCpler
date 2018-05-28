@@ -22,14 +22,20 @@ public class RegDistributor {
 	private HashMap<String, Integer> nameIdx;
 	private ArrayList<HashSet<Integer>> edge;
 	private ArrayList<HashSet<String>> liveOut;
-
-	private String[] funcParams;
+	private String[] lastParams;
+	private String[] first6Params;
 	private boolean [][] matrix;
 	private int[] value;
-	private ArrayList<ArrayList<Integer>> col;
+	private ArrayList<HashSet<Integer>> col;
 	private int nVar;
 
 	private int colCnt, outCol;
+
+	/*
+	* related to the parameters fighting
+	* need to be attach at the beginning
+	* */
+	MyList<Quad> movList;
 
 	private String[] regList = {"rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r10", "r11", "r12", "r13", "r14", "r15", "rbx", "rbp", "rsp"};
 
@@ -68,9 +74,11 @@ public class RegDistributor {
 		nameIdx = new HashMap<>();
 		edge = new ArrayList<>();
 		this.globalVars = globalVars;
-		funcParams = func.getFirst6Params();
-		colCnt = 21;
-		outCol = 21;
+		first6Params = func.getFirst6Params();
+		lastParams = func.getLastParams();
+		movList = new MyList<>();
+		colCnt = 19;
+		outCol = 19;
 
 		for (int i = 0; i < blocks.size(); ++i) {
 			MyList<Quad> codes = blocks.get(i).getCodes();
@@ -88,7 +96,7 @@ public class RegDistributor {
 		col = new ArrayList<>();
 
 		for (int i = 0; i < nVar; ++i) {
-			col.add(new ArrayList<>());
+			col.add(new HashSet<>());
 		}
 	}
 
@@ -178,7 +186,7 @@ public class RegDistributor {
 						matrix[u][v] = matrix[v][u] = true;
 						edge.get(u).add(v);
 						edge.get(v).add(u);
-//						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
+						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
 					}
 					liveNow.remove(nt);
 				}
@@ -187,8 +195,8 @@ public class RegDistributor {
 				if (c.getRt() instanceof MemAccess)
 					addLiveNow(c.getRt(), liveNow);
 			}
-			if (i == 0) {
-				for (String su: globalVars) if (nameIdx.containsKey(su)) {
+			if (i == 0 && lastParams != null) {
+				for (String su: lastParams) if (nameIdx.containsKey(su)) {
 					int u = activeSet.find(nameIdx.get(su));
 					for (String sv: liveNow) {
 						int v = activeSet.find(nameIdx.get(sv));
@@ -265,7 +273,7 @@ public class RegDistributor {
 	private void forceDyeOprand(Oprand r, boolean[] dyed, int k) {
 		if (r == null) return;
 
-		if (!dyed[k] && r instanceof Register && funcParams[k].equals(((Register) r).getMemPos())) {
+		if (!dyed[k] && r instanceof Register && first6Params[k].equals(((Register) r).getMemPos())) {
 			dyed[k] = true;
 			col.get(activeSet.find(nameIdx.get(r.get()))).add(k);
 		} else if (r instanceof MemAccess) {
@@ -281,24 +289,65 @@ public class RegDistributor {
 		boolean[] dyed = new boolean[6];
 
 		/* force dye */
+//		for (int i = 0; i < blocks.size(); ++i) {
+//			MyList<Quad> codes = blocks.get(i).getCodes();
+//			for (int j = 0; j < codes.size(); ++j) {
+//				Quad c = codes.get(j);
+//				Oprand r1 = c.getR1();
+//				Oprand r2 = c.getR2();
+//				Oprand rt = c.getRt();
+//				for (int k = 0; k < first6Params.length; ++k) {
+//					forceDyeOprand(r1, dyed, k);
+//					forceDyeOprand(r2, dyed, k);
+//					if (rt instanceof MemAccess)
+//						forceDyeOprand(rt, dyed, k);
+//				}
+//				if (c instanceof ParamQuad) {
+//					if (paramCnt < 6) {
+//						int tmp = activeSet.find(nameIdx.get(c.getR1Name()));
+//						col.get(tmp).add(paramCnt++);
+//					}
+//				}
+//				if (c instanceof CallQuad) {
+//					paramCnt = 0;
+//					if (c.getRt() instanceof Register) {
+//						col.get(activeSet.find(nameIdx.get(c.getRtName()))).add(6);
+//					}
+//				}
+//			}
+//		}
+		if (first6Params != null) {
+			for (int i = 0; i < first6Params.length; ++i) {
+				col.get(activeSet.find(nameIdx.get(first6Params[i]))).add(i);
+			}
+		}
+
 		int paramCnt = 0;
+		int fightCnt = 0; // The number of the parameters of the function I call fight with my parameters.
 		for (int i = 0; i < blocks.size(); ++i) {
 			MyList<Quad> codes = blocks.get(i).getCodes();
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
-				Oprand r1 = c.getR1();
-				Oprand r2 = c.getR2();
-				Oprand rt = c.getRt();
-				for (int k = 0; k < funcParams.length; ++k) {
-					forceDyeOprand(r1, dyed, k);
-					forceDyeOprand(r2, dyed, k);
-					if (rt instanceof MemAccess)
-						forceDyeOprand(rt, dyed, k);
-				}
 				if (c instanceof ParamQuad) {
 					if (paramCnt < 6) {
-						int tmp = activeSet.find(nameIdx.get(c.getR1Name()));
-						col.get(tmp).add(paramCnt++);
+						int u = activeSet.find(nameIdx.get(c.getR1Name()));
+						col.get(u).add(paramCnt);
+						if (first6Params != null && paramCnt < first6Params.length) {
+							String myParam = first6Params[paramCnt];
+							int v = activeSet.find(nameIdx.get(myParam));
+							if (matrix[u][v]) {
+								int nReg = 7 + fightCnt++;
+								HashSet<Integer> setv = col.get(v);
+								setv.remove(paramCnt);
+								setv.add(nReg);
+								movList.add(new MovQuad("mov", new Register(regList[nReg], myParam, myParam),
+												new Register(regList[paramCnt], myParam, myParam)
+										)
+								);
+
+							}
+						}
+						paramCnt++;
 					}
 				}
 				if (c instanceof CallQuad) {
@@ -329,7 +378,7 @@ public class RegDistributor {
 			Collections.sort(tmp);
 			Tool.unique(tmp);
 			int j;
-			ArrayList<Integer> set = col.get(u);
+			HashSet<Integer> set = col.get(u);
 			for (j = 0; j < tmp.size(); ++j) {
 				if (j != tmp.get(j)) {
 					set.add(j);
@@ -343,7 +392,7 @@ public class RegDistributor {
 
 		for (HashMap.Entry<String, Integer> entry: nameIdx.entrySet()) {
 			int u = entry.getValue();
-			ArrayList<Integer> set = col.get(u);
+			HashSet<Integer> set = col.get(u);
 			if (set.isEmpty()) { // whose degree is less than colCnt.
 				tmp.clear();
 				for (int v : edge.get(u)) {
@@ -384,14 +433,18 @@ public class RegDistributor {
 		for (int i = 0; i < blocks.size(); ++i) {
 			codes = blocks.get(i).getCodes();
 
-			/* Remove phi. *//*
+			/* update parameters' color */
+			int cnt = 0;
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
-				if (!(c instanceof PhiQuad)) {
-					codes.removeBefore(j);
-					break;
-				}
-			}*/
+				if (c instanceof ParamQuad) {
+					int id = activeSet.find(nameIdx.get(c.getR1Name()));
+					HashSet set = col.get(id);
+					if (set.size() > 1) {
+						set.remove(cnt++);
+					}
+				} else if (c instanceof CallQuad) cnt = 0;
+			}
 
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
@@ -400,6 +453,16 @@ public class RegDistributor {
 				if (c instanceof PhiQuad) continue;
 				rebuildOprand(r1, 0);
 				rebuildOprand(r2, 1);
+			}
+
+			if (i == 0) for (int j = movList.size() - 1; j >= 0; --j) {
+				Quad c = codes.getFirst();
+				if (c.getLabel() != null) {
+					Quad d = movList.get(j);
+					d.setLabel(c.getLabel());
+					c.setLabel(null);
+					codes.addFirst(d);
+				}
 			}
 		}
 

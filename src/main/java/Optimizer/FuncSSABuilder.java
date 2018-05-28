@@ -6,11 +6,13 @@ import GeneralDataStructure.OprandClass.MemAccess;
 import GeneralDataStructure.OprandClass.Oprand;
 import GeneralDataStructure.OprandClass.Register;
 import GeneralDataStructure.QuadClass.*;
+import Utilizer.ConstVar;
 import Utilizer.SetOperation;
 
 import java.util.*;
 
 public class FuncSSABuilder {
+	private FuncFrame curFunc;
 	private HashSet<String> global;
 
 	private HashMap<String, HashSet<BasicBlock>> varDomain;
@@ -33,7 +35,7 @@ public class FuncSSABuilder {
 		immDom = new ArrayList<>();
 		rmmDom = new ArrayList<>();
 		nameStack = new HashMap<>();
-
+		curFunc = func;
 	}
 
 	public void buildSSAFunc() {
@@ -194,6 +196,14 @@ public class FuncSSABuilder {
 				if (c.getRt() instanceof Register) {
 					String rt = c.getRtName();
 					c.setRt(newName(rt));
+
+					/*
+					 * the modifiable parameters equals to local variables
+					 * */
+					if (curFunc.containsParam(((Register) c.getRt()).getMemPos())) {
+						curFunc.addLocalVar(((Register) c.getRt()).getMemPos(), ConstVar.addrLen);
+					}
+
 					tmp.add(rt);
 				}
 			}
@@ -213,7 +223,7 @@ public class FuncSSABuilder {
 			if (c instanceof PhiQuad || c instanceof A3Quad || c instanceof MovQuad) {
 				if (c.getRt() instanceof Register) {
 					String name = c.getRtName();
-					int t = name.indexOf("$");
+					int t = name.lastIndexOf("$");
 					String nn = name.substring(0, t);
 					nameStack.get(name.substring(0, t)).pop();
 				}

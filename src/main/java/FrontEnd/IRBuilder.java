@@ -399,7 +399,9 @@ public class IRBuilder extends AstVisitor {
 				break;
 			case GeneralVar :
 				name = ((GeneralMemAccess) nod.reg).getName();
+
 				linearCode.insertVar(name, sz);
+
 				TypeRef type = nod.type;
 				if (type instanceof StringTypeRef) {
 					if (nod.sons.size() > 0) {
@@ -843,7 +845,6 @@ public class IRBuilder extends AstVisitor {
 
 	@Override public void visit(FuncExprNode nod) throws Exception {
 		visitChild(nod);
-
 		int n = nod.sons.size();
 		String fun = funcLabel(nod.id);
 		for (int i = 0; i < n; ++i) {

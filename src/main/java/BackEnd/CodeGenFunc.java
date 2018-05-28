@@ -4,10 +4,7 @@ import GeneralDataStructure.BasicBlock;
 import GeneralDataStructure.Format;
 import GeneralDataStructure.FuncFrame;
 import GeneralDataStructure.MyListClass.MyList;
-import GeneralDataStructure.OprandClass.ImmOprand;
-import GeneralDataStructure.OprandClass.MemAccess;
-import GeneralDataStructure.OprandClass.Oprand;
-import GeneralDataStructure.OprandClass.Register;
+import GeneralDataStructure.OprandClass.*;
 import GeneralDataStructure.QuadClass.*;
 import Utilizer.ConstVar;
 import Utilizer.Tool;
@@ -16,6 +13,8 @@ import javafx.util.Pair;
 
 import java.lang.reflect.Array;
 import java.util.*;
+
+import static java.lang.Integer.min;
 
 public class CodeGenFunc {
 	private HashMap<String, Long> values;
@@ -43,12 +42,22 @@ public class CodeGenFunc {
 	* related to label resolving
 	* */
 	private UnionFind<String> labelMerge;
-	String nextLabel;
+	private String nextLabel;
 
 	/*
 	* related to register saving
 	* */
 	private HashSet<String> calleeSaveReg;
+
+	/*
+	* related to kick out
+	* */
+	private int outReg = 19;
+
+	/*
+	* related to moving parameters in stack into register
+	* */
+	private HashMap<String, String> paramsInStack;
 
 	public CodeGenFunc(FuncFrame func, HashMap<String, Integer> globalSize) {
 		ArrayList<BasicBlock> blocks = func.getBbList();
@@ -70,6 +79,7 @@ public class CodeGenFunc {
 		regLive = new HashSet<>();
 		labelMerge = new UnionFind<>();
 		calleeSaveReg = new HashSet<>();
+		paramsInStack = new HashMap<>();
 
 		for (int i = 0; i < blocks.size(); ++i) {
 			codes.addAll(blocks.get(i).getCodes());
@@ -106,27 +116,27 @@ public class CodeGenFunc {
 	}
 
 	private void addFirstResult(Format code) {
-		if (nextLabel != null) code.setLabel(nextLabel);
+//		if (nextLabel != null) code.setLabel(nextLabel);
 		result.addFirst(code);
 	}
 
-	private void updateLabel() {
-		for (int i = 1; i < result.size(); ++i) {
-			Format code = result.get(i);
-			String label = code.getLabel();
-			String op = code.getOp();
-			String r1 = code.getR1();
-			if (label != null) code.setLabel(labelMerge.find(label));
-			if (op == null) return;
-			switch (op) {
-				case "je": case "jne":
-				case "jl": case	"jle":
-				case "jg": case "jge":
-				case "jmp":
-					code.setR1(labelMerge.find(r1));
-			}
-		}
-	}
+//	private void updateLabel() {
+//		for (int i = 1; i < result.size(); ++i) {
+//			Format code = result.get(i);
+//			String label = code.getLabel();
+//			String op = code.getOp();
+//			String r1 = code.getR1();
+//			if (label != null) code.setLabel(labelMerge.find(label));
+//			if (op == null) return;
+//			switch (op) {
+//				case "je": case "jne":
+//				case "jl": case	"jle":
+//				case "jg": case "jge":
+//				case "jmp":
+//					code.setR1(labelMerge.find(r1));
+//			}
+//		}
+//	}
 
 	private void addCalleeSaveRegister(Oprand r) {
 		if (r instanceof Register) {
@@ -141,9 +151,22 @@ public class CodeGenFunc {
 		}
 	}
 
+	private void checkParamInStack(Oprand r) {
+		if (!(r instanceof Register)) return;
+		String n = r.get();
+		String e = ((Register) r).getEntity();
+		String m = ((Register) r).getMemPos();
+
+		if (!e.equals(m)) return; // be redefined
+
+		Long offset = params.get(e);
+		if (offset == null || offset <= 0) return;
+		paramsInStack.put(m, n);
+	}
+
 	public ArrayList<String> generateCode() {
-		rspVal = 8;
 		subRsp((localParamSize & 15) == 8 ? localParamSize : localParamSize + 8);
+
 		for (int i = 0; i < codes.size(); ++i) {
 			Quad c = codes.get(i);
 			Oprand rt = c.getRt(), r1 = c.getR1(), r2 = c.getR2();
@@ -155,15 +178,13 @@ public class CodeGenFunc {
 				continue;
 			}
 			if (c.getLabel() != null && i > 0) {
-				/*
-				if (!result.isEmpty() && result.getLast().getOp() == null) {
-					String lastCode = result.getLast().getLabel();
-					if (lastCode != null) {
-						labelMerge.merge(c.getLabel(), lastCode);
-						result.removeLast();
-					}
-				}
-				*/
+//				if (!result.isEmpty() && result.getLast().getOp() == null) {
+//					String lastCode = result.getLast().getLabel();
+//					if (lastCode != null) {
+//						labelMerge.merge(c.getLabel(), lastCode);
+//						result.removeLast();
+//					}
+//				}
 				nextLabel = c.getLabel();
 			}
 
@@ -198,15 +219,19 @@ public class CodeGenFunc {
 			modifyQuadRegLive(c);
 		}
 
+		for (Map.Entry<String, String> entry: paramsInStack.entrySet()) {
+			addResult(new Format("mov", entry.getValue(), entry.getKey()));
+		}
+
 		if (useRbp) {
 			addResult(new Format("pop"));
 			addFirstResult(new Format("mov", "rbp", "rsp"));
 			addFirstResult(new Format("push", "rbp"));
 		}
 
-		String[] regs = new String[calleeSaveReg.size()];
-		calleeSaveReg.toArray(regs);
 		if (!funcName.equals("main")) {
+			String[] regs = new String[calleeSaveReg.size()];
+			calleeSaveReg.toArray(regs);
 			for (int i = 0; i < regs.length; ++i) {
 				addFirstResult(new Format("push", regs[i]));
 			}
@@ -252,7 +277,10 @@ public class CodeGenFunc {
 		Long offset2 = params.get(rm);
 		if (offset1 == null && offset2 == null)
 			return String.format("qword" + " [rel %s]", rm);
-		if (offset2 != null && offset2 <= 0) return regList[-offset2.intValue()];
+		/*
+		* in case of modifying the parameters
+		* */
+		if (offset2 != null && offset2 <= 0 && !re.equals(rm)) return regList[-offset2.intValue()];
 		Long offset = offset1 == null ? offset2 : offset1;
 
 		useRbp = true;
@@ -280,9 +308,10 @@ public class CodeGenFunc {
 	}
 
 	private void updateA3Quad(Quad c) {
-		Register rt = (Register) c.getRt();
+		Oprand rt = c.getRt();
 		Oprand r1 = c.getR1(), r2 = c.getR2();
-		String n1 = r1.get(), n2 = r2.get(), nt = rt.get();
+		String n1 = r1.get(), n2 = r2.get();
+		String nt = rt.get();
 		boolean certain1 = r1 instanceof ImmOprand;
 		boolean certain2 = r2 instanceof ImmOprand;
 
@@ -296,30 +325,28 @@ public class CodeGenFunc {
 			String op = c.getOp();
 			if (op.equals("div")) {
 				boolean raxUse = regLive.contains("rax") && !nt.equals("rax");
-				if (raxUse) push("rax", 8);
+				if (raxUse) translate(new MovQuad("mov", new Register(regList[outReg]), new Register("rax")));
 				updateMov(new MovQuad("mov", new Register("rax"), r1));
 				translate(c);
 				updateMov(new MovQuad("mov", rt, new Register("rax")));
-				if (raxUse) pop("rax", 8);
+				if (raxUse) translate(new MovQuad("mov", new Register("rax"), new Register(regList[outReg])));
 			} else if (op.equals("mod")) {
 				boolean raxUse = regLive.contains("rax");
 				boolean rdxUse = regLive.contains("rdx") && !nt.equals("rdx");
-				if (raxUse) push("rax", 8);
-				if (rdxUse) push("rdx", 8);
+				if (raxUse) updateMov(new MovQuad("mov", new Register(regList[outReg]), new Register("rax")));
+				if (rdxUse) updateMov(new MovQuad("mov", new Register(regList[outReg + 1]), new Register("rdx")));
 				updateMov(new MovQuad("mov", new Register("rax"), r1));
 				translate(c);
 				updateMov(new MovQuad("mov", rt, new Register("rdx")));
-				if (rdxUse) pop("rdx", 8);
-				if (raxUse) pop("rax", 8);
+				if (rdxUse) updateMov(new MovQuad("mov", new Register("rdx"), new Register(regList[outReg + 1])));
+				if (raxUse) updateMov(new MovQuad("mov", new Register("rax"), new Register(regList[outReg])));
 			} else translate(c);
 		}
-		modifySize((rt).getEntity(), ConstVar.addrLen);
+//		modifySize((rt).getEntity(), ConstVar.addrLen);
 	}
 
 	private void updateMov(Quad c) {
-
 		if (c.rt.get().equals(c.r1.get())) return;
-
 		if (c.getRt() instanceof MemAccess) {
 			translate(c);
 			return;
@@ -331,27 +358,27 @@ public class CodeGenFunc {
 		Long tmp;
 
 		if (r1 instanceof ImmOprand) {
-			values.remove(nt);
-			tmp = ((ImmOprand) r1).getVal();
-			values.put(nt, tmp);
+//			values.remove(nt);
+//			tmp = ((ImmOprand) r1).getVal();
+//			values.put(nt, tmp);
 			translate(c);
-			modifySize(rt.getEntity(), ConstVar.addrLen);
+//			modifySize(rt.getEntity(), ConstVar.addrLen);
 			return;
 		} else if (r1 instanceof Register) {
 			String n1 = r1.get();
-			tmp = values.get(r1);
-			if (tmp == null) {
-				HashSet<String> setR1 = regStore.get(n1);
-				HashSet<String> setRt = regStore.get(nt);
-				for (String data: setR1) {
-					update(getEntityExist(data), nt, setRt);
-				}
-				translate(c);
-			} else {
-				values.put(nt, tmp);
-				translate(null);
+//			tmp = values.get(r1);
+//			if (tmp == null) {
+			HashSet<String> setR1 = regStore.get(n1);
+			HashSet<String> setRt = regStore.get(nt);
+			for (String data: setR1) {
+				update(getEntityExist(data), nt, setRt);
 			}
-			modifySize(rt.getEntity(), ConstVar.addrLen);
+			translate(c);
+//			} else {
+//				values.put(nt, tmp);
+//				translate(null);
+//			}
+//			modifySize(rt.getEntity(), ConstVar.addrLen);
 		}
 	}
 
@@ -363,7 +390,8 @@ public class CodeGenFunc {
 		}
 		rspVal += sz;
 		if (Character.isDigit(reg.charAt(0))) addResult(new Format("pushl", reg));
-		else if (reg.charAt(0) == 't' || reg.charAt(0) == 'f') addResult(new Format("pushb", reg));
+		else if (reg.charAt(0) == 't') addResult(new Format("pushl", "1"));
+		else if (reg.charAt(0) == 'f') addResult(new Format("pushl", "0"));
 		else addResult(new Format("push", reg));
 	}
 
@@ -373,17 +401,19 @@ public class CodeGenFunc {
 	}
 
 	private void updateCall(Quad c) {
-		int sz = tmpParams.size();
-		long oldRsp = rspVal;
+		int cnt = (int)((ImmOprand) c.getR2()).getVal();
+		int up = tmpParams.size();
+		int down = tmpParams.size() - cnt;
+		long oldRsp;
 
-		Stack<Pair<String, Integer> > pushReg = new Stack<>();
+//		Stack<Pair<String, Integer> > pushReg = new Stack<>();
 
-		for (int j = 0; j < sz; ++j) {
-			String tr = tmpParams.get(j);
-			if (j < 6) {
+		for (int j = 0; j < min(6, up - down); ++j) {
+			String tr = tmpParams.get(down + j);
+//			if (j < 6) {
 				String reg = regList[j];
 //				HashSet<String> set = regStore.get(reg);
-				Long val = values.get(tr);
+//				Long val = values.get(tr);
 				if (tr != reg) {
 //					if (regLive.contains(reg)) {
 //						push(reg, ConstVar.intLen);
@@ -393,21 +423,24 @@ public class CodeGenFunc {
 //						if (val == 0) addResult(new Format("xor", reg, reg));
 //						addResult(new Format("mov", reg, Long.toString(val)));
 //					} else {
-						addResult(new Format("mov", reg, tr));
+						updateMov(new MovQuad("mov", new Register(reg), new Register(tr)));
 //					}
 				}
-				oldRsp = rspVal;
-			} else {
-				push(tr, ConstVar.intLen);
-			}
+//			}
 		}
-		tmpParams.clear();
 
-		if (c.getRt() != null) {
-			Register rt = (Register) c.getRt();
-			String nt = rt.get();
-			modifySize(rt.getEntity(), ConstVar.addrLen);
+		oldRsp = rspVal;
+
+		for (int j = up - down - 1; j >= 6; --j) {
+			push(tmpParams.get(down + j), ConstVar.intLen);
 		}
+		for (int i = 0; i < cnt; ++i) tmpParams.remove(tmpParams.size() - 1);
+
+//		if (c.getRt() != null) {
+//			Register rt = (Register) c.getRt();
+//			String nt = rt.get();
+//			modifySize(rt.getEntity(), ConstVar.addrLen);
+//		}
 
 //		boolean raxUse = regLive.contains("rax");
 //		if (raxUse) push("rax", varSize.get(regStore.get("rax").iterator().next()));
@@ -423,13 +456,6 @@ public class CodeGenFunc {
 	}
 
 	private void updateRet(Quad c) {
-		Oprand r1 = c.getR1();
-		if (r1 != null) {
-			Long val = values.get(c.getR1Name());
-			if (r1 instanceof ImmOprand && ((ImmOprand) r1).getVal() == 0 ||
-					r1 instanceof Register && val != null && val == 0) addResult(new Format("xor", "rax", "rax"));
-			else addResult(new Format("mov", "rax", c.getR1Name()));
-		}
 		translate(c);
 	}
 
@@ -469,9 +495,9 @@ public class CodeGenFunc {
 			HashSet<String> regSet = regStore.get(n);
 			regSet.clear();
 			regSet.add(e);
-			for (String reg : set) {
-				update(entityExist.get(reg), n, regSet);
-			}
+//			for (String reg : set) {
+//				update(entityExist.get(reg), n, regSet);
+//			}
 			set.add(n);
 		}
 	}
@@ -496,24 +522,21 @@ public class CodeGenFunc {
 		String rm = r.getMemPos();
 		String re = r.getEntity();
 		HashSet<String> set = getEntityExist(re);
-		if (!set.isEmpty()) {
-			if (set.contains(rn)) return;
-			String tmp = set.iterator().next();
-			addResult(new Format("mov", rn, tmp));
-			update(regStore.get(tmp), rn, regStore.get(rn));
-		} else {
-			String pos;
-			if (params.containsKey(re)) {
-				long tmp = params.get(re);
-				if (tmp < 0) pos = regList[-(int)tmp];
-				else pos = getVarMem(re, rm);
+
+		if (rn.equals(regList[outReg]) || rn.equals(regList[outReg + 1])) {
+			if (!set.isEmpty()) {
+				if (set.contains(rn)) return;
+				String tmp = set.iterator().next();
+				addResult(new Format("mov", rn, tmp));
+				update(regStore.get(tmp), rn, regStore.get(rn));
+			} else {
+				String pos = getVarMem(re, rm);
+				addResult(new Format("mov", rn, pos));
+				getEntityExist(re).add(rn);
+				regStore.get(rn).add(re);
 			}
-			else pos = getVarMem(re, rm);
-			addResult(new Format( "mov", rn, pos));
-			getEntityExist(re).add(rn);
-			regStore.get(rn).add(re);
 		}
-		modifySize(re, ConstVar.addrLen);
+//		modifySize(re, ConstVar.addrLen);
 	}
 
 	private void storeRegister(Oprand r) {
@@ -522,18 +545,19 @@ public class CodeGenFunc {
 
 	private void storeRegister(Register r) {
 		String rn = r.get();
-		if (!regStore.get(rn).isEmpty()) {
-			for (String e: regStore.get(rn)) {
-				HashSet<String> exist = getEntityExist(e);
-				exist.remove(rn);
-				if (exist.isEmpty()) {
-					if (regLive.contains(r.getEntity())) {
-						addResult(new Format("mov", getVarMem(e, e.split("_", 2)[0]), rn));
+		if (rn.equals(regList[outReg]) || rn.equals(regList[outReg + 1])) {
+			if (!regStore.get(rn).isEmpty()) {
+				for (String e : regStore.get(rn)) {
+					HashSet<String> exist = getEntityExist(e);
+					exist.remove(rn);
+					if (exist.isEmpty()) {
+						if (regLive.contains(r.getEntity())) {
+							addResult(new Format("mov", getVarMem(e, e.split("_", 2)[0]), rn));
+						}
 					}
 				}
 			}
 		}
-		regStore.get(rn).clear();
 	}
 
 	private long calc(String op, long a, long b) {
@@ -576,13 +600,13 @@ public class CodeGenFunc {
 				break;
 			case "sub":
 				if (c.getR1() instanceof ImmOprand && ((ImmOprand) c.getR1()).getVal() == 0) {
-					addResult(new Format("mov", nt, n2));
+					if (!nt.equals(n2)) addResult(new Format("mov", nt, n2));
 					addResult(new Format("neg", nt));
 				} else if (c.getR2() instanceof ImmOprand && ((ImmOprand) c.getR2()).getVal() == 1) {
-					addResult(new Format("mov", nt, n1));
+					if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
 					addResult(new Format("dec", nt));
 				} else {
-					addResult(new Format("mov", nt, n1));
+					if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
 					addResult(new Format("lea", nt, String.format("%s", n1 + "-" + n2)));
 				}
 				break;
@@ -615,11 +639,11 @@ public class CodeGenFunc {
 				break;
 			case "sal":	case "sar":
 			case "and":	case "or" :  case "xor":
-				addResult(new Format("mov", nt, n1));
+				if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
 				addResult(new Format(c.getOp(), nt, n2));
 				break;
 			case "not":
-				addResult(new Format("mov", nt, n1));
+				if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
 				addResult(new Format("not", nt));
 				break;
 			case "mov":
@@ -628,7 +652,7 @@ public class CodeGenFunc {
 			case "call":
 				addResult(new Format("call", c.getR1Name()));
 				if (c.getRt() != null)
-					addResult(new Format("mov", c.getRtName(), "rax"));
+					if (!c.getRtName().equals("rax")) addResult(new Format("mov", c.getRtName(), "rax"));
 				break;
 			case "equ": if (oop == null) oop = "sete";
 			case "neq": if (oop == null) oop = "setne";
@@ -652,12 +676,18 @@ public class CodeGenFunc {
 				addResult(new Format(c.getOp(), labelMerge.find(c.getRtName())));
 				break;
 			case "ret":
+				Oprand r1 = c.getR1();
+				if (r1 != null) {
+//			Long val = values.get(c.getR1Name());
+					if (r1 instanceof ImmOprand && ((ImmOprand) r1).getVal() == 0) addResult(new Format("xor", "rax", "rax"));
+					else if (!n1.equals("rax")) addResult(new Format("mov", "rax", n1));
+				}
 				addResult(new Format("ret"));
 				break;
 		}
 	}
 
 	private long getValue(Oprand r) {
-		return r instanceof ImmOprand ? ((ImmOprand) r).getVal() : values.get(r.get());
+		return ((ImmOprand) r).getVal();
 	}
 }

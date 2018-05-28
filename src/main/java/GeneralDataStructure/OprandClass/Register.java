@@ -12,6 +12,11 @@ public class Register extends Oprand {
 		name = n;
 		memPos = m;
 	}
+	public Register(String n, String m, String e) {
+		name = n;
+		memPos = m;
+		entity = e;
+	}
 	public Register(String n, String m, String e, boolean w) {
 		name = n;
 		memPos = m;
