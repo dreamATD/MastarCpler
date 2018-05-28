@@ -25,7 +25,8 @@ public class RegDistributor {
 
 	private String[] funcParams;
 	private boolean [][] matrix;
-	private int[] value, col;
+	private int[] value;
+	private ArrayList<ArrayList<Integer>> col;
 	private int nVar;
 
 	private int colCnt, outCol;
@@ -68,8 +69,8 @@ public class RegDistributor {
 		edge = new ArrayList<>();
 		this.globalVars = globalVars;
 		funcParams = func.getFirst6Params();
-		colCnt = 22;
-		outCol = 22;
+		colCnt = 21;
+		outCol = 21;
 
 		for (int i = 0; i < blocks.size(); ++i) {
 			MyList<Quad> codes = blocks.get(i).getCodes();
@@ -84,10 +85,10 @@ public class RegDistributor {
 		activeSet = new SimpleUnionFind(nVar);
 		matrix = new boolean[nVar][nVar];
 		value = new int[nVar];
-		col = new int[nVar];
+		col = new ArrayList<>();
 
 		for (int i = 0; i < nVar; ++i) {
-			col[i] = -1;
+			col.add(new ArrayList<>());
 		}
 	}
 
@@ -266,7 +267,7 @@ public class RegDistributor {
 
 		if (!dyed[k] && r instanceof Register && funcParams[k].equals(((Register) r).getMemPos())) {
 			dyed[k] = true;
-			col[activeSet.find(nameIdx.get(r.get()))] = k;
+			col.get(activeSet.find(nameIdx.get(r.get()))).add(k);
 		} else if (r instanceof MemAccess) {
 			forceDyeOprand(((MemAccess) r).getBase(), dyed, k);
 			forceDyeOprand(((MemAccess) r).getOffset(), dyed, k);
@@ -280,6 +281,7 @@ public class RegDistributor {
 		boolean[] dyed = new boolean[6];
 
 		/* force dye */
+		int paramCnt = 0;
 		for (int i = 0; i < blocks.size(); ++i) {
 			MyList<Quad> codes = blocks.get(i).getCodes();
 			for (int j = 0; j < codes.size(); ++j) {
@@ -293,8 +295,21 @@ public class RegDistributor {
 					if (rt instanceof MemAccess)
 						forceDyeOprand(rt, dyed, k);
 				}
+				if (c instanceof ParamQuad) {
+					if (paramCnt < 6) {
+						int tmp = activeSet.find(nameIdx.get(c.getR1Name()));
+						col.get(tmp).add(paramCnt++);
+					}
+				}
+				if (c instanceof CallQuad) {
+					paramCnt = 0;
+					if (c.getRt() instanceof Register) {
+						col.get(activeSet.find(nameIdx.get(c.getRtName()))).add(6);
+					}
+				}
 			}
 		}
+
 		ArrayList<Integer> sortList = new ArrayList<>();
 		for (HashMap.Entry<String, Integer> entry: nameIdx.entrySet()) {
 			int u = entry.getValue();
@@ -308,57 +323,59 @@ public class RegDistributor {
 		for (int i = 0; i < sortList.size(); ++i) {
 			int u = sortList.get(i);
 			tmp.clear();
-			for (int v: edge.get(u)) if (col[v] >= 0) {
-				tmp.add(col[v]);
+			for (int v: edge.get(u)) {
+				tmp.addAll(col.get(v));
 			}
 			Collections.sort(tmp);
 			Tool.unique(tmp);
 			int j;
+			ArrayList<Integer> set = col.get(u);
 			for (j = 0; j < tmp.size(); ++j) {
 				if (j != tmp.get(j)) {
-					col[u] = j;
+					set.add(j);
 					break;
 				}
 			}
-			if (col[u] == -1) {
-				if (j < colCnt) col[u] = j;
-				else col[u] = outCol; // Can't be dyed.
+			if (set.isEmpty()) {
+				if (j < colCnt) set.add(j);
 			}
 		}
 
 		for (HashMap.Entry<String, Integer> entry: nameIdx.entrySet()) {
 			int u = entry.getValue();
-			if (col[u] == -1) { // whose degree is less than colCnt.
+			ArrayList<Integer> set = col.get(u);
+			if (set.isEmpty()) { // whose degree is less than colCnt.
 				tmp.clear();
-				for (int v : edge.get(u)) if (col[v] >= 0) {
-					tmp.add(col[v]);
+				for (int v : edge.get(u)) {
+					tmp.addAll(col.get(v));
 				}
 				Collections.sort(tmp);
 				Tool.unique(tmp);
 				int j;
 				for (j = 0; j < tmp.size(); ++j) {
 					if (j != tmp.get(j)) {
-						col[u] = j;
+						set.add(j);
 						break;
 					}
 				}
-				if (col[u] == -1) {
-					if (j < colCnt) col[u] = j;
-					else col[u] = outCol; // Can't be dyed.
+				if (set.isEmpty()) {
+					if (j < colCnt) set.add(j);
 				}
 			}
 		}
 	}
 
-	private void rebuildOprand(Oprand r) {
+	private void rebuildOprand(Oprand r, int t) {
 		if (r instanceof Register) {
-			int nr = col[activeSet.find(nameIdx.get(r.get()))];
-			r.set(regList[nr]);
+			Integer id = nameIdx.get(r.get());
+			int nr = col.get(activeSet.find(id)).iterator().next();
+			if (nr == -1) r.set(regList[nr + t]);
+			else r.set(regList[nr]);
 		} else if (r instanceof MemAccess) {
-			rebuildOprand(((MemAccess) r).getBase());
-			rebuildOprand(((MemAccess) r).getOffset());
-			rebuildOprand(((MemAccess) r).getOffsetCnt());
-			rebuildOprand(((MemAccess) r).getOffsetSize());
+			rebuildOprand(((MemAccess) r).getBase(), 0);
+			rebuildOprand(((MemAccess) r).getOffset(), 1);
+			rebuildOprand(((MemAccess) r).getOffsetCnt(), 1);
+			rebuildOprand(((MemAccess) r).getOffsetSize(), 0);
 		}
 	}
 
@@ -379,10 +396,10 @@ public class RegDistributor {
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
 				Oprand rt = c.getRt(), r1 = c.getR1(), r2 = c.getR2();
-				rebuildOprand(rt);
+				rebuildOprand(rt, 0);
 				if (c instanceof PhiQuad) continue;
-				rebuildOprand(r1);
-				rebuildOprand(r2);
+				rebuildOprand(r1, 0);
+				rebuildOprand(r2, 1);
 			}
 		}
 

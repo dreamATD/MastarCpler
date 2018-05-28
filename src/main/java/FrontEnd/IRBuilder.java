@@ -657,7 +657,7 @@ public class IRBuilder extends AstVisitor {
 		nod.reg = new Register(getTempName());
 
 		/* Special for useless assignment statement. */
-		if (nod.id.equals("=") && isTempReg(rr.get()) && !(right instanceof NewExprNode)) {
+		if (nod.id.equals("=") && isTempReg(rr.get()) && !(right instanceof NewExprNode) && !(right instanceof FuncExprNode)) {
 			updateTempReg(rr.get(), lr.copy());
 			return;
 		}
@@ -847,7 +847,13 @@ public class IRBuilder extends AstVisitor {
 		int n = nod.sons.size();
 		String fun = funcLabel(nod.id);
 		for (int i = 0; i < n; ++i) {
-			insertQuad(new ParamQuad("param", nod.sons.get(i).reg.copy()));
+			Oprand tmp = nod.sons.get(i).reg;
+			if (!(tmp instanceof Register)) {
+				Register reg = new Register(getTempName());
+				insertQuad(new MovQuad("mov", reg, tmp.copy()));
+				tmp = reg;
+			}
+			insertQuad(new ParamQuad("param", tmp.copy()));
 		}
 
 		nod.reg = nod.type instanceof VoidTypeRef ? null : new Register(getTempName());

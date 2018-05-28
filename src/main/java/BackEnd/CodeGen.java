@@ -313,8 +313,10 @@ public class CodeGen {
 //			func.print();
 			RegDistributor distributor = new RegDistributor(func, globals);
 			distributor.regDistribute();
-//			System.out.println();
-//			func.print();
+			if (func.getName().equals("F_gcd")) {
+				System.out.println();
+				func.print();
+			}
 			CodeGenFunc funcGenerator = new CodeGenFunc(func, globalSize);
 			codes.addAll(funcGenerator.generateCode());
 			codes.add("");

@@ -287,18 +287,38 @@ public class CodeGenFunc {
 		boolean certain2 = r2 instanceof ImmOprand;
 
 		if (certain1 && certain2) {
-			values.put(nt, calc(c.getOp(), getValue(r1), getValue(r2)));
-			translate(null);
+			long val = calc(c.getOp(), getValue(r1), getValue(r2));
+			translate(new MovQuad("mov", rt, new ImmOprand(val)));
 			return;
 		} else {
 			if (certain1) c.changeR1(new ImmOprand(getValue(r1)));
 			if (certain2) c.changeR2(new ImmOprand(getValue(r2)));
-			translate(c);
+			String op = c.getOp();
+			if (op.equals("div")) {
+				boolean raxUse = regLive.contains("rax") && !nt.equals("rax");
+				if (raxUse) push("rax", 8);
+				updateMov(new MovQuad("mov", new Register("rax"), r1));
+				translate(c);
+				updateMov(new MovQuad("mov", rt, new Register("rax")));
+				if (raxUse) pop("rax", 8);
+			} else if (op.equals("mod")) {
+				boolean raxUse = regLive.contains("rax");
+				boolean rdxUse = regLive.contains("rdx") && !nt.equals("rdx");
+				if (raxUse) push("rax", 8);
+				if (rdxUse) push("rdx", 8);
+				updateMov(new MovQuad("mov", new Register("rax"), r1));
+				translate(c);
+				updateMov(new MovQuad("mov", rt, new Register("rdx")));
+				if (rdxUse) pop("rdx", 8);
+				if (raxUse) pop("rax", 8);
+			} else translate(c);
 		}
 		modifySize((rt).getEntity(), ConstVar.addrLen);
 	}
 
 	private void updateMov(Quad c) {
+
+		if (c.rt.get().equals(c.r1.get())) return;
 
 		if (c.getRt() instanceof MemAccess) {
 			translate(c);
@@ -362,19 +382,19 @@ public class CodeGenFunc {
 			String tr = tmpParams.get(j);
 			if (j < 6) {
 				String reg = regList[j];
-				HashSet<String> set = regStore.get(reg);
+//				HashSet<String> set = regStore.get(reg);
 				Long val = values.get(tr);
 				if (tr != reg) {
-					if (!regStore.get(reg).isEmpty()) {
-						push(reg, ConstVar.intLen);
-						pushReg.add(new Pair<>(reg, ConstVar.intLen));
-					}
-					if (val != null) {
-						if (val == 0) addResult(new Format("xor", reg, reg));
-						addResult(new Format("mov", reg, Long.toString(val)));
-					} else {
+//					if (regLive.contains(reg)) {
+//						push(reg, ConstVar.intLen);
+//						pushReg.add(new Pair<>(reg, ConstVar.intLen));
+//					}
+//					if (val != null) {
+//						if (val == 0) addResult(new Format("xor", reg, reg));
+//						addResult(new Format("mov", reg, Long.toString(val)));
+//					} else {
 						addResult(new Format("mov", reg, tr));
-					}
+//					}
 				}
 				oldRsp = rspVal;
 			} else {
@@ -389,17 +409,17 @@ public class CodeGenFunc {
 			modifySize(rt.getEntity(), ConstVar.addrLen);
 		}
 
-		boolean raxUse = regLive.contains("rax");
-		if (raxUse) push("rax", varSize.get(regStore.get("rax").iterator().next()));
+//		boolean raxUse = regLive.contains("rax");
+//		if (raxUse) push("rax", varSize.get(regStore.get("rax").iterator().next()));
 		if ((rspVal & 15) != 0) subRsp(8);
 		translate(c);
-		if (raxUse) pop("rax", ConstVar.addrLen);
+//		if (raxUse) pop("rax", ConstVar.addrLen);
 		addRsp(rspVal - oldRsp);
 		rspVal = oldRsp;
-		while (!pushReg.isEmpty()) {
-			Pair<String, Integer> u = pushReg.pop();
-			pop(u.getKey(), u.getValue());
-		}
+//		while (!pushReg.isEmpty()) {
+//			Pair<String, Integer> u = pushReg.pop();
+//			pop(u.getKey(), u.getValue());
+//		}
 	}
 
 	private void updateRet(Quad c) {
@@ -585,12 +605,13 @@ public class CodeGenFunc {
 				}
 				addResult(new Format("imul", nt, n1, n2));
 				break;
-			case "div":
-				addResult(new Format("xchg", n1, "eax"));
-				addResult(new Format("xchg", nt, "edx"));
-				addResult(new Format("div", n2));
-				addResult(new Format("xchg", n1, "eax"));
-				addResult(new Format("xchg", nt, "edx"));
+			case "div": ;
+				addResult(new Format("cqo"));
+				addResult(new Format("idiv", n2));
+				break;
+			case "mod":
+				addResult(new Format("cqo"));
+				addResult(new Format("idiv", n2));
 				break;
 			case "sal":	case "sar":
 			case "and":	case "or" :  case "xor":
