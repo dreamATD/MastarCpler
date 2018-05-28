@@ -146,13 +146,13 @@ public class FuncFrame {
 
 	public void buildCFG(ArrayList<Quad> codes) {
 		int cnt = 0;
-		System.out.println(name + ": ");
-
-		for (int i = 0; i < codes.size(); ++i) {
-			codes.get(i).print();
-		}
-
-		System.out.println();
+//		System.out.println(name + ": ");
+//
+//		for (int i = 0; i < codes.size(); ++i) {
+//			codes.get(i).print();
+//		}
+//
+//		System.out.println();
 		if (codes.size() == 0) {
 			first = null;
 			return;
