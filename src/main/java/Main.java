@@ -10,7 +10,7 @@ import java.util.ArrayList;
 
 public class Main {
     public static void main (String[] args) throws IOException, Exception {
-        String fileName = "stringConst";
+        String fileName = "test";
         InputStream is = new FileInputStream ("example/" + fileName + ".txt");
         ANTLRInputStream input = new ANTLRInputStream (is);
         MxStarLexer lexer = new MxStarLexer (input);
@@ -62,16 +62,11 @@ public class Main {
             content += codes.get(i) + '\n';
         }
 
-        boolean debug = false; // file output
-        if (debug) {
-            File file = new File("output/" + fileName + ".asm");
-            OutputStream out = new FileOutputStream(file);
-            if (!file.exists()) file.createNewFile();
-            out.write(content.getBytes());
-            out.flush();
-            out.close();
-        } else {
-            System.out.print(content);
-        }
+        File file = new File("output/" + fileName + ".asm");
+        OutputStream out = new FileOutputStream(file);
+        if (!file.exists()) file.createNewFile();
+        out.write(content.getBytes());
+        out.flush();
+        out.close();
     }
 }
