@@ -30,7 +30,7 @@ public class CodeGenFunc {
 	private ArrayList<String> resCode;
 
 	private String funcName;
-	private String[] regList = {"rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r10", "r11", "r12", "r13", "r14", "r15", "rbx", "rbp", "rsp"};
+	private String[] regList = {"rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "rbx", "r12", "r13", "r14", "r10", "r11", "r15", "rbp", "rsp"};
 
 	private boolean useRbp;
 
@@ -52,7 +52,7 @@ public class CodeGenFunc {
 	/*
 	* related to kick out
 	* */
-	private int outReg = 19;
+	private int outReg = 13;
 
 	/*
 	* related to moving parameters in stack into register

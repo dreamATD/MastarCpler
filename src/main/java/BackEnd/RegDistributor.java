@@ -37,7 +37,7 @@ public class RegDistributor {
 	* */
 	MyList<Quad> movList;
 
-	private String[] regList = {"rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r10", "r11", "r12", "r13", "r14", "r15", "rbx", "rbp", "rsp"};
+	private String[] regList = {"rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "rbx", "r12", "r13", "r14", "r10", "r11", "r15", "rbp", "rsp"};
 
 	private void addRegister(Oprand opr) {
 		if (opr instanceof Register && !(nameIdx.containsKey(opr.get()))) {
@@ -77,8 +77,8 @@ public class RegDistributor {
 		first6Params = func.getFirst6Params();
 		lastParams = func.getLastParams();
 		movList = new MyList<>();
-		colCnt = 19;
-		outCol = 19;
+		colCnt = 13;
+		outCol = 13;
 
 		for (int i = 0; i < blocks.size(); ++i) {
 			MyList<Quad> codes = blocks.get(i).getCodes();
