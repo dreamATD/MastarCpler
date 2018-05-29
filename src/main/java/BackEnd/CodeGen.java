@@ -309,16 +309,16 @@ public class CodeGen {
 			FuncFrame func = funcs.get(i);
 			FuncSSABuilder ssaBuilder = new FuncSSABuilder(func);
 			ssaBuilder.buildSSAFunc();
-			if (func.getName().equals("main")) {
-				System.out.println();
-				func.print();
-			}
+//			if (func.getName().equals("main")) {
+//				System.out.println();
+//				func.print();
+//			}
 			RegDistributor distributor = new RegDistributor(func, globals);
 			distributor.regDistribute();
-			if (func.getName().equals("main")) {
-				System.out.println();
-				func.print();
-			}
+//			if (func.getName().equals("main")) {
+//				System.out.println();
+//				func.print();
+//			}
 			CodeGenFunc funcGenerator = new CodeGenFunc(func, globalSize);
 			codes.addAll(funcGenerator.generateCode());
 			codes.add("");
