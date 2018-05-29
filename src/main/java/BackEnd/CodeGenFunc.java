@@ -254,8 +254,11 @@ public class CodeGenFunc {
 			for (int i = 0; i < regs.length; ++i) {
 				addFirstResult(new Format("push", regs[i]));
 			}
-			if (func.getRetSize() == 0) for (int i = regs.length - 1; i >= 0; --i) {
-				addResult(new Format("pop", regs[i]));
+			if (func.getRetSize() == 0) {
+				addResult(retFormat);
+				for (int i = regs.length - 1; i >= 0; --i) {
+					addResult(new Format("pop", regs[i]));
+				}
 			}
 		}
 
@@ -372,7 +375,7 @@ public class CodeGenFunc {
 
 	private void updateMov(Quad c) {
 		if (c.rt.get().equals(c.r1.get())) return;
-		if (c.getRt() instanceof MemAccess) {
+		if (c.getRt() instanceof MemAccess || !(c.getR1() instanceof Register)) {
 			translate(c);
 			return;
 		}
@@ -621,7 +624,12 @@ public class CodeGenFunc {
 		String oop = null;
 		switch (c.getOp()) {
 			case "add":
-				addResult(new Format("lea", nt, String.format("[%s]", n1 + "+" + n2)));
+				if (c.getR1() instanceof Register && c.getR2() instanceof Register && c.getRt() instanceof Register)
+					addResult(new Format("lea", nt, String.format("[%s]", n1 + "+" + n2)));
+				else {
+					addResult(new Format("mov", nt, n1));
+					addResult(new Format("add", nt, n2));
+				}
 				break;
 			case "sub":
 				if (c.getR1() instanceof ImmOprand && ((ImmOprand) c.getR1()).getVal() == 0) {

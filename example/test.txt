@@ -1,65 +1,50 @@
-int gcd(int x, int y) {
-  if (x%y == 0) return y;
-  else return gcd5(y, x%y);
+
+class TA{
+	string state;
+	int anger;
 }
-
-
-int gcd1(int x, int y) {
-  if (x%y == 0) return y;
-  else return gcd(y, x%y);
+int init_anger = 100;
+int work_anger = 10;
+void work(string st, TA ta)
+{
+	if (ta.anger <= 100) println(st + ", " + ta.state + " enjoys this work. XD");
+	else println(st + ", " + ta.state + " wants to give up!!!!!");
+	ta.anger = ta.anger + work_anger;
 }
-
-
-int gcd2(int x, int y) {
-  if (x%y == 0) return y;
-  else return gcd1(y, x%y);
-}
-
-
-
-int gcd3(int x, int y) {
-  if (x%y == 0) return y;
-  else return gcd2(y, x%y);
-}
-
-
-int gcd4(int x, int y) {
-  if (x%y == 0) return y;
-  else return gcd(y, x%y);
-}
-
-
-int gcd5(int x, int y) {
-  if (x%y == 0) return y;
-  else return gcd2(y, x%y);
-}
-
-int main() {
-    println(toString(gcd(10,1)));
-    println(toString(gcd(34986,3087)));
-    println(toString(gcd(2907,1539)));
-
-    return 0;
+int main()
+{
+	TA mr;
+	TA mars;
+	mr = new TA;
+	mr.state = "the leading TA";
+	mr.anger = 0;
+	mars = new TA;
+	mars.state = "the striking TA";
+	mars.anger = init_anger;
+	work("MR", mr);
+	work("Mars", mars);
+	work("Mars", mars);
+	return 0;
 }
 
 
 /*!! metadata:
 === comment ===
-codegen2-5140309569-xushichao.txt
-gcd_modified
+class_test-mahaojun.mx
 === input ===
 
 === assert ===
 output
 === timeout ===
-1.0
+0.1
 === output ===
-1
-1029
-171
+MR, the leading TA enjoys this work. XD
+Mars, the striking TA enjoys this work. XD
+Mars, the striking TA wants to give up!!!!!
 === phase ===
 codegen pretest
 === is_public ===
 True
 
 !!*/
+

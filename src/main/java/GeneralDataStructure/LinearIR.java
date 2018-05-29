@@ -78,31 +78,42 @@ public class LinearIR {
 		uninitMem.add(new Pair<>(name, len));
 	}
 	public void addInitMem(String name, byte[] list) {
-		String res = Integer.toHexString(list[0]).toUpperCase();
+		String tmp;
+		String res = "";
 		int len = list.length;
-		for (int i = 1; i < 8; ++i) {
-			res += len > i ? Integer.toHexString(list[i]).toUpperCase() : "00";
+		for (int i = 0; i < 8; ++i) {
+			tmp = Integer.toHexString(list[i]).toUpperCase();
+			if (tmp.length() == 1) tmp = '0' + tmp;
+			res += (len > i ? tmp : "00");
 		}
 		res += "H";
 		for (int i = 8; i < len; i += 8) {
 			for (int j = i; j - i < 8; ++j) {
-				res += len > j ? Integer.toHexString(list[i]).toUpperCase() : "00";
+				tmp = Integer.toHexString(list[i]).toUpperCase();
+				if (tmp.length() == 1) tmp = '0' + tmp;
+				res += len > j ? tmp : "00";
 			}
 			res += "H";
 		}
 		initMem.add(new Pair<>(name, res));
 	}
 	public void addInitMem(String name, byte[] list, int len) {
-		String str = Integer.toHexString(list[0]).toUpperCase();
+		String tmp = Integer.toHexString(list[0]).toUpperCase();
+		if (tmp.length() == 1) tmp = '0' + tmp;
+		String str = tmp;
 		int size = list.length;
 		for (int i = 1; i < 8; ++i) {
-			str += size > i ? Integer.toHexString(list[i]).toUpperCase() : "00";
+			tmp = Integer.toHexString(list[i]).toUpperCase();
+			if (tmp.length() == 1) tmp = '0' + tmp;
+			str += size > i ? tmp : "00";
 		}
 		str += "H";
 		for (int i = 8; i < len; i += 8) {
 			str += ", ";
 			for (int j = i; j - i < 8; ++j) {
-				str += size > j ? Integer.toHexString(list[i]).toUpperCase() : "00";
+				tmp = Integer.toHexString(list[i]).toUpperCase();
+				if (tmp.length() == 1) tmp = '0' + tmp;
+				str += size > j ? tmp : "00";
 			}
 			str += "H";
 		}
@@ -112,7 +123,9 @@ public class LinearIR {
 		int len = list.length;
 		String str = "";
 		for (int i = 0; i < len; ++i) {
-			str += Integer.toHexString(list[i]).toUpperCase() + "H, ";
+			String tmp = Integer.toHexString(list[i]).toUpperCase();
+			if (tmp.length() == 1) tmp = '0' + tmp;
+			str += tmp + "H, ";
 		}
 		str += "00H";
 		roData.add(new Pair<>(name, str));

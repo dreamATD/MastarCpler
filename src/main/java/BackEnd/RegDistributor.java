@@ -10,6 +10,7 @@ import GeneralDataStructure.QuadClass.*;
 import Optimizer.ActionAnalyzer;
 import Utilizer.SimpleUnionFind;
 import Utilizer.Tool;
+import javafx.util.Pair;
 
 import java.util.*;
 
@@ -35,7 +36,7 @@ public class RegDistributor {
 	* related to the parameters fighting
 	* need to be attach at the beginning
 	* */
-	MyList<Quad> movList;
+	HashMap<Pair<String, String>, Quad> movList;
 
 	private String[] regList = {"rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "rbx", "r12", "r13", "r14", "r10", "r11", "r15", "rbp", "rsp"};
 
@@ -76,7 +77,7 @@ public class RegDistributor {
 		this.globalVars = globalVars;
 		first6Params = func.getFirst6Params();
 		lastParams = func.getLastParams();
-		movList = new MyList<>();
+		movList = new HashMap<>();
 		colCnt = 12;
 		outCol = 12;
 
@@ -186,7 +187,7 @@ public class RegDistributor {
 						matrix[u][v] = matrix[v][u] = true;
 						edge.get(u).add(v);
 						edge.get(v).add(u);
-//						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
+						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
 					}
 					liveNow.remove(nt);
 				}
@@ -205,7 +206,7 @@ public class RegDistributor {
 						matrix[u][v] = matrix[v][u] = true;
 						edge.get(u).add(v);
 						edge.get(v).add(u);
-//						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
+						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
 					}
 				}
 			}
@@ -224,20 +225,25 @@ public class RegDistributor {
 					int u = nameIdx.get(nu), v = nameIdx.get(nv);
 					int fu = activeSet.find(u);
 					int fv = activeSet.find(v);
+					int f;
 					if (!matrix[fu][fv] && fu != fv) {
+						HashSet<Integer> tmp1 = edge.get(fu), tmp2 = edge.get(fv);
 						activeSet.merge(fu, fv);
-						if (activeSet.find(fv) != fv) Tool.<Integer>swap(fu, fv);
-						changed = true;
+						f = activeSet.find(fu);
 
 						/* Rebuild graph. */
-						HashSet<Integer> edgeList = edge.get(fu);
-						while (edgeList.size() > 0) {
-							for (int p: edgeList) {
-								cut(p, fu);
-								link(p, fv);
-								break;
-							}
+						HashSet<Integer> edgeList = edge.get(f);
+						for (int t: tmp1) {
+							int tt = activeSet.find(t);
+							edgeList.add(tt);
+							matrix[tt][f] = matrix[f][tt] = true;
 						}
+						for (int t: tmp2) {
+							int tt = activeSet.find(t);
+							edgeList.add(tt);
+							matrix[tt][f] = matrix[f][tt] = true;
+						}
+						changed = true;
 					}
 				}
 			}
@@ -284,6 +290,27 @@ public class RegDistributor {
 		}
 	}
 
+	private void dyePoint(int u) {
+		ArrayList<Integer> tmp = new ArrayList<>();
+		tmp.clear();
+		for (int v: edge.get(u)) {
+			tmp.addAll(col.get(activeSet.find(v)));
+		}
+		Collections.sort(tmp);
+		Tool.unique(tmp);
+		int j;
+		HashSet<Integer> set = col.get(u);
+		for (j = 0; j < tmp.size(); ++j) {
+			if (j != tmp.get(j)) {
+				set.add(j);
+				break;
+			}
+		}
+		if (set.isEmpty()) {
+			if (j < colCnt) set.add(j);
+		}
+	}
+
 	private void dyeGraph() {
 
 		boolean[] dyed = new boolean[6];
@@ -318,7 +345,8 @@ public class RegDistributor {
 //		}
 		if (first6Params != null) {
 			for (int i = 0; i < first6Params.length; ++i) {
-				col.get(activeSet.find(nameIdx.get(first6Params[i]))).add(i);
+				if (nameIdx.containsKey(first6Params[i]))
+					col.get(activeSet.find(nameIdx.get(first6Params[i]))).add(i);
 			}
 		}
 
@@ -334,30 +362,34 @@ public class RegDistributor {
 						col.get(u).add(paramCnt);
 						if (first6Params != null && paramCnt < first6Params.length) {
 							String myParam = first6Params[paramCnt];
+							if (!nameIdx.containsKey(myParam)) continue;
 							int v = activeSet.find(nameIdx.get(myParam));
 							if (matrix[u][v]) {
 								int nReg = 7 + fightCnt++;
 								HashSet<Integer> setv = col.get(v);
 								setv.remove(paramCnt);
 								setv.add(nReg);
-								movList.add(new MovQuad("mov", new Register(regList[nReg], myParam, myParam),
+								movList.put(new Pair<>(regList[nReg], regList[paramCnt]),
+											new MovQuad("mov", new Register(regList[nReg], myParam, myParam),
 												new Register(regList[paramCnt], myParam, myParam)
-										)
+											)
 								);
-
 							}
 						}
+
 						paramCnt++;
 					}
 				}
 				if (c instanceof CallQuad) {
 					paramCnt = 0;
+					fightCnt = 0;
 					if (c.getRt() instanceof Register) {
 						col.get(activeSet.find(nameIdx.get(c.getRtName()))).add(6);
 					}
 				}
 			}
 		}
+
 
 		ArrayList<Integer> sortList = new ArrayList<>();
 		for (HashMap.Entry<String, Integer> entry: nameIdx.entrySet()) {
@@ -368,48 +400,16 @@ public class RegDistributor {
 		}
 		Collections.sort(sortList, (x, y) -> value[x] >= value[y] ? 1 : 0);
 
-		ArrayList<Integer> tmp = new ArrayList<>();
 		for (int i = 0; i < sortList.size(); ++i) {
 			int u = sortList.get(i);
-			tmp.clear();
-			for (int v: edge.get(u)) {
-				tmp.addAll(col.get(v));
-			}
-			Collections.sort(tmp);
-			Tool.unique(tmp);
-			int j;
-			HashSet<Integer> set = col.get(u);
-			for (j = 0; j < tmp.size(); ++j) {
-				if (j != tmp.get(j)) {
-					set.add(j);
-					break;
-				}
-			}
-			if (set.isEmpty()) {
-				if (j < colCnt) set.add(j);
-			}
+			dyePoint(u);
 		}
 
 		for (HashMap.Entry<String, Integer> entry: nameIdx.entrySet()) {
 			int u = entry.getValue();
 			HashSet<Integer> set = col.get(u);
 			if (set.isEmpty()) { // whose degree is less than colCnt.
-				tmp.clear();
-				for (int v : edge.get(u)) {
-					tmp.addAll(col.get(v));
-				}
-				Collections.sort(tmp);
-				Tool.unique(tmp);
-				int j;
-				for (j = 0; j < tmp.size(); ++j) {
-					if (j != tmp.get(j)) {
-						set.add(j);
-						break;
-					}
-				}
-				if (set.isEmpty()) {
-					if (j < colCnt) set.add(j);
-				}
+				dyePoint(u);
 			}
 		}
 	}
@@ -459,10 +459,10 @@ public class RegDistributor {
 				rebuildOprand(r2, 1);
 			}
 
-			if (i == 0) for (int j = movList.size() - 1; j >= 0; --j) {
+			if (i == 0) for (Map.Entry<Pair<String, String>, Quad> entry: movList.entrySet()) {
 				Quad c = codes.getFirst();
 				if (c.getLabel() != null) {
-					Quad d = movList.get(j);
+					Quad d = entry.getValue();
 					d.setLabel(c.getLabel());
 					c.setLabel(null);
 					codes.addFirst(d);
