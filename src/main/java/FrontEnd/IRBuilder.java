@@ -413,8 +413,8 @@ public class IRBuilder extends AstVisitor {
 					generateNewFunc(nod.reg, new ImmOprand(256));
 					if (!nod.sons.isEmpty()) {
 						visit(nod.sons.get(0));
-						generateStringFunc("strcpy", null, nod.reg.copy(), nod.sons.get(0).reg.copy());
-						linearCode.insertExterns("strcpy");
+						generateStringFunc("S_strcpy", null, nod.reg.copy(), nod.sons.get(0).reg.copy());
+						linearCode.insertExterns("S_strcpy");
 					}
 				}
 
@@ -685,12 +685,10 @@ public class IRBuilder extends AstVisitor {
 			generateNewFunc(nod.reg, new ImmOprand(256));
 			ArrayList<Oprand> strList = new ArrayList<>();
 			generateStrAdd(nod, strList);
-			generateStringFunc("strcpy", null, nod.reg.copy(), strList.get(0).copy());
+			generateStringFunc("S_strcpy", null, nod.reg.copy(), strList.get(0).copy());
 			for (int i = 1; i < strList.size(); ++i) {
-				generateStringFunc("strcat", null, nod.reg.copy(), strList.get(i).copy());
+				generateStringFunc("S_strcat", null, nod.reg.copy(), strList.get(i).copy());
 			}
-			linearCode.insertExterns("strcpy");
-			linearCode.insertExterns("strcat");
 			return;
 		}
 
@@ -945,8 +943,8 @@ public class IRBuilder extends AstVisitor {
 			switch (mem.id) {
 				case "length":
 					getParam(son.reg);
-					insertQuad(new CallQuad("call", nod.reg, new FuncName("strlen"), new ImmOprand(1)));
-					linearCode.insertExterns("strlen");
+					insertQuad(new CallQuad("call", nod.reg, new FuncName("S_strlen"), new ImmOprand(1)));
+					linearCode.insertExterns("S_strlen");
 					break;
 				case "subString":
 					Node left = mem.sons.get(0), right = mem.sons.get(1);

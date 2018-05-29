@@ -23,7 +23,7 @@ public class RegDistributor {
 	private HashMap<String, Integer> nameIdx;
 	private ArrayList<HashSet<Integer>> edge;
 	private ArrayList<HashSet<String>> liveOut;
-	private String[] lastParams;
+	private String[] params;
 	private String[] first6Params;
 	private boolean [][] matrix;
 	private int[] value;
@@ -38,7 +38,7 @@ public class RegDistributor {
 	* */
 	HashMap<Pair<String, String>, Quad> movList;
 
-	private String[] regList = {"rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "rbx", "r12", "r13", "r14", "r10", "r11", "r15", "rbp", "rsp"};
+	private String[] regList = {"rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "rbx", "r12", "r13", "r14", "r15", "r11", "r10", "rbp", "rsp"};
 
 	private void addRegister(Oprand opr) {
 		if (opr instanceof Register && !(nameIdx.containsKey(opr.get()))) {
@@ -76,7 +76,13 @@ public class RegDistributor {
 		edge = new ArrayList<>();
 		this.globalVars = globalVars;
 		first6Params = func.getFirst6Params();
-		lastParams = func.getLastParams();
+
+		HashMap<String, Long> tmp = func.getParams();
+		if (!tmp.isEmpty()) {
+			params = new String[tmp.size()];
+			tmp.keySet().toArray(params);
+		}
+
 		movList = new HashMap<>();
 		colCnt = 12;
 		outCol = 12;
@@ -95,7 +101,6 @@ public class RegDistributor {
 		matrix = new boolean[nVar][nVar];
 		value = new int[nVar];
 		col = new ArrayList<>();
-
 		for (int i = 0; i < nVar; ++i) {
 			col.add(new HashSet<>());
 		}
@@ -105,7 +110,7 @@ public class RegDistributor {
 		buildActiveDomain();
 		buildLiveOut();
 		buildGraph();
-		while (mergeActive());
+//		while (mergeActive());
 		calcVal();
 		dyeGraph();
 		rebuildCodes();
@@ -176,28 +181,31 @@ public class RegDistributor {
 				updateRegLive(c.getRt(), liveNow);
 				updateRegLive(c.getR1(), liveNow);
 				updateRegLive(c.getR2(), liveNow);
-				if (!(c instanceof PhiQuad) && c.getRt() instanceof Register) {
-					String nt = c.getRtName();
-					int u = activeSet.find(nameIdx.get(nt));
-					for (String data: liveNow) {
-						if (data.equals(nt)) continue;
-						int v = activeSet.find(nameIdx.get(data));
-						if (matrix[u][v] || (c instanceof MovQuad && c.getRt() instanceof Register && data.equals(c.getR1Name())))
-							continue;
-						matrix[u][v] = matrix[v][u] = true;
-						edge.get(u).add(v);
-						edge.get(v).add(u);
+				if (!(c instanceof PhiQuad)) {
+					if (!(c.getRt() instanceof Register || c instanceof ParamQuad && c.getR1() instanceof Register));
+					else {
+						String nt = c instanceof ParamQuad ? c.getR1Name() : c.getRtName();
+						int u = activeSet.find(nameIdx.get(nt));
+						for (String data : liveNow) {
+							if (data.equals(nt)) continue;
+							int v = activeSet.find(nameIdx.get(data));
+							if (matrix[u][v] || (c instanceof MovQuad && c.getRt() instanceof Register && data.equals(c.getR1Name())))
+								continue;
+							matrix[u][v] = matrix[v][u] = true;
+							edge.get(u).add(v);
+							edge.get(v).add(u);
 //						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
+						}
+						liveNow.remove(nt);
 					}
-					liveNow.remove(nt);
 				}
 				addLiveNow(c.getR1(), liveNow);
 				addLiveNow(c.getR2(), liveNow);
 				if (c.getRt() instanceof MemAccess)
 					addLiveNow(c.getRt(), liveNow);
 			}
-			if (i == 0 && lastParams != null) {
-				for (String su: lastParams) if (nameIdx.containsKey(su)) {
+			if (i == 0 && params != null) {
+				for (String su: params) if (nameIdx.containsKey(su)) {
 					int u = activeSet.find(nameIdx.get(su));
 					for (String sv: liveNow) {
 						int v = activeSet.find(nameIdx.get(sv));
@@ -364,9 +372,9 @@ public class RegDistributor {
 							String myParam = first6Params[paramCnt];
 							if (!nameIdx.containsKey(myParam)) continue;
 							int v = activeSet.find(nameIdx.get(myParam));
-							if (matrix[u][v]) {
+							HashSet<Integer> setv = col.get(v);
+							if (matrix[u][v] && setv.iterator().next() == paramCnt) {
 								int nReg = 7 + fightCnt++;
-								HashSet<Integer> setv = col.get(v);
 								setv.remove(paramCnt);
 								setv.add(nReg);
 								movList.put(new Pair<>(regList[nReg], regList[paramCnt]),
@@ -376,13 +384,11 @@ public class RegDistributor {
 								);
 							}
 						}
-
 						paramCnt++;
 					}
 				}
 				if (c instanceof CallQuad) {
 					paramCnt = 0;
-					fightCnt = 0;
 					if (c.getRt() instanceof Register) {
 						col.get(activeSet.find(nameIdx.get(c.getRtName()))).add(6);
 					}
@@ -394,7 +400,8 @@ public class RegDistributor {
 		ArrayList<Integer> sortList = new ArrayList<>();
 		for (HashMap.Entry<String, Integer> entry: nameIdx.entrySet()) {
 			int u = entry.getValue();
-			if (edge.get(u).size() >= colCnt) {
+			int fu = activeSet.find(u);
+			if (u == fu && col.get(u).isEmpty() && edge.get(u).size() >= colCnt) {
 				sortList.add(u);
 			}
 		}

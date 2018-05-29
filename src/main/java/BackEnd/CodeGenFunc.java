@@ -9,9 +9,7 @@ import GeneralDataStructure.QuadClass.*;
 import Utilizer.ConstVar;
 import Utilizer.Tool;
 import Utilizer.UnionFind;
-import javafx.util.Pair;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 import static java.lang.Integer.min;
@@ -25,13 +23,20 @@ public class CodeGenFunc {
 	private HashMap<String, HashSet<String> > entityExist;
 	private HashMap<String, HashSet<String>> regStore;
 	private HashSet<String> regLive;
-	private MyList<Quad> codes;
+
+	/*
+	* related to blocks
+	* */
+	private BasicBlock firstBlock;
+	private ArrayList<BasicBlock> blockList;
+	private boolean [] visited;
+	private int visitedCnt;
 
 	private MyList<Format> result;
 	private ArrayList<String> resCode;
 
 	private String funcName;
-	private String[] regList = {"rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "rbx", "r12", "r13", "r14", "r10", "r11", "r15", "rbp", "rsp"};
+	private String[] regList = {"rdi", "rsi", "rdx", "rcx", "r8", "r9", "rax", "rbx", "r12", "r13", "r14", "r15", "r11", "r10", "rbp", "rsp"};
 
 	private boolean useRbp;
 
@@ -68,8 +73,13 @@ public class CodeGenFunc {
 		values = new HashMap<>();
 		entityExist = new HashMap<>();
 		regStore = new HashMap<>();
-		codes = new MyList<>();
 		result = new MyList<>();
+
+		blockList = func.getBbList();
+		firstBlock = func.getFirst();
+		visited = new boolean [func.getBbList().size()];
+		for (int i = 0; i < visited.length; ++i) visited[i] = false;
+
 		resCode = new ArrayList<>();
 		useRbp = false;
 		localParamSize = func.getLocalVarSize();
@@ -84,32 +94,7 @@ public class CodeGenFunc {
 		labelMerge = new UnionFind<>();
 		calleeSaveReg = new HashSet<>();
 		paramsInStack = new HashMap<>();
-
-		for (int i = 0; i < blocks.size(); ++i) {
-			codes.addAll(blocks.get(i).getCodes());
-		}
-
-		for (int i = 0; i < codes.size(); ++i) {
-			Quad c = codes.get(i);
-			Oprand rt = c.getRt();
-			Oprand r1 = c.getR1();
-			Oprand r2 = c.getR2();
-
-			addCalleeSaveRegister(rt);
-			addCalleeSaveRegister(r1);
-			addCalleeSaveRegister(r2);
-		}
-
 		for (int i = 0; i < regList.length; ++i) regStore.put(regList[i], new HashSet<>());
-
-		for (Map.Entry<String, Long> entry: params.entrySet()) {
-			String n = entry.getKey();
-			long offset = entry.getValue();
-			if (offset <= 0) {
-				HashSet<String> tmp = getEntityExist(n);
-				tmp.add(regList[-(int)offset]);
-			}
-		}
 
 	}
 
@@ -158,57 +143,141 @@ public class CodeGenFunc {
 			String reg = r.get();
 			for (int i = 0; i < 7; ++i) if (reg.equals(regList[i])) return;
 			calleeSaveReg.add(reg);
-		} else if (r instanceof MemAccess) {
+		} /*else if (r instanceof MemAccess) {
 			addCalleeSaveRegister(((MemAccess) r).getBase());
 			addCalleeSaveRegister(((MemAccess) r).getOffset());
 			addCalleeSaveRegister(((MemAccess) r).getOffsetCnt());
 			addCalleeSaveRegister(((MemAccess) r).getOffsetSize());
-		}
+		}*/
 	}
 
 	private void checkParamInStack(Oprand r) {
-		if (!(r instanceof Register)) return;
-		String n = r.get();
-		String e = ((Register) r).getEntity();
-		String m = ((Register) r).getMemPos();
+		if (r instanceof Register) {
+			String n = r.get();
+			String e = ((Register) r).getEntity();
+			String m = ((Register) r).getMemPos();
 
-		if (!e.equals(m)) return; // be redefined
+			if (!e.equals(m)) return; // be redefined
 
-		Long offset = params.get(e);
-		if (offset == null || offset <= 0) return;
-		paramsInStack.put(m, n);
+			Long offset = params.get(e);
+			if (offset == null || offset <= 0) return;
+			paramsInStack.put(m, n);
+		} else if (r instanceof MemAccess) {
+			checkParamInStack(((MemAccess) r).getBase());
+			checkParamInStack(((MemAccess) r).getOffsetSize());
+			checkParamInStack(((MemAccess) r).getOffset());
+			checkParamInStack(((MemAccess) r).getOffsetCnt());
+		}
 	}
 
 	public ArrayList<String> generateCode() {
-		rspVal += calleeSaveReg.size() * 8;
-		long old = rspVal;
-		if ((rspVal & 15) == 8) {
-			subRspFirst((localParamSize & 15) == 8 ? localParamSize : localParamSize + 8);
-		}
-		else {
-			subRspFirst((localParamSize & 15) == 0 ? localParamSize : localParamSize + 8);
-		}
-		retFormat = new Format("add", "rsp", Long.toString(rspVal - old));
 
+		generateBlocks(firstBlock);
+
+		/*
+		* Mov the parameters in stack into registers.
+		* */
+		for (Map.Entry<String, String> entry: paramsInStack.entrySet()) {
+			addResult(new Format("mov", entry.getValue(), entry.getKey()));
+		}
+
+		/*
+		* Add the enter codes.
+		* */
+
+		rspVal = 8 + calleeSaveReg.size() * 8 + (useRbp ? 1 : 0) * 8;
+		long delta;
+		if ((rspVal & 15) == 8) {
+			delta = (localParamSize & 15) == 8 ? localParamSize : localParamSize + 8;
+		} else {
+			delta = (localParamSize & 15) == 0 ? localParamSize : localParamSize + 8;
+		}
+		subRspFirst(delta);
+
+		/*
+		* Add the leave codes.
+		* */
+		nextLabel = "end_" + funcName;
+		String[] regs = new String[calleeSaveReg.size()];
+		calleeSaveReg.toArray(regs);
+		for (int i = 0; i < regs.length; ++i) {
+			addFirstResult(new Format("push", regs[i]));
+		}
+
+		addRsp(delta);
+
+		if (useRbp) {
+			addResult(new Format("pop", "rbp"));
+			addFirstResult(new Format("mov", "rbp", "rsp"));
+			addFirstResult(new Format("push", "rbp"));
+		}
+
+
+		if (func.getRetSize() == 0) {
+			for (int i = regs.length - 1; i >= 0; --i) {
+				addResult(new Format("pop", regs[i]));
+			}
+		}
+		addResult(new Format("ret"));
+
+		/*
+		* Add the function name label.
+		* */
+		addFirstResult(new Format());
+		result.getFirst().setLabel(funcName);
+
+//		updateLabel();
+
+		for (int i = 0; i < result.size(); ++i) {
+			resCode.add(result.get(i).toString());
+		}
+
+		return resCode;
+	}
+
+	public void generateBlocks(BasicBlock block) {
+		++visitedCnt;
+		visited[block.getIdx()] = true;
+		MyList<Quad> codes = block.getCodes();
+		ArrayList<BasicBlock> succBlocks = block.getSuccs();
+
+		for (int i = 0; i < codes.size(); ++i) {
+			Quad c = codes.get(i);
+			Oprand rt = c.getRt();
+			Oprand r1 = c.getR1();
+			Oprand r2 = c.getR2();
+
+			if (rt instanceof MemAccess) checkParamInStack(rt);
+			checkParamInStack(r1);
+			checkParamInStack(r2);
+
+			addCalleeSaveRegister(rt);
+		}
+
+		for (String reg: regStore.keySet()) {
+			regStore.get(reg).clear();
+		}
+
+
+//		for (Map.Entry<String, Long> entry: params.entrySet()) {
+//			String n = entry.getKey();
+//			long offset = entry.getValue();
+//			if (offset <= 0) {
+//				HashSet<String> tmp = getEntityExist(n);
+//				tmp.add(regList[-(int)offset]);
+//			}
+//		}
+
+		if (!block.getName().equals(funcName)) nextLabel = block.getName();
 		for (int i = 0; i < codes.size(); ++i) {
 			Quad c = codes.get(i);
 			Oprand rt = c.getRt(), r1 = c.getR1(), r2 = c.getR2();
 
 			if (c instanceof PhiQuad) {
-				modifySize(((Register) rt).getEntity(), ConstVar.addrLen);
+//				modifySize(((Register) rt).getEntity(), ConstVar.addrLen);
 				regStore.get(c.getRtName()).add(((Register) rt).getEntity());
-				getEntityExist(((Register) rt).getEntity()).add(c.getRtName());
+//				getEntityExist(((Register) rt).getEntity()).add(c.getRtName());
 				continue;
-			}
-			if (c.getLabel() != null && i > 0) {
-//				if (!result.isEmpty() && result.getLast().getOp() == null) {
-//					String lastCode = result.getLast().getLabel();
-//					if (lastCode != null) {
-//						labelMerge.merge(c.getLabel(), lastCode);
-//						result.removeLast();
-//					}
-//				}
-				nextLabel = c.getLabel();
 			}
 
 			loadRegister(r1);
@@ -225,12 +294,26 @@ public class CodeGenFunc {
 			} else if (c instanceof CallQuad) {
 				updateCall(c);
 			} else if (c instanceof RetQuad) {
-				updateRet(c);
+				if (visitedCnt < blockList.size())
+					updateRet(c, "end_" + funcName);
+				else updateRet(c, null);
 			} else if (c instanceof JumpQuad) {
-				if (i + 1 < codes.size()) updateJump(c, codes.get(i + 1));
-				else updateJump(c, null);
+				BasicBlock succ = block.succs.get(0);
+				if (!visited[succ.getIdx()]) {
+					updateJump(c, succ.getName());
+					generateBlocks(succ);
+				} else updateJump(c, null);
 			} else if (c instanceof CJumpQuad) {
-				updateCondJump(c, codes.get(i + 1));
+				BasicBlock succ1 = succBlocks.get(0);
+				BasicBlock succ2 = succBlocks.get(1);
+				if (!visited[succ1.getIdx()]) {
+					updateCondJump(c, succ1.getName());
+					generateBlocks(succ1);
+					if (!visited[succ2.getIdx()]) generateBlocks(succ2);
+				} else if (!visited[succ2.getIdx()]) {
+					updateCondJump(c, succ2.getName());
+					generateBlocks(succ2);
+				} else updateCondJump(c, null);
 			} else if (c instanceof CondQuad) {
 				updateCond(c);
 			}
@@ -238,58 +321,24 @@ public class CodeGenFunc {
 			modifyQuadRegLive(c);
 		}
 
-		for (Map.Entry<String, String> entry: paramsInStack.entrySet()) {
-			addResult(new Format("mov", entry.getValue(), entry.getKey()));
+		if (succBlocks.isEmpty() && visitedCnt < blockList.size()) {
+			updateJump(new JumpQuad("jump", new LabelName("end_" + funcName)), null);
 		}
-
-		if (useRbp) {
-			addResult(new Format("pop"));
-			addFirstResult(new Format("mov", "rbp", "rsp"));
-			addFirstResult(new Format("push", "rbp"));
-		}
-
-		if (!funcName.equals("main")) {
-			String[] regs = new String[calleeSaveReg.size()];
-			calleeSaveReg.toArray(regs);
-			for (int i = 0; i < regs.length; ++i) {
-				addFirstResult(new Format("push", regs[i]));
-			}
-			if (func.getRetSize() == 0) {
-				addResult(retFormat);
-				for (int i = regs.length - 1; i >= 0; --i) {
-					addResult(new Format("pop", regs[i]));
-				}
-			}
-		}
-
-		addFirstResult(new Format());
-		result.getFirst().setLabel(funcName);
-
-//		updateLabel();
-
-		for (int i = 0; i < result.size(); ++i) {
-			resCode.add(result.get(i).toString());
-		}
-
-		return resCode;
 	}
 
 	private  void subRspFirst(long offset) {
 		if (offset == 0) return;
 		addFirstResult(new Format("sub", "rsp", Long.toString(offset)));
-		rspVal += offset;
 	}
 
 	private  void subRsp(long offset) {
 		if (offset == 0) return;
 		addResult(new Format("sub", "rsp", Long.toString(offset)));
-		rspVal += offset;
 	}
 
 	private void addRsp(long offset) {
 		if (offset == 0) return;
 		addResult(new Format("add", "rsp", Long.toString(offset)));
-		rspVal -= offset;
 	}
 
 	private String translateSize(int sz) {
@@ -375,47 +424,22 @@ public class CodeGenFunc {
 
 	private void updateMov(Quad c) {
 		if (c.rt.get().equals(c.r1.get())) return;
+
 		if (c.getRt() instanceof MemAccess || !(c.getR1() instanceof Register)) {
 			translate(c);
 			return;
 		}
 
 		Register rt = (Register) c.getRt();
-		Oprand r1 = c.getR1();
+		Register r1 = (Register) c.getR1();
 		String nt = rt.get();
-		Long tmp;
-
-		if (r1 instanceof ImmOprand) {
-//			values.remove(nt);
-//			tmp = ((ImmOprand) r1).getVal();
-//			values.put(nt, tmp);
-			translate(c);
-//			modifySize(rt.getEntity(), ConstVar.addrLen);
-			return;
-		} else if (r1 instanceof Register) {
-			String n1 = r1.get();
-//			tmp = values.get(r1);
-//			if (tmp == null) {
-			HashSet<String> setR1 = regStore.get(n1);
-			HashSet<String> setRt = regStore.get(nt);
-			for (String data: setR1) {
-				update(getEntityExist(data), nt, setRt);
-			}
-			translate(c);
-//			} else {
-//				values.put(nt, tmp);
-//				translate(null);
-//			}
-//			modifySize(rt.getEntity(), ConstVar.addrLen);
-		}
+		HashSet<String> reg1 = regStore.get(nt);
+		if (reg1.contains(r1.getEntity())) return;
+		reg1.add(r1.getEntity());
+		translate(c);
 	}
 
 	private void push(String reg, int sz) {
-		if (rspVal % sz != 0) {
-			long newRsp = (rspVal + sz - 1) / sz * sz;
-			subRsp(newRsp - rspVal);
-			rspVal = newRsp;
-		}
 		rspVal += sz;
 		if (Character.isDigit(reg.charAt(0))) addResult(new Format("pushl", reg));
 		else if (reg.charAt(0) == 't') addResult(new Format("pushl", "1"));
@@ -425,7 +449,7 @@ public class CodeGenFunc {
 
 	private void pop(String reg, int sz) {
 		addResult(new Format("pop", reg));
-		rspVal -= 8;
+		rspVal -= sz;
 	}
 
 	private void updateCall(Quad c) {
@@ -457,10 +481,10 @@ public class CodeGenFunc {
 //			}
 		}
 
-		oldRsp = rspVal;
-
+		long size = 0;
 		for (int j = up - down - 1; j >= 6; --j) {
 			push(tmpParams.get(down + j), ConstVar.intLen);
+			size += 8;
 		}
 		for (int i = 0; i < cnt; ++i) tmpParams.remove(tmpParams.size() - 1);
 
@@ -472,23 +496,23 @@ public class CodeGenFunc {
 
 //		boolean raxUse = regLive.contains("rax");
 //		if (raxUse) push("rax", varSize.get(regStore.get("rax").iterator().next()));
-		if ((rspVal & 15) != 0) subRsp(8);
+		if ((size & 15) == 8) subRsp(8);
 		translate(c);
+		if ((size & 15) == 8) addRsp(8);
 //		if (raxUse) pop("rax", ConstVar.addrLen);
-		addRsp(rspVal - oldRsp);
-		rspVal = oldRsp;
 //		while (!pushReg.isEmpty()) {
 //			Pair<String, Integer> u = pushReg.pop();
 //			pop(u.getKey(), u.getValue());
 //		}
 	}
 
-	private void updateRet(Quad c) {
+	private void updateRet(Quad c, String label) {
 		translate(c);
+		if (label != null) addResult(new Format("jmp", label));
 	}
 
-	private void updateJump(Quad c, Quad cNext) {
-		if (cNext == null || !c.getRtName().equals(cNext.getLabel())) {
+	private void updateJump(Quad c, String nextLabel) {
+		if (nextLabel == null || !c.getRtName().equals(nextLabel)) {
 //			if (nextLabel != null) labelMerge.merge(nextLabel, c.getRtName());
 			translate(c);
 		} else translate(null);
@@ -498,8 +522,8 @@ public class CodeGenFunc {
 		translate(c);
 	}
 
-	private void updateCondJump(Quad c, Quad cNext) {
-		if (cNext.getLabel().equals(c.getR1Name())) {
+	private void updateCondJump(Quad c, String nextLabel) {
+		if (nextLabel != null && nextLabel.equals(c.getR1Name())) {
 			switch (c.op) {
 				case "je": c.changeOp("jne"); break;
 				case "jne": c.changeOp("je"); break;
@@ -519,14 +543,13 @@ public class CodeGenFunc {
 		String n = r.get();
 		String e = ((Register) r).getEntity();
 		if (e != null) {
-			HashSet<String> set = getEntityExist(e);
+//			HashSet<String> set = getEntityExist(e);
 			HashSet<String> regSet = regStore.get(n);
-			regSet.clear();
 			regSet.add(e);
 //			for (String reg : set) {
 //				update(entityExist.get(reg), n, regSet);
 //			}
-			set.add(n);
+//			set.add(n);
 		}
 	}
 
@@ -549,21 +572,21 @@ public class CodeGenFunc {
 		String rn = r.get();
 		String rm = r.getMemPos();
 		String re = r.getEntity();
-		HashSet<String> set = getEntityExist(re);
+		if (re == null) return;
+//		HashSet<String> set = getEntityExist(re);
 
 		if (rn.equals(regList[outReg]) || rn.equals(regList[outReg + 1])) {
-			if (!set.isEmpty()) {
-				if (set.contains(rn)) return;
-				String tmp = set.iterator().next();
-				addResult(new Format("mov", rn, tmp));
-				update(regStore.get(tmp), rn, regStore.get(rn));
-			} else {
+//			if (!set.isEmpty()) {
+//				if (set.contains(rn)) return;
+//				String tmp = set.iterator().next();
+//				addResult(new Format("mov", rn, tmp));
+//				update(regStore.get(tmp), rn, regStore.get(rn));
+//			} else {
 				String pos = getVarMem(re, rm);
 				addResult(new Format("mov", rn, pos));
-				getEntityExist(re).add(rn);
-				regStore.get(rn).add(re);
-			}
-		}
+//				regStore.get(rn).add(re);
+//			}
+		} else regStore.get(rn).add(re);
 //		modifySize(re, ConstVar.addrLen);
 	}
 
@@ -573,18 +596,22 @@ public class CodeGenFunc {
 
 	private void storeRegister(Register r) {
 		String rn = r.get();
+		String re = r.getEntity();
+		String rm = r.getMemPos();
 		if (rn.equals(regList[outReg]) || rn.equals(regList[outReg + 1])) {
-			if (!regStore.get(rn).isEmpty()) {
-				for (String e : regStore.get(rn)) {
-					HashSet<String> exist = getEntityExist(e);
-					exist.remove(rn);
-					if (exist.isEmpty()) {
-						if (regLive.contains(r.getEntity())) {
-							addResult(new Format("mov", getVarMem(e, e.split("_", 2)[0]), rn));
-						}
-					}
-				}
-			}
+//			if (!regStore.get(rn).isEmpty()) {
+//				for (String e : regStore.get(rn)) {
+//					HashSet<String> exist = getEntityExist(e);
+//					exist.remove(rn);
+//					if (exist.isEmpty()) {
+//						if (regLive.contains(r.getEntity())) {
+							addResult(new Format("mov", getVarMem(re, rm), rn));
+//						}
+//					}
+//				}
+//			}
+		} else {
+			regStore.get(rn).clear();
 		}
 	}
 
@@ -715,13 +742,6 @@ public class CodeGenFunc {
 					if (r1 instanceof ImmOprand && ((ImmOprand) r1).getVal() == 0) addResult(new Format("xor", "rax", "rax"));
 					else if (!n1.equals("rax")) addResult(new Format("mov", "rax", n1));
 				}
-				String[] regs = new String[calleeSaveReg.size()];
-				calleeSaveReg.toArray(regs);
-				for (int i = regs.length - 1; i >= 0; --i) {
-					addResult(new Format("pop", regs[i]));
-				}
-				addResult(retFormat);
-				addResult(new Format("ret"));
 				break;
 		}
 	}

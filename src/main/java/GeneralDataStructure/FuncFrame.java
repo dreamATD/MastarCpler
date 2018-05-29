@@ -68,11 +68,11 @@ public class FuncFrame {
 	}
 
 	public void print() {
-		System.out.printf("\nFunc_def %s (", name);
+		System.err.printf("\nFunc_def %s (", name);
 		for (Map.Entry<String, Long> entry: params.entrySet()) {
-			System.out.print(entry.getKey() + " ");
+			System.err.print(entry.getKey() + " ");
 		}
-		System.out.println("):");
+		System.err.println("):");
 		if (first  != null) {
 			LinkedList<BasicBlock> q = new LinkedList<>();
 			Set<String> inQueue = new HashSet<>();
@@ -90,7 +90,7 @@ public class FuncFrame {
 				}
 			}
 		}
-		System.out.println("Func_def_done");
+		System.err.println("Func_def_done");
 	}
 
 	public void addParam(String name, int sz) {

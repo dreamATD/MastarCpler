@@ -89,22 +89,22 @@ public class BasicBlock {
 	}
 
 	public void print() {
-		System.out.printf("BasicBlock %s: \n", name);
+		System.err.printf("BasicBlock %s: \n", name);
 		for (int i = 0; i < codes.size(); ++i) {
 			codes.get(i).print();
 		}
 
-		System.out.println();
-		System.out.print("(From:");
+		System.err.println();
+		System.err.print("(From:");
 		for (int i = 0; i < preps.size(); ++i) {
-			System.out.print(" " + preps.get(i).getName());
+			System.err.print(" " + preps.get(i).getName());
 		}
-		System.out.println(")");
-		System.out.print("(To:");
+		System.err.println(")");
+		System.err.print("(To:");
 		for (int i = 0; i < succs.size(); ++i) {
-			System.out.print(" " + succs.get(i).getName());
+			System.err.print(" " + succs.get(i).getName());
 		}
-		System.out.println(")");
-		System.out.println();
+		System.err.println(")");
+		System.err.println();
 	}
 }

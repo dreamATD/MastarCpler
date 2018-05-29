@@ -122,18 +122,18 @@ public class Quad {
 		label = l;
 	}
 	public void print() {
-		if (label != null) System.out.printf("%-20s", label + ": ");
-		else System.out.printf("%-20s", " ");
-		System.out.print(op);
-		if (rt != null) System.out.print(" " + rt.get());
-		if (r1 != null) System.out.print(" " + r1.get());
-		if (r2 != null) System.out.print(" " + r2.get());
+		if (label != null) System.err.printf("%-20s", label + ": ");
+		else System.err.printf("%-20s", " ");
+		System.err.print(op);
+		if (rt != null) System.err.print(" " + rt.get());
+		if (r1 != null) System.err.print(" " + r1.get());
+		if (r2 != null) System.err.print(" " + r2.get());
 		if (phiParams != null) {
 			for (int i = 0; i < phiParams.size(); ++i) {
-				System.out.print(" " + phiParams.get(i).get());
+				System.err.print(" " + phiParams.get(i).get());
 			}
 		}
-		System.out.println();
+		System.err.println();
 	}
 	public void updateLabel(LabelTable labels) {
 		switch (op) {
