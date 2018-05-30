@@ -1009,7 +1009,8 @@ public class IRBuilder extends AstVisitor {
 	}
 
 	@Override void visit(StringLiteralNode nod) throws Exception {
-		nod.reg = new StringLiteral(linearCode.insertStrConst(nod.id));
+		String str = nod.id.substring(1, nod.id.length() - 1);
+		nod.reg = new StringLiteral(linearCode.insertStrConst(str));
 		nod.beCertain();
 	}
 }
