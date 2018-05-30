@@ -8,6 +8,7 @@ import GeneralDataStructure.OprandClass.Oprand;
 import GeneralDataStructure.OprandClass.Register;
 import GeneralDataStructure.QuadClass.*;
 import Optimizer.ActionAnalyzer;
+import Utilizer.ConstVar;
 import Utilizer.SimpleUnionFind;
 import Utilizer.Tool;
 import javafx.util.Pair;
@@ -28,6 +29,7 @@ public class RegDistributor {
 	private boolean [][] matrix;
 	private int[] value;
 	private ArrayList<HashSet<Integer>> col;
+	private ArrayList<HashSet<Integer>> deCol;
 	private int nVar;
 
 	private int colCnt, outCol;
@@ -97,12 +99,17 @@ public class RegDistributor {
 			}
 		}
 
-		activeSet = new SimpleUnionFind(nVar);
+		boolean [] isTemp = new boolean [nVar];
+		for (int i = 0; i < nVar; ++i) isTemp[i] = Register.isTempReg(global.get(i));
+		activeSet = new SimpleUnionFind(nVar, isTemp);
+
 		matrix = new boolean[nVar][nVar];
 		value = new int[nVar];
 		col = new ArrayList<>();
+		deCol = new ArrayList<>();
 		for (int i = 0; i < nVar; ++i) {
 			col.add(new HashSet<>());
+			deCol.add(new HashSet<>());
 		}
 	}
 
@@ -189,6 +196,13 @@ public class RegDistributor {
 						for (String data : liveNow) {
 							if (data.equals(nt)) continue;
 							int v = activeSet.find(nameIdx.get(data));
+
+							/*
+							* Can't use the parameters' register.
+							* */
+							HashSet<Integer> tmpDeCol = deCol.get(v);
+							for (int k = 0; k < 7; ++k) tmpDeCol.add(k);
+
 							if (matrix[u][v] || (c instanceof MovQuad && c.getRt() instanceof Register && data.equals(c.getR1Name())))
 								continue;
 							matrix[u][v] = matrix[v][u] = true;
@@ -275,10 +289,14 @@ public class RegDistributor {
 				Quad c = codes.get(j);
 				Oprand r1 = c.getR1(), r2 = c.getR2();
 				if (r1 instanceof Register) {
-					value[activeSet.find(nameIdx.get(r1.get()))] += loop;
+					int n1 = nameIdx.get(r1.get());
+					if (activeSet.getVal(n1)) value[activeSet.find(n1)] = ConstVar.INF;
+					value[activeSet.find(n1)] += loop;
 				}
 				if (r2 instanceof Register) {
-					value[activeSet.find(nameIdx.get(r2.get()))] += loop;
+					int n2 = nameIdx.get(r2.get());
+					if (activeSet.getVal(n2)) value[activeSet.find(n2)] = ConstVar.INF;
+					value[activeSet.find(n2)] += loop;
 				}
 			}
 		}
@@ -299,23 +317,19 @@ public class RegDistributor {
 	}
 
 	private void dyePoint(int u) {
-		ArrayList<Integer> tmp = new ArrayList<>();
+		HashSet<Integer> tmp = new HashSet<>();
 		tmp.clear();
 		for (int v: edge.get(u)) {
 			tmp.addAll(col.get(activeSet.find(v)));
 		}
-		Collections.sort(tmp);
-		Tool.unique(tmp);
 		int j;
-		HashSet<Integer> set = col.get(u);
-		for (j = 0; j < tmp.size(); ++j) {
-			if (j != tmp.get(j)) {
-				set.add(j);
-				break;
+		HashSet<Integer> set = col.get(u), tmpDeCol = deCol.get(u);
+		boolean isTemp = activeSet.getVal(u);
+		for (int i = 0; i < colCnt; ++i) {
+			if (!tmp.contains(i) && !tmpDeCol.contains(i)) {
+				set.add(i);
+				return;
 			}
-		}
-		if (set.isEmpty()) {
-			if (j < colCnt) set.add(j);
 		}
 	}
 
@@ -424,9 +438,9 @@ public class RegDistributor {
 	private void rebuildOprand(Oprand r, int t) {
 		if (r instanceof Register) {
 			Integer id = nameIdx.get(r.get());
-			int nr = col.get(activeSet.find(id)).iterator().next();
-			if (nr == -1) r.set(regList[nr + t]);
-			else r.set(regList[nr]);
+			HashSet<Integer> nt = col.get(activeSet.find(id));
+			if (nt.isEmpty()) r.set(regList[outCol + t]);
+			else r.set(regList[nt.iterator().next()]);
 		} else if (r instanceof MemAccess) {
 			rebuildOprand(((MemAccess) r).getBase(), 0);
 			rebuildOprand(((MemAccess) r).getOffset(), 1);

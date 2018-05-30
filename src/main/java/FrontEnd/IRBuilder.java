@@ -353,7 +353,9 @@ public class IRBuilder extends AstVisitor {
 
 	private void generateNewFunc(Oprand ret, Oprand len) {
 		getParam(len);
-		insertQuad(new CallQuad("call", ret, new FuncName("malloc"), new ImmOprand(1)));
+		Register tmp = new Register(getTempName());
+		insertQuad(new CallQuad("call", tmp, new FuncName("malloc"), new ImmOprand(1)));
+		insertQuad(new MovQuad("mov", ret, tmp.copy()));
 	}
 
 	private String getLoopRegisterName() {
@@ -413,8 +415,7 @@ public class IRBuilder extends AstVisitor {
 					generateNewFunc(nod.reg, new ImmOprand(256));
 					if (!nod.sons.isEmpty()) {
 						visit(nod.sons.get(0));
-						generateStringFunc("S_strcpy", null, nod.reg.copy(), nod.sons.get(0).reg.copy());
-						linearCode.insertExterns("S_strcpy");
+						generateStringFunc("S_strcpy", new Register("_"), nod.reg.copy(), nod.sons.get(0).reg.copy());
 					}
 				}
 
@@ -685,9 +686,9 @@ public class IRBuilder extends AstVisitor {
 			generateNewFunc(nod.reg, new ImmOprand(256));
 			ArrayList<Oprand> strList = new ArrayList<>();
 			generateStrAdd(nod, strList);
-			generateStringFunc("S_strcpy", null, nod.reg.copy(), strList.get(0).copy());
+			generateStringFunc("S_strcpy", new Register("_"), nod.reg.copy(), strList.get(0).copy());
 			for (int i = 1; i < strList.size(); ++i) {
-				generateStringFunc("S_strcat", null, nod.reg.copy(), strList.get(i).copy());
+				generateStringFunc("S_strcat", new Register("_"), nod.reg.copy(), strList.get(i).copy());
 			}
 			return;
 		}
@@ -767,7 +768,7 @@ public class IRBuilder extends AstVisitor {
 			insertQuad(new A3Quad(op, nod.reg, lr, rr));
 		} else if (isStringType) {
 			if (nod.id.equals("=")) {
-				insertQuad(new MovQuad("mov", lr, rr));
+				generateStringFunc("S_strcpy", new Register("_"), lr, rr);
 				return;
 			}
 			Register tmp = new Register(getTempName());
@@ -842,13 +843,12 @@ public class IRBuilder extends AstVisitor {
 		if (son.type instanceof ClassTypeRef) {
 			nod.reg = new Register(getTempName());
 			son.reg = new ImmOprand(((ClassTypeRef) son.type).getBelongClass().getSize());
-			getParam(son.reg);
-			insertQuad(new CallQuad("call", nod.reg, new FuncName("malloc"), new ImmOprand(1)));
-			getParam(nod.reg);
+			generateNewFunc(nod.reg, son.reg);
 
+			getParam(nod.reg);
 			String className = ((ClassTypeRef) son.type).getTypeId();
 			String funcName = classFuncLabel(className, className);
-			insertQuad(new CallQuad("call", null, new FuncName(funcName), new ImmOprand(1)));
+			insertQuad(new CallQuad("call", new Register("_"), new FuncName(funcName), new ImmOprand(1)));
 
 			if (varState == VarDefStatus.GeneralVar) {
 				insertQuad(new RetQuad("ret", nod.reg.copy()));
@@ -909,7 +909,7 @@ public class IRBuilder extends AstVisitor {
 			getParam(tmp);
 		}
 
-		nod.reg = nod.type instanceof VoidTypeRef ? null : new Register(getTempName());
+		nod.reg = nod.type instanceof VoidTypeRef ? new Register("_") : new Register(getTempName());
 		insertQuad(new CallQuad("call", nod.reg, new FuncName(fun), new ImmOprand(n)));
 	}
 
@@ -944,7 +944,6 @@ public class IRBuilder extends AstVisitor {
 				case "length":
 					getParam(son.reg);
 					insertQuad(new CallQuad("call", nod.reg, new FuncName("S_strlen"), new ImmOprand(1)));
-					linearCode.insertExterns("S_strlen");
 					break;
 				case "subString":
 					Node left = mem.sons.get(0), right = mem.sons.get(1);

@@ -78,13 +78,13 @@ public class CodeGen {
 			FuncFrame func = funcs.get(i);
 			FuncSSABuilder ssaBuilder = new FuncSSABuilder(func);
 			ssaBuilder.buildSSAFunc();
-			if (func.getName().equals("F_work")) {
+			if (func.getName().equals("main")) {
 				System.err.println();
 				func.print();
 			}
 			RegDistributor distributor = new RegDistributor(func, globals);
 			distributor.regDistribute();
-			if (func.getName().equals("F_work")) {
+			if (func.getName().equals("main")) {
 				System.err.println();
 				func.print();
 			}
