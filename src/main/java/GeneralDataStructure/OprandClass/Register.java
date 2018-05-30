@@ -39,8 +39,8 @@ public class Register extends Oprand {
 	}
 
 	public static boolean isTempReg(String name) {
-		if (name.charAt(0) != '@' && name.charAt(0) != '%') return false;
-		char c = name.charAt(1);
+		if (name.charAt(0) != 'V') return false;
+		char c = name.charAt(2);
 		return '0' <= c && c <= '9';
 	}
 	public void setWillUse(boolean use) {
