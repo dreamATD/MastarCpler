@@ -24,6 +24,13 @@ public class MemAccess extends Oprand {
 		offsetSize = s;
 		ac = "qword [" + b.get() + '+' + c.get() + '*' + s.get() + ']';
 	}
+	public MemAccess(Oprand b, Oprand c, Oprand s, Oprand o) {
+		base = b;
+		offsetCnt = c;
+		offsetSize = s;
+		offset = o;
+		ac = "qword [" + b.get() + '+' + c.get() + '*' + s.get() + '+' + o.get() + ']';
+	}
 	public MemAccess(String str) {
 		ac = str;
 	}
@@ -40,13 +47,11 @@ public class MemAccess extends Oprand {
 		return offsetSize;
 	}
 	@Override public String get() {
-		if (base != null && offsetCnt != null && offsetSize != null) {
-			ac = "qword [" + base.get() + '+' + offsetCnt.get() + '*' + offsetSize.get() + ']';
-		} else if (base != null && offset != null) {
-			ac = "qword [" + base.get() + '+' + offset.get() + "]";
-		} else if (base != null) {
-			ac = "qword [" + base.get() + "]";
-		}
+		ac = "qword [";
+		if (base != null) ac += base.get();
+		if (offsetCnt != null) ac += "+" + String.format("%s*%s", offsetCnt.get(), offsetSize.get());
+		if (offset != null) ac += "+" + offset.get();
+		ac += "]";
 		return ac;
 	}
 	@Override public void set(String v) {
@@ -54,8 +59,8 @@ public class MemAccess extends Oprand {
 	}
 	@Override public MemAccess copy() {
 		if (base == null) return new MemAccess(ac);
-		if (offset == null && offsetSize == null && offsetCnt == null) return new MemAccess(base);
-		if (offset != null) return new MemAccess(base, offset);
-		return new MemAccess(base, offsetCnt, offsetSize);
+		if (offset == null && offsetSize == null && offsetCnt == null) return new MemAccess(base.copy());
+		if (offset != null) return new MemAccess(base.copy(), offset.copy());
+		return new MemAccess(base.copy(), offsetCnt.copy(), offsetSize.copy());
 	}
 }

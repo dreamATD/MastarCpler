@@ -144,11 +144,13 @@ public class FuncSSABuilder {
 		for (String data: global) {
 			workList = varDomain.get(data);
 			if (workList == null) continue;
-			for (BasicBlock block: workList) {
+			while (!workList.isEmpty()) {
+				BasicBlock block = workList.iterator().next();
+				workList.remove(block);
 				for (BasicBlock sucBlock: domainEdge.get(block.getIdx())) {
 					if (!sucBlock.containsPhi(data)) {
 						sucBlock.addPhi(data);
-						workList.add(block);
+						workList.add(sucBlock);
 					}
 				}
 			}

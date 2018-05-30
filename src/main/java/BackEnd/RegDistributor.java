@@ -200,8 +200,10 @@ public class RegDistributor {
 							/*
 							* Can't use the parameters' register.
 							* */
-							HashSet<Integer> tmpDeCol = deCol.get(v);
-							for (int k = 0; k < 7; ++k) tmpDeCol.add(k);
+							if (c instanceof ParamQuad) {
+								HashSet<Integer> tmpDeCol = deCol.get(v);
+								for (int k = 0; k < 7; ++k) tmpDeCol.add(k);
+							}
 
 							if (matrix[u][v] || (c instanceof MovQuad && c.getRt() instanceof Register && data.equals(c.getR1Name())))
 								continue;
@@ -287,7 +289,7 @@ public class RegDistributor {
 			MyList<Quad> codes = block.getCodes();
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
-				Oprand r1 = c.getR1(), r2 = c.getR2();
+				Oprand r1 = c.getR1(), r2 = c.getR2(), rt = c.getRt();
 				if (r1 instanceof Register) {
 					int n1 = nameIdx.get(r1.get());
 					if (activeSet.getVal(n1)) value[activeSet.find(n1)] = ConstVar.INF;
@@ -297,6 +299,10 @@ public class RegDistributor {
 					int n2 = nameIdx.get(r2.get());
 					if (activeSet.getVal(n2)) value[activeSet.find(n2)] = ConstVar.INF;
 					value[activeSet.find(n2)] += loop;
+				}
+				if (rt instanceof Register) {
+					int nt = nameIdx.get(rt.get());
+					if (activeSet.getVal(nt)) value[activeSet.find(nt)] = ConstVar.INF;
 				}
 			}
 		}
@@ -400,12 +406,22 @@ public class RegDistributor {
 						}
 						paramCnt++;
 					}
-				}
-				if (c instanceof CallQuad) {
+				} else if (c instanceof CallQuad) {
 					paramCnt = 0;
 					if (c.getRt() instanceof Register) {
 						col.get(activeSet.find(nameIdx.get(c.getRtName()))).add(6);
 					}
+				} else if (c instanceof A3Quad) {
+					if (c.getRt() instanceof Register) {
+						String rt = c.getRt().get();
+						switch (c.getOp()) {
+							case "les": case "leq":
+							case "gre": case "geq":
+							case "equ": case "neq":
+								col.get(activeSet.find(nameIdx.get(rt))).add(7);
+						}
+					}
+
 				}
 			}
 		}

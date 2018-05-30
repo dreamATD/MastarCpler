@@ -97,9 +97,22 @@ public class IRBuilder extends AstVisitor {
 		linearCode.insertInitFunc(curFunc);
 	}
 
+	private Oprand changeOpr2Reg(Oprand r) {
+		if (!(r instanceof Register)) {
+			Register reg = new Register(getTempName());
+			insertQuad(new MovQuad("mov", reg, r.copy()));
+			return reg.copy();
+		}
+		return r;
+	}
+
 	private ArrayList<Quad> paramsQuads = new ArrayList<>();
 	private void insertQuad(Quad ins) {
-
+		switch (ins.getOp()) {
+			case "cmp":
+				ins.changeR1(changeOpr2Reg(ins.getR1()));
+				ins.changeR2(changeOpr2Reg(ins.getR2()));
+		}
 		if (nextStatLabel.size() > 0) {
 			String label = nextLabel();
 			ins.setLabel(label);
@@ -109,12 +122,11 @@ public class IRBuilder extends AstVisitor {
 			nextStatLabel.clear();
 		}
 		if (ins instanceof ParamQuad) paramsQuads.add(ins);
-		else if (!(ins instanceof CallQuad)) curCodeList.add(ins);
-		else {
+		else if (ins instanceof CallQuad) {
 			for (int i = 0; i < paramsQuads.size(); ++i) curCodeList.add(paramsQuads.get(i));
 			paramsQuads.clear();
 			curCodeList.add(ins);
-		}
+		} else curCodeList.add(ins);
 	}
 
 	private void updateLabel(LabelTable labels, ArrayList<Quad> code) {
@@ -183,6 +195,17 @@ public class IRBuilder extends AstVisitor {
 		} else if (nod.id != null && nod.id.equals("false")) {
 			insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(labelFalse))));
 			return;
+		} else if (nod.reg != null) {
+			visit(nod);
+			Register tmp;
+			if (nod.reg instanceof Register) tmp = (Register) nod.reg.copy();
+			else {
+				tmp = new Register(getTempName());
+				insertQuad(new MovQuad("mov", tmp, nod.reg.copy()));
+			}
+			insertQuad(new CondQuad("cmp", tmp.copy(), new ImmOprand(0)));
+			insertQuad(new CJumpQuad("jne", new LabelName(Integer.toString(labelTrue)), new LabelName(Integer.toString(labelFalse))));
+			return;
 		}
 
 		Node left = nod.sons.get(0);
@@ -218,7 +241,9 @@ public class IRBuilder extends AstVisitor {
 					generateStringFunc("strcmp", tmp, lr, rr);
 					linearCode.insertExterns("strcmp");
 					insertQuad(new CondQuad("cmp", tmp, new ImmOprand(0)));
-				} else insertQuad(new CondQuad("cmp", left.reg.copy(), right.reg.copy()));
+				} else {
+					insertQuad(new CondQuad("cmp", left.reg.copy(), right.reg.copy()));
+				}
 				switch (nod.id) {
 					case "==": op = "je";  break;
 					case "!=": op = "jne"; break;
@@ -243,14 +268,18 @@ public class IRBuilder extends AstVisitor {
 		}
 	}
 
-	private void updateTempReg(String name, Oprand newOpr) {
+	private boolean updateTempReg(Oprand r, Oprand newOpr) {
+		String name = r.get();
 		for (int i = curCodeList.size() - 1; i >= 0; --i) {
 			Quad code = curCodeList.get(i);
 			if (code.getRt() instanceof Register && code.getRtName().equals(name)) {
+				if (code instanceof MovQuad && code.getR1() instanceof MemAccess && newOpr instanceof MemAccess) return false;
+				if (code instanceof A3Quad && newOpr instanceof MemAccess) return false;
 				code.changeRt(newOpr);
 				break;
 			}
 		}
+		return true;
 	}
 
 	private Oprand calcBinary(String op, Oprand left, Oprand right) {
@@ -324,13 +353,13 @@ public class IRBuilder extends AstVisitor {
 		insertQuad(new CallQuad("call", ans, new FuncName(funcName), new ImmOprand(2)));
 	}
 
-	private void generateStrAdd(Node nod, ArrayList<Oprand> list) throws Exception {
+	private void generateStrAdd(Node nod, Oprand reg) throws Exception {
 		if (nod instanceof BinaryExprNode) {
-			generateStrAdd(nod.sons.get(0), list);
-			generateStrAdd(nod.sons.get(1), list);
+			generateStrAdd(nod.sons.get(0), reg);
+			generateStrAdd(nod.sons.get(1), reg);
 		} else {
 			visit(nod);
-			list.add(nod.reg);
+			generateStringFunc("S_strcpy", new Register("_"), reg.copy(), nod.reg.copy());
 		}
 	}
 
@@ -421,10 +450,24 @@ public class IRBuilder extends AstVisitor {
 
 				if (nod.sons.isEmpty()) break;
 				son = nod.sons.get(0);
+				if (son.reg == null && son.type instanceof BoolTypeRef) {
+					int label1 = labelCnt++, label2 = labelCnt++, label3 = labelCnt++;
+					generateCondition(son, label1, label2);
+					updateNextStatLabel(label1);
+					insertQuad(new MovQuad("mov", nod.reg.copy(), new ImmOprand(1)));
+					insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(label3))));
+					updateNextStatLabel(label2);
+					insertQuad(new MovQuad("mov", nod.reg.copy(), new ImmOprand(0)));
+					insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(label3))));
+					updateNextStatLabel(label3);
+					break;
+				}
 				visit(son);
 				if (isTempReg(son.reg.get()) && !(son instanceof NewExprNode)) {
 					updateTempReg(son.reg.get(), name, name);
-				} else insertQuad(new MovQuad("mov", nod.reg.copy(), son.reg.copy()));
+				} else {
+					insertQuad(new MovQuad("mov", nod.reg.copy(), son.reg.copy()));
+				}
 				break;
 			case GeneralVar :
 				name = ((GeneralMemAccess) nod.reg).getName();
@@ -457,7 +500,7 @@ public class IRBuilder extends AstVisitor {
 					curCodeList = new ArrayList<>();
 					curFunc = new FuncFrame(initFuncLabel(name));
 					visit(son);
-					updateTempReg(son.reg.get(), new GeneralMemAccess(((Register)nod.reg).getMemPos()));
+					updateTempReg(son.reg.copy(), new GeneralMemAccess(((Register)nod.reg).getMemPos()));
 					insertInit(curFunc);
 					curCodeList = tmp;
 				}
@@ -574,8 +617,6 @@ public class IRBuilder extends AstVisitor {
 		int label1 = labelCnt++;
 		int label2 = labelCnt++;
 		int label3 = labelCnt++;
-		int label4 = labelCnt++;
-		int label5 = labelCnt++;
 		if (!(condExpr instanceof EmptyExprNode)) {
 			generateCondition(condExpr, label1, label2);
 		} else {
@@ -591,26 +632,10 @@ public class IRBuilder extends AstVisitor {
 		if (ctnLabel.pop().getValue().equals(true)) updateNextStatLabel(label3);
 		visit(loopExpr);
 		if (!(condExpr instanceof EmptyExprNode)) {
-			generateCondition(condExpr, label4, label2);
+			generateCondition(condExpr, label1, label2);
 		} else {
-			insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(label4))));
+			insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(label1))));
 		}
-
-		updateNextStatLabel(label4);
-
-		ctnLabel.push(new Pair<>(label5, false));
-		brkLabel.push(label2);
-		visit(forBody);
-		brkLabel.pop();
-
-		if (ctnLabel.pop().getValue().equals(true)) updateNextStatLabel(label5);
-		visit(loopExpr);
-		if (!(condExpr instanceof EmptyExprNode)) {
-			generateCondition(condExpr, label4, label2);
-		} else {
-			insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(label4))));
-		}
-
 		updateNextStatLabel(label2);
 	}
 
@@ -621,8 +646,6 @@ public class IRBuilder extends AstVisitor {
 		int label1 = labelCnt++;
 		int label2 = labelCnt++;
 		int label3 = labelCnt++;
-		int label4 = labelCnt++;
-		int label5 = labelCnt++;
 		generateCondition(condExpr, label1, label2);
 
 		updateNextStatLabel(label1);
@@ -632,21 +655,7 @@ public class IRBuilder extends AstVisitor {
 		brkLabel.pop();
 
 		if (ctnLabel.pop().getValue().equals(true)) updateNextStatLabel(label3);
-		visit(condExpr);
-		generateCondition(condExpr, label4, label2);
-
-		/*
-		* unrolling the 1st cycle.
-		* */
-		updateNextStatLabel(label4);
-
-		ctnLabel.push(new Pair<>(label5, false));
-		brkLabel.push(label2);
-		visit(whileBody);
-		brkLabel.pop();
-		if (ctnLabel.pop().getValue().equals(true)) updateNextStatLabel(label5);
-		visit(condExpr);
-		generateCondition(condExpr, label4, label2);
+		generateCondition(condExpr, label1, label2);
 
 		updateNextStatLabel(label2);
 
@@ -685,12 +694,22 @@ public class IRBuilder extends AstVisitor {
 		if (isStringType && nod.id.equals("+")) {
 			nod.reg = new Register(getTempName());
 			generateNewFunc(nod.reg, new ImmOprand(256));
-			ArrayList<Oprand> strList = new ArrayList<>();
-			generateStrAdd(nod, strList);
-			generateStringFunc("S_strcpy", new Register("_"), nod.reg.copy(), strList.get(0).copy());
-			for (int i = 1; i < strList.size(); ++i) {
-				generateStringFunc("S_strcat", new Register("_"), nod.reg.copy(), strList.get(i).copy());
-			}
+			generateStrAdd(nod, nod.reg.copy());
+			return;
+		}
+
+
+		if (nod.id.equals("=") && right.type instanceof BoolTypeRef && right.reg == null) {
+			int label1 = labelCnt++, label2 = labelCnt++, label3 = labelCnt++;
+			visit(left);
+			generateCondition(right, label1, label2);
+			updateNextStatLabel(label1);
+			insertQuad(new MovQuad("mov", left.reg.copy(), new ImmOprand(1)));
+			insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(label3))));
+			updateNextStatLabel(label2);
+			insertQuad(new MovQuad("mov", left.reg.copy(), new ImmOprand(0)));
+			insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(label3))));
+			updateNextStatLabel(label3);
 			return;
 		}
 
@@ -711,9 +730,9 @@ public class IRBuilder extends AstVisitor {
 
 		/* Special for useless assignment statement. */
 		if (nod.id.equals("=") && isTempReg(rr.get()) && !(right instanceof NewExprNode) && !(right instanceof FuncExprNode)) {
-			updateTempReg(rr.get(), lr.copy());
-			return;
+			if (updateTempReg(rr.copy(), lr.copy()))	return;
 		}
+
 
 		String op;
 		if (isIntType) {
@@ -729,12 +748,12 @@ public class IRBuilder extends AstVisitor {
 				case "&" : op = "and"; break;
 				case "|" : op = "or" ; break;
 				case "^" : op = "xor"; break;
-				case "==": op = "equ"; break;
-				case "!=": op = "neq"; break;
-				case "<" : op = "les"; break;
-				case "<=": op = "leq"; break;
-				case ">" : op = "gre"; break;
-				case ">=": op = "geq"; break;
+//				case "==": op = "equ"; break;
+//				case "!=": op = "neq"; break;
+//				case "<" : op = "les"; break;
+//				case "<=": op = "leq"; break;
+//				case ">" : op = "gre"; break;
+//				case ">=": op = "geq"; break;
 				default: op = null;
 			}
 			if (op.equals("mov")) {
@@ -744,18 +763,17 @@ public class IRBuilder extends AstVisitor {
 					rr = tmp.copy();
 				}
 				insertQuad(new MovQuad(op, lr, rr));
-			}
-			else insertQuad(new A3Quad(op, nod.reg, lr, rr));
+			} else insertQuad(new A3Quad(op, nod.reg, lr, rr));
 		} else if (isBoolType) {
 			switch (nod.id) {
 				case "=" : op = "mov"; break;
-				case "&&":
+//				case "&&":
 				case "&" : op = "and"; break;
-				case "||":
+//				case "||":
 				case "|" : op = "or" ; break;
 				case "^" : op = "xor"; break;
-				case "==": op = "equ"; break;
-				case "!=": op = "neq"; break;
+//				case "==": op = "equ"; break;
+//				case "!=": op = "neq"; break;
 				default: op = null;
 			}
 			if (op.equals("mov")) {
@@ -765,26 +783,12 @@ public class IRBuilder extends AstVisitor {
 					rr = tmp.copy();
 				}
 				insertQuad(new MovQuad(op, lr, rr));
-			}
-			insertQuad(new A3Quad(op, nod.reg, lr, rr));
+			} else insertQuad(new A3Quad(op, nod.reg, lr, rr));
 		} else if (isStringType) {
 			if (nod.id.equals("=")) {
 				generateStringFunc("S_strcpy", new Register("_"), lr, rr);
 				return;
 			}
-			Register tmp = new Register(getTempName());
-			generateStringFunc("strcmp", tmp, lr, rr);
-			linearCode.insertExterns("strcmp");
-			switch (nod.id) {
-				case "==": op = "equ"; break;
-				case "!=": op = "neq"; break;
-				case "<" : op = "les"; break;
-				case "<=": op = "leq"; break;
-				case ">" : op = "gre"; break;
-				case ">=": op = "geq"; break;
-				default: op = null;
-			}
-			insertQuad(new A3Quad(op, nod.reg, tmp, new ImmOprand(0)));
 		} else {
 			assert(nod.id.equals("="));
 			insertQuad(new MovQuad("mov", lr, rr));
@@ -808,6 +812,7 @@ public class IRBuilder extends AstVisitor {
 			case "++": op = "add"; break;
 			case "--": op = "sub"; break;
 			default:
+				nod.reg = new Register(getTempName());
 				switch (nod.id) {
 					case "!":
 					case "~": op = "not"; break;
@@ -867,12 +872,12 @@ public class IRBuilder extends AstVisitor {
 		}
 		Node len = nod.sons.get(0);
 		Node typ = nod.sons.get(1);
-		int size = typ.type instanceof SingleTypeRef ? typ.type.getSize() : addrLen + intLen;
+		int size = addrLen;
 
 		/*
 		* int[2][3]
 		* 2 * int[3]
-		* 2 * 16
+		* 2 * 8
 		* 3 * 8
 		* */
 		if (len instanceof EmptyExprNode) {
@@ -883,19 +888,22 @@ public class IRBuilder extends AstVisitor {
 		nod.reg = new Register(getTempName());
 		if (len.isCertain()) {
 			int val = ((Long) ((ImmOprand) len.reg).getVal()).intValue();
-			int offset = 0;
-			generateNewFunc(nod.reg, new ImmOprand(val * size));
+			generateNewFunc(nod.reg, new ImmOprand((val + 1) * size));
+			insertQuad(new MovQuad("mov", new MemAccess(nod.reg.copy()), new ImmOprand(val)));
 
+			int offset = 0;
 			for (int i = 0; i < val; ++i) {
 				visit(typ);
+				offset += size;
 				if (typ.reg != null)
 					insertQuad(new MovQuad("mov", new MemAccess(nod.reg.copy(), new ImmOprand(offset)), typ.reg.copy()));
-				offset += size;
 			}
 		} else {
 			Register tmp = new Register(getTempName());
 			insertQuad(new A3Quad("mul", tmp, len.reg.copy(), new ImmOprand(size)));
+			insertQuad(new A3Quad("add", tmp.copy(), tmp.copy(), new ImmOprand(size)));
 			generateNewFunc(nod.reg, tmp.copy());
+			insertQuad(new MovQuad("mov", new MemAccess(nod.reg.copy()), len.reg.copy()));
 			if (!(typ.type instanceof SingleTypeRef))
 				generateLoop(new ImmOprand(0), len.reg.copy(), nod.reg, size, typ);
 		}
@@ -926,9 +934,7 @@ public class IRBuilder extends AstVisitor {
 			insertQuad(new MovQuad("mov", tmp, son.reg.copy()));
 		}
 		if (nod.type instanceof SingleTypeRef)
-			nod.reg = new MemAccess(tmp.copy(), idx.reg.copy(), new ImmOprand(nod.type.getSize()));
-		else
-			nod.reg = new MemAccess(tmp.copy(), idx.reg.copy(), new ImmOprand(addrLen + intLen));
+			nod.reg = new MemAccess(tmp.copy(), idx.reg.copy(), new ImmOprand(addrLen), new ImmOprand(addrLen));
 	}
 
 	@Override void visit(ObjAccExprNode nod) throws Exception {
@@ -972,7 +978,7 @@ public class IRBuilder extends AstVisitor {
 				insertQuad(new MovQuad("mov", tmp, son.reg.copy()));
 			}
 			nod.reg = new Register(getTempName());
-			insertQuad(new MovQuad("mov", nod.reg, new MemAccess(tmp, new ImmOprand(addrLen))));
+			insertQuad(new MovQuad("mov", nod.reg, new MemAccess(tmp)));
 		}
 	}
 

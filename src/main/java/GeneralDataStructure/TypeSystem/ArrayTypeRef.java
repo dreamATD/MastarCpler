@@ -23,6 +23,7 @@ public class ArrayTypeRef extends VarTypeRef {
 		VarTypeRef tmp = (VarTypeRef) TypeRef.buildTypeRef(typeId);
 		if (dim == 1) {
 			type = tmp;
+			size = addrLen;
 			return;
 		}
 		for (int i = 1; i < dim; ++i) {

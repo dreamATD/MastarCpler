@@ -400,10 +400,15 @@ public class CodeGenFunc {
 			translate(new MovQuad("mov", rt, new ImmOprand(val)));
 			return;
 		} else {
-			if (certain1) c.changeR1(new ImmOprand(getValue(r1)));
-			if (certain2) c.changeR2(new ImmOprand(getValue(r2)));
 			String op = c.getOp();
 			if (op.equals("div")) {
+				if (certain2) {
+					long tmp = getValue(r1);
+					if (Tool.isPow2(tmp)) {
+						translate(new A3Quad("sar", c.getRt(), c.getR1(), new ImmOprand(Tool.log2(tmp))));
+						return;
+					}
+				}
 				boolean raxUse = regLive.contains("rax") && !nt.equals("rax");
 				if (raxUse) translate(new MovQuad("mov", new Register(regList[outReg]), new Register("rax")));
 				updateMov(new MovQuad("mov", new Register("rax"), r1));
@@ -411,6 +416,14 @@ public class CodeGenFunc {
 				updateMov(new MovQuad("mov", rt, new Register("rax")));
 				if (raxUse) translate(new MovQuad("mov", new Register("rax"), new Register(regList[outReg])));
 			} else if (op.equals("mod")) {
+				if (certain2) {
+					long tmp = getValue(r1);
+					Long log = 0L;
+					if (tmp > 0 && Tool.isPow2(tmp)) {
+						translate(new A3Quad("and", c.getRt(), c.getR1(), new ImmOprand(tmp - 1)));
+						return;
+					}
+				}
 				boolean raxUse = regLive.contains("rax");
 				boolean rdxUse = regLive.contains("rdx") && !nt.equals("rdx");
 				if (raxUse) updateMov(new MovQuad("mov", new Register(regList[outReg]), new Register("rax")));
@@ -661,37 +674,51 @@ public class CodeGenFunc {
 				if (c.getR1() instanceof Register && c.getR2() instanceof Register && c.getRt() instanceof Register)
 					addResult(new Format("lea", nt, String.format("[%s]", n1 + "+" + n2)));
 				else {
-					addResult(new Format("mov", nt, n1));
+					if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
 					addResult(new Format("add", nt, n2));
 				}
 				break;
 			case "sub":
-				if (c.getR1() instanceof ImmOprand && ((ImmOprand) c.getR1()).getVal() == 0) {
-					if (!nt.equals(n2)) addResult(new Format("mov", nt, n2));
+				if (nt.equals(n2)) {
 					addResult(new Format("neg", nt));
-				} else if (c.getR2() instanceof ImmOprand && ((ImmOprand) c.getR2()).getVal() == 1) {
-					if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
-					addResult(new Format("dec", nt));
-				} else {
-					if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
-					addResult(new Format("lea", nt, String.format("%s", n1 + "-" + n2)));
+					addResult(new Format("add", nt, n1));
+					break;
 				}
+				if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
+				addResult(new Format("sub", nt, n2));
 				break;
 			case "mul":
 				if (c.getR1() instanceof ImmOprand) {
 					long tmp = ((ImmOprand) c.getR1()).getVal();
-					Long log = 0L;
-					if (Tool.isPow2(tmp, log)) {
-						addResult(new Format("lea", nt, String.format("[%s*%d]", tmp, n2)));
+					if (Tool.isPow2(tmp)) {
+						if (0 <= tmp && tmp <= 8 && c.getR2() instanceof Register)
+							addResult(new Format("lea", nt, String.format("[%d*%s]", tmp, n2)));
+						else {
+							long log = Tool.log2(tmp);
+							addResult(new Format("mov", nt, n2));
+							if (log > 0) addResult(new Format("sal", nt, Long.toString(Math.abs(log))));
+							if (log < 0) addResult(new Format("neg", nt));
+						}
 						break;
 					}
 				}
 				if (c.getR2() instanceof ImmOprand) {
 					long tmp = ((ImmOprand) c.getR2()).getVal();
-					Long log = 0L;
-					if (Tool.isPow2(tmp, log)) {
-						addResult(new Format("lea", nt, String.format("[%s*%d]", n1, tmp)));
-						break;
+					if (Tool.isPow2(tmp)) {
+						if (tmp <= 8 && c.getR1() instanceof Register)
+							addResult(new Format("lea", nt, String.format("[%s*%d]", n1, tmp)));
+						else {
+							long log = Tool.log2(tmp);
+							if (log >= 0) {
+								addResult(new Format("mov", nt, n1));
+							} else {
+								addResult(new Format("mov", nt, n1));
+								addResult(new Format("neg", nt));
+								log = -log;
+							}
+							if (log > 0) addResult(new Format("sal", nt, Long.toString(log)));
+						}
+							break;
 					}
 				}
 				addResult(new Format("imul", nt, n1, n2));
@@ -706,6 +733,11 @@ public class CodeGenFunc {
 				break;
 			case "sal":	case "sar":
 			case "and":	case "or" :  case "xor":
+				if (c.getR2() instanceof ImmOprand && ((ImmOprand) c.getR2()).getVal() < 0) {
+					addResult(new Format("mov", nt, n1));
+					addResult(new Format("neg", nt));
+					c.changeR2(new ImmOprand(-((ImmOprand) c.getR2()).getVal()));
+				}
 				if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
 				addResult(new Format(c.getOp(), nt, n2));
 				break;
@@ -713,21 +745,31 @@ public class CodeGenFunc {
 				if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
 				addResult(new Format("not", nt));
 				break;
+			case "neg":
+				if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
+				addResult(new Format("neg", nt));
+				break;
 			case "mov":
 				if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
 				break;
 			case "call":
 				addResult(new Format("call", c.getR1Name()));
 				break;
-			case "equ": if (oop == null) oop = "sete";
-			case "neq": if (oop == null) oop = "setne";
-			case "les": if (oop == null) oop = "setl";
-			case "leq": if (oop == null) oop = "setle";
-			case "gre": if (oop == null) oop = "setg";
-			case "geq": if (oop == null) oop = "setge";
-				addResult(new Format("cmp", c.getR1Name(), c.getR2Name()));
-				addResult(new Format(oop, c.getRtName()));
-				break;
+//			case "equ": if (oop == null) oop = "sete";
+//			case "neq": if (oop == null) oop = "setne";
+//			case "les": if (oop == null) oop = "setl";
+//			case "leq": if (oop == null) oop = "setle";
+//			case "gre": if (oop == null) oop = "setg";
+//			case "geq": if (oop == null) oop = "setge";
+//				if (c.getRt() instanceof Register) {
+//					addResult(new Format("cmp", c.getR1Name(), c.getR2Name()));
+//					addResult(new Format("xor", c.getRtName(), c.getRtName()));
+//					addResult(new Format(oop, reg2Byte(c.getRtName())));
+//				} else {
+//					addResult(new Format("cmp", c.getR1Name(), c.getR2Name()));
+//					addResult(new Format(oop, c.getRtName()));
+//				}
+//				break;
 			case "cmp":
 				addResult(new Format("cmp", c.getR1Name(), c.getR2Name()));
 				break;
@@ -749,6 +791,16 @@ public class CodeGenFunc {
 				}
 				break;
 		}
+	}
+
+	private String reg2Byte(String reg) {
+		switch (reg) {
+			case "rax": return "al";
+			case "rbx": return "bl";
+			case "rcx": return "cl";
+			case "rdx": return "dl";
+		}
+		return null;
 	}
 
 	private long getValue(Oprand r) {

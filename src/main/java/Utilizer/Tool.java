@@ -18,13 +18,20 @@ public class Tool {
 		while (j < list.size()) list.remove(list.size() - 1);
 	}
 
-	public static boolean isPow2(long t, Long ans) {
-		ans = 0L;
-		while (t > 1) {
+	public static boolean isPow2(long t) {
+		while (t != 1) {
 			if ((t & 1) == 1) return false;
-			++ans;
 			t >>= 1;
 		}
 		return true;
+	}
+
+	public static long log2(long x) {
+		long len = 0;
+		while (x != 1) {
+			++len;
+			x >>= 1;
+		}
+		return len;
 	}
 }
