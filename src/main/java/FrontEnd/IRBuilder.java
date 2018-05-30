@@ -560,6 +560,7 @@ public class IRBuilder extends AstVisitor {
 		visit(ifStat);
 		if (!ifElseEndLabel.isEmpty())
 			insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(ifElseEndLabel.peek()))));
+		else insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(label2))));
 		updateNextStatLabel(label2);
 	}
 

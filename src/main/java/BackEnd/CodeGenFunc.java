@@ -216,7 +216,7 @@ public class CodeGenFunc {
 
 
 		if (!funcName.equals("main")) {
-			for (int i = regs.length - 1; i >= 0; --i) {
+			for (int i = 0; i < regs.length; ++i) {
 				addResult(new Format("pop", regs[i]));
 			}
 		}

@@ -60,7 +60,7 @@ public class BasicBlock {
 		for (int i = 0; i < codes.size(); ++i) {
 			Quad c = codes.get(i);
 			if (! (c instanceof PhiQuad)) break;
-			String rt = ((Register) c.getRt()).getMemPos();
+			String rt = ((Register) c.getRt()).getEntity();
 			if (nameList.contains(rt)) c.addPhiParams(nameStack.get(rt).peek());
 		}
 	}
@@ -89,7 +89,7 @@ public class BasicBlock {
 	}
 
 	public void print() {
-		System.err.printf("BasicBlock %s: \n", name);
+		System.err.printf("BasicBlock %d %s: \n", idx, name);
 		for (int i = 0; i < codes.size(); ++i) {
 			codes.get(i).print();
 		}

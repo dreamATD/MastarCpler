@@ -1,7 +1,8 @@
 package GeneralDataStructure;
 
 public class BuiltinCode {
-	static public String text = "S_strlen:\n" +
+	static public String text = "\n" +
+			"S_strlen:\n" +
 			"        xor     eax, eax\n" +
 			"        cmp     byte [rdi], 0\n" +
 			"        jz      L_002\n" +
@@ -128,7 +129,7 @@ public class BuiltinCode {
 			"\n" +
 			"S_parseInt:\n" +
 			"        sub     rsp, 24\n" +
-			"        mov     esi, L_019\n" +
+			"        mov     esi, L_020\n" +
 			"\n" +
 			"\n" +
 			"        mov     rax, qword [fs:abs 28H]\n" +
@@ -161,7 +162,7 @@ public class BuiltinCode {
 			"\n" +
 			"ALIGN   16\n" +
 			"\n" +
-			"F_print:\n" +
+			"_Z5printPc:\n" +
 			"        push    rbx\n" +
 			"        mov     rbx, rdi\n" +
 			"        movsx   edi, byte [rdi]\n" +
@@ -192,7 +193,7 @@ public class BuiltinCode {
 			"        push    rbx\n" +
 			"        mov     edi, 256\n" +
 			"        call    malloc\n" +
-			"        mov     edi, L_020\n" +
+			"        mov     edi, L_021\n" +
 			"        mov     rbx, rax\n" +
 			"        mov     rsi, rax\n" +
 			"        xor     eax, eax\n" +
@@ -264,11 +265,21 @@ public class BuiltinCode {
 			"        mov     rbx, rdi\n" +
 			"        mov     edi, 256\n" +
 			"        call    malloc\n" +
-			"        xor     esi, esi\n" +
 			"        test    rbx, rbx\n" +
 			"        mov     r8, rax\n" +
-			"        mov     rdi, qword 6666666666666667H\n" +
 			"        jnz     L_016\n" +
+			"        mov     byte [rax], 48\n" +
+			"L_015:  mov     rax, r8\n" +
+			"        pop     rbx\n" +
+			"        ret\n" +
+			"\n" +
+			"\n" +
+			"\n" +
+			"\n" +
+			"\n" +
+			"ALIGN   8\n" +
+			"L_016:  xor     edi, edi\n" +
+			"        mov     rsi, qword 6666666666666667H\n" +
 			"        jmp     L_018\n" +
 			"\n" +
 			"\n" +
@@ -276,9 +287,9 @@ public class BuiltinCode {
 			"\n" +
 			"\n" +
 			"ALIGN   8\n" +
-			"L_015:  mov     rsi, rax\n" +
-			"L_016:  mov     rax, rbx\n" +
-			"        imul    rdi\n" +
+			"L_017:  mov     rdi, rax\n" +
+			"L_018:  mov     rax, rbx\n" +
+			"        imul    rsi\n" +
 			"        mov     rax, rbx\n" +
 			"        sar     rax, 63\n" +
 			"        sar     rdx, 2\n" +
@@ -286,16 +297,16 @@ public class BuiltinCode {
 			"        lea     rax, [rdx+rdx*4]\n" +
 			"        add     rax, rax\n" +
 			"        sub     rbx, rax\n" +
-			"        lea     rax, [rsi+1H]\n" +
+			"        lea     rax, [rdi+1H]\n" +
 			"        add     ebx, 48\n" +
 			"        test    rdx, rdx\n" +
-			"        mov     byte [r8+rsi], bl\n" +
+			"        mov     byte [r8+rdi], bl\n" +
 			"        mov     rbx, rdx\n" +
-			"        jnz     L_015\n" +
-			"        test    esi, esi\n" +
-			"        jz      L_018\n" +
-			"        movsxd  rax, esi\n" +
-			"        mov     rdi, r8\n" +
+			"        jnz     L_017\n" +
+			"        test    edi, edi\n" +
+			"        jz      L_015\n" +
+			"        movsxd  rax, edi\n" +
+			"        mov     rsi, r8\n" +
 			"        xor     edx, edx\n" +
 			"        add     rax, r8\n" +
 			"\n" +
@@ -303,28 +314,30 @@ public class BuiltinCode {
 			"\n" +
 			"\n" +
 			"ALIGN   8\n" +
-			"L_017:  movzx   ecx, byte [rdi]\n" +
+			"L_019:  movzx   ecx, byte [rsi]\n" +
 			"        movzx   r9d, byte [rax]\n" +
 			"        add     edx, 1\n" +
-			"        add     rdi, 1\n" +
+			"        add     rsi, 1\n" +
 			"        sub     rax, 1\n" +
-			"        mov     byte [rdi-1H], r9b\n" +
+			"        mov     byte [rsi-1H], r9b\n" +
 			"        mov     byte [rax+1H], cl\n" +
-			"        mov     ecx, esi\n" +
+			"        mov     ecx, edi\n" +
 			"        sub     ecx, edx\n" +
 			"        cmp     ecx, edx\n" +
-			"        jg      L_017\n" +
-			"L_018:  mov     rax, r8\n" +
+			"        jg      L_019\n" +
+			"        mov     rax, r8\n" +
 			"        pop     rbx\n" +
-			"        ret\n";
-	static public String roDataString = "\n" +
-			"L_019:\n" +
+			"        ret\n" +
+			"\n" +
+			"\n" +
+			"\n";
+	static public String roDataString = "L_020:\n" +
 			"        db 25H, 6CH, 64H, 00H\n" +
 			"\n" +
-			"L_020:\n" +
+			"L_021:\n" +
 			"        db 25H, 73H, 00H\n" +
 			"\n" +
-			"L_021:\n" +
-			"        db 25H, 64H, 20H, 25H, 64H, 0AH, 00H\n" +
-			"\n";
+			"L_022:\n" +
+			"        db 61H, 62H, 63H, 63H, 66H, 6AH, 67H, 6BH\n" +
+			"        db 73H, 6BH, 73H, 6BH, 00H";
 }
