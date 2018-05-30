@@ -99,6 +99,7 @@ public class IRBuilder extends AstVisitor {
 
 	private ArrayList<Quad> paramsQuads = new ArrayList<>();
 	private void insertQuad(Quad ins) {
+
 		if (nextStatLabel.size() > 0) {
 			String label = nextLabel();
 			ins.setLabel(label);
@@ -187,7 +188,7 @@ public class IRBuilder extends AstVisitor {
 		Node left = nod.sons.get(0);
 		Node right = nod.sons.size() > 1 ? nod.sons.get(1) : null;
 
-		int label = labelCnt;
+		int label = labelCnt++;
 		LabelName lt = new LabelName(Integer.toString(labelTrue));
 		LabelName lf = new LabelName(Integer.toString(labelFalse));
 
@@ -196,7 +197,6 @@ public class IRBuilder extends AstVisitor {
 				generateCondition(left, label, labelFalse);
 				updateNextStatLabel(label);
 				generateCondition(right, labelTrue, labelFalse);
-				labelCnt++;
 				break;
 			case "||":
 				generateCondition(left, labelTrue, label);
@@ -831,8 +831,8 @@ public class IRBuilder extends AstVisitor {
 
 		String op;
 		switch (nod.id) {
-			case "++": op = "add";
-			case "--": op = "sub";
+			case "++": op = "add"; break;
+			case "--": op = "sub"; break;
 			default: op = null;
 		}
 		insertQuad(new A3Quad(op, sonReg.copy(), sonReg.copy(), new ImmOprand(1)));
