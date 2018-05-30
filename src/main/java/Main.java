@@ -63,11 +63,11 @@ public class Main {
             System.out.println(codes.get(i));
         }
 //
-        File file = new File("output/" + fileName + ".asm");
-        OutputStream out = new FileOutputStream(file);
-        if (!file.exists()) file.createNewFile();
-        out.write(content.getBytes());
-        out.flush();
-        out.close();
+//        File file = new File("output/" + fileName + ".asm");
+//        OutputStream out = new FileOutputStream(file);
+//        if (!file.exists()) file.createNewFile();
+//        out.write(content.getBytes());
+//        out.flush();
+//        out.close();
     }
 }
