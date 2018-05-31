@@ -50,6 +50,10 @@ public class ActionAnalyzer {
 			HashSet<String> curVarKill = varKill.get(i);
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
+				if (c instanceof PhiQuad) {
+					ArrayList<Register> tmp = ((PhiQuad) c).getParams();
+					for (Register reg: tmp) checkOprand(reg, curUeVar, curVarKill);
+				}
 				checkOprand(c.getR1(), curUeVar, curVarKill);
 				checkOprand(c.getR2(), curUeVar, curVarKill);
 				if (c.getRt() instanceof MemAccess)

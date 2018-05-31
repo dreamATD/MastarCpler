@@ -5,6 +5,7 @@ import GeneralDataStructure.OprandClass.*;
 import GeneralDataStructure.QuadClass.*;
 import GeneralDataStructure.TypeSystem.*;
 import Utilizer.ConstVar;
+import Utilizer.Tool;
 import javafx.util.Pair;
 
 import java.nio.ByteBuffer;
@@ -12,7 +13,6 @@ import java.util.*;
 
 import static GeneralDataStructure.OprandClass.Register.isTempReg;
 import static Utilizer.ConstVar.addrLen;
-import static Utilizer.ConstVar.intLen;
 
 enum VarDefStatus {GeneralVar, FuncParam, ClassObj, LovalVar}
 
@@ -97,21 +97,18 @@ public class IRBuilder extends AstVisitor {
 		linearCode.insertInitFunc(curFunc);
 	}
 
-	private Oprand changeOpr2Reg(Oprand r) {
-		if (!(r instanceof Register)) {
-			Register reg = new Register(getTempName());
-			insertQuad(new MovQuad("mov", reg, r.copy()));
-			return reg.copy();
-		}
-		return r;
+	private Register changeOpr2Reg(Oprand r) {
+		Register reg = new Register(getTempName());
+		insertQuad(new MovQuad("mov", reg, r.copy()));
+		return reg.copy();
 	}
 
 	private ArrayList<Quad> paramsQuads = new ArrayList<>();
 	private void insertQuad(Quad ins) {
 		switch (ins.getOp()) {
 			case "cmp":
-				ins.changeR1(changeOpr2Reg(ins.getR1()));
-				ins.changeR2(changeOpr2Reg(ins.getR2()));
+				if (ins.getR1() instanceof MemAccess) ins.changeR1(changeOpr2Reg(ins.getR1()));
+				if (ins.getR2() instanceof MemAccess) ins.changeR2(changeOpr2Reg(ins.getR2()));
 		}
 		if (nextStatLabel.size() > 0) {
 			String label = nextLabel();
@@ -195,7 +192,7 @@ public class IRBuilder extends AstVisitor {
 		} else if (nod.id != null && nod.id.equals("false")) {
 			insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(labelFalse))));
 			return;
-		} else if (nod.reg != null) {
+		} else if (nod.reg != null || nod instanceof FuncExprNode || nod instanceof ArrExprNode || nod instanceof ObjAccExprNode) {
 			visit(nod);
 			Register tmp;
 			if (nod.reg instanceof Register) tmp = (Register) nod.reg.copy();
@@ -763,7 +760,11 @@ public class IRBuilder extends AstVisitor {
 					rr = tmp.copy();
 				}
 				insertQuad(new MovQuad(op, lr, rr));
-			} else insertQuad(new A3Quad(op, nod.reg, lr, rr));
+			} else {
+				if ((op.equals("div") || op.equals("mod")) && !(rr instanceof ImmOprand && Tool.isPow2(((ImmOprand) rr).getVal())))
+					rr = changeOpr2Reg(rr).copy();
+				insertQuad(new A3Quad(op, nod.reg, lr, rr));
+			}
 		} else if (isBoolType) {
 			switch (nod.id) {
 				case "=" : op = "mov"; break;
@@ -927,14 +928,10 @@ public class IRBuilder extends AstVisitor {
 		Node son = nod.sons.get(0);
 		Node idx = nod.sons.get(1);
 
-		Register tmp;
-		if (son.reg instanceof Register) tmp = ((Register) son.reg).copy();
-		else {
-			tmp = new Register(getTempName());
-			insertQuad(new MovQuad("mov", tmp, son.reg.copy()));
-		}
-		if (nod.type instanceof SingleTypeRef)
-			nod.reg = new MemAccess(tmp.copy(), idx.reg.copy(), new ImmOprand(addrLen), new ImmOprand(addrLen));
+		Oprand tmp1 = son.reg instanceof MemAccess ? changeOpr2Reg(son.reg) : son.reg;
+		Oprand tmp2 = idx.reg instanceof MemAccess ? changeOpr2Reg(idx.reg) : idx.reg;
+
+		nod.reg = new MemAccess(tmp1.copy(), tmp2.copy(), new ImmOprand(addrLen), new ImmOprand(addrLen));
 	}
 
 	@Override void visit(ObjAccExprNode nod) throws Exception {

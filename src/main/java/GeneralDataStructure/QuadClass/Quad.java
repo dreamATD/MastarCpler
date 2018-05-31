@@ -69,8 +69,6 @@ public class Quad {
 
 	public ArrayList<Register> phiParams;
 
-	boolean futureLive;
-
 	public Quad(String op, Oprand rt, ArrayList<Register> phiParams) {
 		this.op = op;
 		this.rt = rt;
@@ -163,14 +161,6 @@ public class Quad {
 
 	public void addPhiParams(String x) {
 		phiParams.add(new Register(x));
-	}
-
-	public void setLive(boolean live) {
-		futureLive = live;
-	}
-
-	public boolean isLive() {
-		return futureLive;
 	}
 	public void changeOp(String op) {
 		this.op = op;

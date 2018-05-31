@@ -60,7 +60,8 @@ public class MemAccess extends Oprand {
 	@Override public MemAccess copy() {
 		if (base == null) return new MemAccess(ac);
 		if (offset == null && offsetSize == null && offsetCnt == null) return new MemAccess(base.copy());
-		if (offset != null) return new MemAccess(base.copy(), offset.copy());
-		return new MemAccess(base.copy(), offsetCnt.copy(), offsetSize.copy());
+		if (offset != null && offsetCnt == null && offsetSize == null) return new MemAccess(base.copy(), offset.copy());
+		if (offset == null && offsetCnt != null && offsetSize != null) return new MemAccess(base.copy(), offsetCnt.copy(), offsetSize.copy());
+		return new MemAccess(base, offsetCnt, offsetSize, offset);
 	}
 }

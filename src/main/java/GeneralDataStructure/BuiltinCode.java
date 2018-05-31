@@ -162,7 +162,7 @@ public class BuiltinCode {
 			"\n" +
 			"ALIGN   16\n" +
 			"\n" +
-			"_Z5printPc:\n" +
+			"F_print:\n" +
 			"        push    rbx\n" +
 			"        mov     rbx, rdi\n" +
 			"        movsx   edi, byte [rdi]\n" +

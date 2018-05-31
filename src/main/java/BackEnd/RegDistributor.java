@@ -189,6 +189,19 @@ public class RegDistributor {
 				updateRegLive(c.getR1(), liveNow);
 				updateRegLive(c.getR2(), liveNow);
 				if (!(c instanceof PhiQuad)) {
+					if (c.getOp().equals("mul") || c.getOp().equals("div") || c.getOp().equals("mod")) {
+						int rax = 6, rdx = 2;
+						if (c.getR1() instanceof Register) {
+							int tmp = activeSet.find(nameIdx.get(c.getR1Name()));
+							deCol.get(tmp).add(rax);
+							deCol.get(tmp).add(rdx);
+						}
+						if (c.getR2() instanceof Register) {
+							int tmp = activeSet.find(nameIdx.get(c.getR2Name()));
+							deCol.get(tmp).add(rax);
+							deCol.get(tmp).add(rdx);
+						}
+					}
 					if (!(c.getRt() instanceof Register || c instanceof ParamQuad && c.getR1() instanceof Register));
 					else {
 						String nt = c instanceof ParamQuad ? c.getR1Name() : c.getRtName();

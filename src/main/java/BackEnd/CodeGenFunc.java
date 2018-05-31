@@ -316,7 +316,10 @@ public class CodeGenFunc {
 				} else if (!visited[succ2.getIdx()]) {
 					updateCondJump(c, succ2.getName());
 					generateBlocks(succ2);
-				} else updateCondJump(c, null);
+				} else {
+					updateCondJump(c, succ1.getName());
+					updateJump(new JumpQuad("jump", new LabelName(succ1.getName())), null);
+				}
 			} else if (c instanceof CondQuad) {
 				updateCond(c);
 			}
@@ -401,38 +404,18 @@ public class CodeGenFunc {
 			return;
 		} else {
 			String op = c.getOp();
-			if (op.equals("div")) {
-				if (certain2) {
-					long tmp = getValue(r1);
-					if (Tool.isPow2(tmp)) {
-						translate(new A3Quad("sar", c.getRt(), c.getR1(), new ImmOprand(Tool.log2(tmp))));
-						return;
-					}
-				}
-				boolean raxUse = regLive.contains("rax") && !nt.equals("rax");
-				if (raxUse) translate(new MovQuad("mov", new Register(regList[outReg]), new Register("rax")));
-				updateMov(new MovQuad("mov", new Register("rax"), r1));
+			if ((op.equals("div") || op.equals("mod") || op.equals("mul")) &&
+					!(c.getR1() instanceof ImmOprand) && !(c.getR2() instanceof ImmOprand)) {
+				boolean raxUse = !regStore.get("rax").isEmpty();
+				boolean rdxUse = !regStore.get("rdx").isEmpty();
+				if (raxUse && !n2.equals("rax")) translate(new MovQuad("mov", new Register(regList[outReg]), new Register("rax")));
+				if (rdxUse && !n2.equals("rdx")) translate(new MovQuad("mov", new Register(regList[outReg + 1]), new Register("rdx")));
+				translate(new MovQuad("mov", new Register("rax"), r1));
 				translate(c);
-				updateMov(new MovQuad("mov", rt, new Register("rax")));
-				if (raxUse) translate(new MovQuad("mov", new Register("rax"), new Register(regList[outReg])));
-			} else if (op.equals("mod")) {
-				if (certain2) {
-					long tmp = getValue(r1);
-					Long log = 0L;
-					if (tmp > 0 && Tool.isPow2(tmp)) {
-						translate(new A3Quad("and", c.getRt(), c.getR1(), new ImmOprand(tmp - 1)));
-						return;
-					}
-				}
-				boolean raxUse = regLive.contains("rax");
-				boolean rdxUse = regLive.contains("rdx") && !nt.equals("rdx");
-				if (raxUse) updateMov(new MovQuad("mov", new Register(regList[outReg]), new Register("rax")));
-				if (rdxUse) updateMov(new MovQuad("mov", new Register(regList[outReg + 1]), new Register("rdx")));
-				updateMov(new MovQuad("mov", new Register("rax"), r1));
-				translate(c);
-				updateMov(new MovQuad("mov", rt, new Register("rdx")));
-				if (rdxUse) updateMov(new MovQuad("mov", new Register("rdx"), new Register(regList[outReg + 1])));
-				if (raxUse) updateMov(new MovQuad("mov", new Register("rax"), new Register(regList[outReg])));
+				if (op.equals("div")) translate(new MovQuad("mov", rt, new Register("rax")));
+				else translate(new MovQuad("mov", rt, new Register("rdx")));
+				if (rdxUse && !n2.equals("rdx")) translate(new MovQuad("mov", new Register("rdx"), new Register(regList[outReg + 1])));
+				if (raxUse && !n2.equals("rax")) translate(new MovQuad("mov", new Register("rax"), new Register(regList[outReg])));
 			} else translate(c);
 		}
 //		modifySize((rt).getEntity(), ConstVar.addrLen);
@@ -688,46 +671,48 @@ public class CodeGenFunc {
 				addResult(new Format("sub", nt, n2));
 				break;
 			case "mul":
+				Oprand tmp1, tmp2;
 				if (c.getR1() instanceof ImmOprand) {
-					long tmp = ((ImmOprand) c.getR1()).getVal();
-					if (Tool.isPow2(tmp)) {
-						if (0 <= tmp && tmp <= 8 && c.getR2() instanceof Register)
-							addResult(new Format("lea", nt, String.format("[%d*%s]", tmp, n2)));
-						else {
-							long log = Tool.log2(tmp);
-							addResult(new Format("mov", nt, n2));
-							if (log > 0) addResult(new Format("sal", nt, Long.toString(Math.abs(log))));
-							if (log < 0) addResult(new Format("neg", nt));
-						}
-						break;
-					}
+					tmp1 = c.getR2();
+					tmp2 = c.getR1();
+				} else {
+					tmp1 = c.getR1();
+					tmp2 = c.getR2();
 				}
-				if (c.getR2() instanceof ImmOprand) {
-					long tmp = ((ImmOprand) c.getR2()).getVal();
+				if (tmp2 instanceof ImmOprand) {
+					long tmp = ((ImmOprand) tmp2).getVal();
 					if (Tool.isPow2(tmp)) {
-						if (tmp <= 8 && c.getR1() instanceof Register)
+						if (tmp <= 8 && tmp1 instanceof Register)
 							addResult(new Format("lea", nt, String.format("[%s*%d]", n1, tmp)));
 						else {
 							long log = Tool.log2(tmp);
 							if (log >= 0) {
-								addResult(new Format("mov", nt, n1));
+								addResult(new Format("mov", nt, tmp1.get()));
 							} else {
-								addResult(new Format("mov", nt, n1));
+								addResult(new Format("mov", nt, tmp1.get()));
 								addResult(new Format("neg", nt));
 								log = -log;
 							}
 							if (log > 0) addResult(new Format("sal", nt, Long.toString(log)));
 						}
-							break;
-					}
-				}
-				addResult(new Format("imul", nt, n1, n2));
+						break;
+					} else addResult(new Format("imul", nt, tmp1.get(), tmp2.get()));
+				} else addResult(new Format("imul", n2));
 				break;
-			case "div": ;
+			case "div":
+				if (c.getR2() instanceof ImmOprand && Tool.isPow2(((ImmOprand) c.getR2()).getVal())) {
+					long log = Tool.log2(((ImmOprand) c.getR2()).getVal());
+					addResult(new Format("sar", n1, Long.toString(log)));
+					break;
+				}
 				addResult(new Format("cqo"));
 				addResult(new Format("idiv", n2));
 				break;
 			case "mod":
+				if (c.getR2() instanceof ImmOprand && Tool.isPow2(((ImmOprand) c.getR2()).getVal())) {
+					addResult(new Format("and", n1, Long.toString(((ImmOprand) c.getR2()).getVal() - 1)));
+					break;
+				}
 				addResult(new Format("cqo"));
 				addResult(new Format("idiv", n2));
 				break;

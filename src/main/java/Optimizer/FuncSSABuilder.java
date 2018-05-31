@@ -42,7 +42,9 @@ public class FuncSSABuilder {
 		BuildImmDom();
 		BuildDomainEdge();
 		addPhi();
-		renameVar(blockList.get(0));
+
+		HashSet<String> tmp = new HashSet<>();
+		renameVar(blockList.get(0), tmp);
 	}
 
 	private void BuildImmDom() {
@@ -141,16 +143,20 @@ public class FuncSSABuilder {
 		}
 
 		HashSet<BasicBlock> workList;
+		Stack<BasicBlock> st = new Stack<>();
 		for (String data: global) {
 			workList = varDomain.get(data);
 			if (workList == null) continue;
-			while (!workList.isEmpty()) {
-				BasicBlock block = workList.iterator().next();
-				workList.remove(block);
+			for (BasicBlock block: workList) st.push(block);
+			while (!st.isEmpty()) {
+				BasicBlock block = st.pop();
 				for (BasicBlock sucBlock: domainEdge.get(block.getIdx())) {
 					if (!sucBlock.containsPhi(data)) {
 						sucBlock.addPhi(data);
-						workList.add(sucBlock);
+						if (!workList.contains(sucBlock)) {
+							st.push(sucBlock);
+							workList.add(sucBlock);
+						}
 					}
 				}
 			}
@@ -181,8 +187,9 @@ public class FuncSSABuilder {
 		}
 	}
 
-	private void renameVar(BasicBlock u) {
+	private void renameVar(BasicBlock u, HashSet<String> pre) {
 		HashSet<String> tmp = new HashSet<>();
+		tmp.addAll(pre);
 		MyList<Quad> codes = u.getCodes();
 		for (int i = 0; i < codes.size(); ++i) {
 			Quad c = codes.get(i);
@@ -217,7 +224,7 @@ public class FuncSSABuilder {
 
 		ArrayList<BasicBlock> domSucc = rmmDom.get(u.getIdx());
 		for (int i = 0; i < domSucc.size(); ++i) {
-			renameVar(domSucc.get(i));
+			renameVar(domSucc.get(i), tmp);
 		}
 
 		for (int i = 0; i < codes.size(); ++i) {
