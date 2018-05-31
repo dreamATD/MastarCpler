@@ -656,21 +656,15 @@ public class CodeGenFunc {
 		String oop = null;
 		switch (c.getOp()) {
 			case "add":
-				if (c.getR1() instanceof Register && c.getR2() instanceof Register && c.getRt() instanceof Register)
+				if (c.getR1() instanceof Register && c.getR2() instanceof Register && c.getRt() instanceof Register) {
 					addResult(new Format("lea", nt, String.format("[%s]", n1 + "+" + n2)));
-				else {
-					if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
-					addResult(new Format("add", nt, n2));
-				}
-				break;
-			case "sub":
-				if (nt.equals(n2)) {
-					addResult(new Format("neg", nt));
-					addResult(new Format("add", nt, n1));
 					break;
 				}
+			case "sub":
+			case "sal":	case "sar":
+			case "and":	case "or" :  case "xor":
 				if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
-				addResult(new Format("sub", nt, n2));
+				addResult(new Format(c.getOp(), nt, n2));
 				break;
 			case "mul":
 				Oprand tmp1, tmp2;
@@ -718,16 +712,6 @@ public class CodeGenFunc {
 				addResult(new Format("cqo"));
 				addResult(new Format("idiv", n2));
 				break;
-			case "sal":	case "sar":
-			case "and":	case "or" :  case "xor":
-				if (c.getR2() instanceof ImmOprand && ((ImmOprand) c.getR2()).getVal() < 0) {
-					addResult(new Format("mov", nt, n1));
-					addResult(new Format("neg", nt));
-					c.changeR2(new ImmOprand(-((ImmOprand) c.getR2()).getVal()));
-				}
-				if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
-				addResult(new Format(c.getOp(), nt, n2));
-				break;
 			case "not":
 				if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
 				addResult(new Format("not", nt));
@@ -742,21 +726,7 @@ public class CodeGenFunc {
 			case "call":
 				addResult(new Format("call", c.getR1Name()));
 				break;
-//			case "equ": if (oop == null) oop = "sete";
-//			case "neq": if (oop == null) oop = "setne";
-//			case "les": if (oop == null) oop = "setl";
-//			case "leq": if (oop == null) oop = "setle";
-//			case "gre": if (oop == null) oop = "setg";
-//			case "geq": if (oop == null) oop = "setge";
-//				if (c.getRt() instanceof Register) {
-//					addResult(new Format("cmp", c.getR1Name(), c.getR2Name()));
-//					addResult(new Format("xor", c.getRtName(), c.getRtName()));
-//					addResult(new Format(oop, reg2Byte(c.getRtName())));
-//				} else {
-//					addResult(new Format("cmp", c.getR1Name(), c.getR2Name()));
-//					addResult(new Format(oop, c.getRtName()));
-//				}
-//				break;
+
 			case "cmp":
 				addResult(new Format("cmp", c.getR1Name(), c.getR2Name()));
 				break;
@@ -778,16 +748,6 @@ public class CodeGenFunc {
 				}
 				break;
 		}
-	}
-
-	private String reg2Byte(String reg) {
-		switch (reg) {
-			case "rax": return "al";
-			case "rbx": return "bl";
-			case "rcx": return "cl";
-			case "rdx": return "dl";
-		}
-		return null;
 	}
 
 	private long getValue(Oprand r) {

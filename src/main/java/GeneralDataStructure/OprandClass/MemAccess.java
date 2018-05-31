@@ -64,4 +64,10 @@ public class MemAccess extends Oprand {
 		if (offset == null && offsetCnt != null && offsetSize != null) return new MemAccess(base.copy(), offsetCnt.copy(), offsetSize.copy());
 		return new MemAccess(base, offsetCnt, offsetSize, offset);
 	}
+	public boolean contains(Oprand r) {
+		if (r instanceof Register &&
+				(r.get().equals(base) || r.get().equals(offset) || r.get().equals(offsetCnt) || r.get().equals(offsetSize)))
+			return true;
+		return false;
+	}
 }

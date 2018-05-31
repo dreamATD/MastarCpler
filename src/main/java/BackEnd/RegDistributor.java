@@ -188,10 +188,7 @@ public class RegDistributor {
 				updateRegLive(c.getRt(), liveNow);
 				updateRegLive(c.getR1(), liveNow);
 				updateRegLive(c.getR2(), liveNow);
-				addLiveNow(c.getR1(), liveNow);
 				addLiveNow(c.getR2(), liveNow);
-				if (c.getRt() instanceof MemAccess)
-					addLiveNow(c.getRt(), liveNow);
 				if (!(c instanceof PhiQuad)) {
 					if (c.getOp().equals("mul") || c.getOp().equals("div") || c.getOp().equals("mod")) {
 						int rax = 6, rdx = 2;
@@ -223,7 +220,7 @@ public class RegDistributor {
 								for (int k = 0; k < 7; ++k) tmpDeCol.add(k);
 							}
 
-							if (matrix[u][v] || (c instanceof MovQuad && c.getRt() instanceof Register && data.equals(c.getR1Name())))
+							if (u == v || matrix[u][v] || (c instanceof MovQuad && c.getRt() instanceof Register && data.equals(c.getR1Name())))
 								continue;
 							matrix[u][v] = matrix[v][u] = true;
 							edge.get(u).add(v);
@@ -232,6 +229,9 @@ public class RegDistributor {
 						}
 					}
 				}
+				addLiveNow(c.getR1(), liveNow);
+				if (c.getRt() instanceof MemAccess)
+					addLiveNow(c.getRt(), liveNow);
 				else if (c.getRt() instanceof Register) liveNow.remove(c.getRtName());
 			}
 			if (i == 0 && params != null) {

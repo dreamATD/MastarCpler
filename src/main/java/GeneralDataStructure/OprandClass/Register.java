@@ -60,4 +60,8 @@ public class Register extends Oprand {
 	@Override public Register copy() {
 		return new Register(name, memPos, entity, willUse);
 	}
+	public boolean contains(Oprand r) {
+		if (r instanceof Register && r.get().equals(name)) return true;
+		return false;
+	}
 }

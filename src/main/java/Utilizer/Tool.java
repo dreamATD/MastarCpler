@@ -19,6 +19,7 @@ public class Tool {
 	}
 
 	public static boolean isPow2(long t) {
+		if (t <= 0) return false;
 		while (t != 1) {
 			if ((t & 1) == 1) return false;
 			t >>= 1;

@@ -345,8 +345,7 @@ public class IRBuilder extends AstVisitor {
 	}
 
 	private void generateStringFunc(String funcName, Oprand ans, Oprand left, Oprand right) {
-		getParam(left);
-		getParam(right);
+		getParam(left, right);
 		insertQuad(new CallQuad("call", ans, new FuncName(funcName), new ImmOprand(2)));
 	}
 
@@ -371,8 +370,10 @@ public class IRBuilder extends AstVisitor {
 
 		int n = nod.sons.size();
 		String func = classFuncLabel(classId, nod.id);
-		getParam(base);
-		for (int i = 0; i < n; ++i) getParam(nod.sons.get(i).reg);
+		ArrayList<Oprand> tmp = new ArrayList<>();
+		tmp.add(base);
+		for (int i = 0; i < n; ++i) tmp.add(nod.sons.get(i).reg);
+		getParam(tmp);
 		nod.reg = nod.type instanceof VoidTypeRef ? null : new Register(getTempName());
 		insertQuad(new CallQuad("call", nod.reg, new FuncName(func), new ImmOprand(n + 1)));
 	}
@@ -408,12 +409,29 @@ public class IRBuilder extends AstVisitor {
 		insertQuad(new CJumpQuad("jl", new LabelName(Integer.toString(label1)), new LabelName(Integer.toString(label2))));
 		updateNextStatLabel(label2);
 	}
+	private void getParam(ArrayList<Oprand> r) {
+		Register[] tmp = new Register[r.size()];
+		for (int i = 0; i < r.size(); ++i) {
+			Oprand rr = r.get(i);
+//			if (!(rr instanceof Register && isTempReg(rr.get()))) {
+				tmp[i] = new Register(getTempName());
+				insertQuad(new MovQuad("mov", tmp[i].copy(), rr.copy()));
+//			} else tmp[i] = ((Register) rr).copy();
+		}
+		for (int i = 0; i < tmp.length; ++i)
+			insertQuad(new ParamQuad("param", tmp[i]));
+	}
 
-	private void getParam(Oprand r) {
-		Register tmp;
-		tmp = new Register(getTempName());
-		insertQuad(new MovQuad("mov", tmp.copy(), r.copy()));
-		insertQuad(new ParamQuad("param", tmp));
+	private void getParam(Oprand... r) {
+		Register[] tmp = new Register[r.length];
+		for (int i = 0; i < r.length; ++i) {
+//			if (!(r[i] instanceof Register && isTempReg(r[i].get()))) {
+				tmp[i] = new Register(getTempName());
+				insertQuad(new MovQuad("mov", tmp[i].copy(), r[i].copy()));
+//			} else tmp[i] = ((Register) r[i]).copy();
+		}
+		for (int i = 0; i < tmp.length; ++i)
+			insertQuad(new ParamQuad("param", tmp[i]));
 	}
 
 	@Override public void visit(CodeNode nod) throws Exception {
@@ -443,6 +461,7 @@ public class IRBuilder extends AstVisitor {
 						visit(nod.sons.get(0));
 						generateStringFunc("S_strcpy", new Register("_"), nod.reg.copy(), nod.sons.get(0).reg.copy());
 					}
+					break;
 				}
 
 				if (nod.sons.isEmpty()) break;
@@ -935,10 +954,11 @@ public class IRBuilder extends AstVisitor {
 		visitChild(nod);
 		int n = nod.sons.size();
 		String fun = funcLabel(nod.id);
+		ArrayList<Oprand> tmp = new ArrayList<>();
 		for (int i = 0; i < n; ++i) {
-			Oprand tmp = nod.sons.get(i).reg;
-			getParam(tmp);
+			tmp.add(nod.sons.get(i).reg);
 		}
+		getParam(tmp);
 
 		nod.reg = nod.type instanceof VoidTypeRef ? new Register("_") : new Register(getTempName());
 		insertQuad(new CallQuad("call", nod.reg, new FuncName(fun), new ImmOprand(n)));
@@ -970,30 +990,31 @@ public class IRBuilder extends AstVisitor {
 			generateObjFunc(mem, ((ClassTypeRef) son.type).getTypeId(), son.reg.copy());
 			nod.reg = mem.reg;
 		} else if (son.type instanceof StringTypeRef) {
+			Register tmp = new Register(getTempName());
 			nod.reg = new Register(getTempName());
 			switch (mem.id) {
 				case "length":
 					getParam(son.reg);
-					insertQuad(new CallQuad("call", nod.reg, new FuncName("S_strlen"), new ImmOprand(1)));
+					insertQuad(new CallQuad("call", tmp, new FuncName("S_strlen"), new ImmOprand(1)));
 					break;
 				case "subString":
 					Node left = mem.sons.get(0), right = mem.sons.get(1);
 					visit(left);
 					visit(right);
-					getParam(son.reg);
-					getParam(left.reg);
-					getParam(right.reg);
-					insertQuad(new CallQuad("call", nod.reg, new FuncName("S_substring"), new ImmOprand(2)));
+					getParam(son.reg, left.reg, right.reg);
+					insertQuad(new CallQuad("call", tmp, new FuncName("S_substring"), new ImmOprand(3)));
 					break;
 				case "parseInt":
-					insertQuad(new CallQuad("call", nod.reg, new FuncName("S_parseInt"), new ImmOprand(0)));
+					getParam(son.reg);
+					insertQuad(new CallQuad("call", tmp, new FuncName("S_parseInt"), new ImmOprand(1)));
 					break;
 				case "ord":
 					Node memSon = mem.sons.get(0);
 					visit(memSon);
-					getParam(memSon.reg);
-					insertQuad(new CallQuad("call", nod.reg, new FuncName("S_ord"), new ImmOprand(1)));
+					getParam(son.reg, memSon.reg);
+					insertQuad(new CallQuad("call", tmp, new FuncName("S_ord"), new ImmOprand(2)));
 			}
+			insertQuad(new MovQuad("mov", nod.reg.copy(), tmp));
 		} else {
 			Register tmp;
 			if (son.reg instanceof Register) tmp = ((Register) son.reg);
