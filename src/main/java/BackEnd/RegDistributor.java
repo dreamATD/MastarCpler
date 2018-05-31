@@ -190,9 +190,9 @@ public class RegDistributor {
 				updateRegLive(c.getR1(), liveNow);
 				updateRegLive(c.getR2(), liveNow);
 				addLiveNow(c.getR2(), liveNow);
+				int rax = 6, rdx = 2;
 				if (!(c instanceof PhiQuad)) {
 					if (c.getOp().equals("mul") || c.getOp().equals("div") || c.getOp().equals("mod")) {
-						int rax = 6, rdx = 2;
 						if (c.getR1() instanceof Register) {
 							int tmp = activeSet.find(nameIdx.get(c.getR1Name()));
 							deCol.get(tmp).add(rax);
@@ -216,9 +216,15 @@ public class RegDistributor {
 							/*
 							* Can't use the parameters' register.
 							* */
+							HashSet<Integer> tmpDeCol = deCol.get(v);
 							if (c instanceof CallQuad) {
-								HashSet<Integer> tmpDeCol = deCol.get(v);
 								for (int k = 0; k < 7; ++k) tmpDeCol.add(k);
+							} else if (c instanceof A3Quad && (
+									c.getOp().equals("mul") ||
+									c.getOp().equals("div") ||
+									c.getOp().equals("mod"))) {
+									tmpDeCol.add(rax);
+									tmpDeCol.add(rdx);
 							}
 
 							if (u == v || matrix[u][v] || (c instanceof MovQuad && c.getRt() instanceof Register && data.equals(c.getR1Name())))

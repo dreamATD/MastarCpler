@@ -412,8 +412,8 @@ public class CodeGenFunc {
 				if (rdxUse && !n2.equals("rdx")) translate(new MovQuad("mov", new Register(regList[outReg + 1]), new Register("rdx")));
 				translate(new MovQuad("mov", new Register("rax"), r1));
 				translate(c);
-				if (op.equals("div")) translate(new MovQuad("mov", rt, new Register("rax")));
-				else translate(new MovQuad("mov", rt, new Register("rdx")));
+				if (op.equals("mod")) translate(new MovQuad("mov", rt, new Register("rdx")));
+				else translate(new MovQuad("mov", rt, new Register("rax")));
 				if (rdxUse && !n2.equals("rdx")) translate(new MovQuad("mov", new Register("rdx"), new Register(regList[outReg + 1])));
 				if (raxUse && !n2.equals("rax")) translate(new MovQuad("mov", new Register("rax"), new Register(regList[outReg])));
 			} else translate(c);

@@ -74,11 +74,11 @@ public class CodeGen {
 
 		codes.add(BuiltinCode.text);
 
-		ArrayList<FuncFrame> tmp = initFuncs;
-		funcs.get(0).addInit(tmp);
-
 		for (int i = 0; i < funcs.size(); ++i) {
 			FuncFrame func = funcs.get(i);
+
+			if (func.getName().equals("main")) func.addInit(initFuncs);
+
 //			func.print();
 			FuncSSABuilder ssaBuilder = new FuncSSABuilder(func);
 			ssaBuilder.buildSSAFunc();

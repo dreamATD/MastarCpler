@@ -98,6 +98,7 @@ public class IRBuilder extends AstVisitor {
 	}
 
 	private Register changeOpr2Reg(Oprand r) {
+		if (r instanceof Register) return;
 		Register reg = new Register(getTempName());
 		insertQuad(new MovQuad("mov", reg, r.copy()));
 		return reg.copy();
