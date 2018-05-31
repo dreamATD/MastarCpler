@@ -545,7 +545,7 @@ public class CodeGenFunc {
 		if (e != null) {
 //			HashSet<String> set = getEntityExist(e);
 			if (n.equals(regList[outReg]) || n.equals(regList[outReg + 1])) {
-				addResult(new Format("mov", getVarMem(e, m), n));
+				if (m != null) addResult(new Format("mov", getVarMem(e, m), n));
 				HashSet<String> regSet = regStore.get(n);
 				regSet.add(e);
 			}
@@ -585,8 +585,10 @@ public class CodeGenFunc {
 //				addResult(new Format("mov", rn, tmp));
 //				update(regStore.get(tmp), rn, regStore.get(rn));
 //			} else {
+			if (rm != null) {
 				String pos = getVarMem(re, rm);
 				addResult(new Format("mov", rn, pos));
+			}
 //				regStore.get(rn).add(re);
 //			}
 		} else regStore.get(rn).add(re);

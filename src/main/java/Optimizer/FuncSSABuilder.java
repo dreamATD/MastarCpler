@@ -236,9 +236,8 @@ public class FuncSSABuilder {
 			}
 		}
 
-		HashSet<BasicBlock> df = domainEdge.get(u.getIdx());
-		for (BasicBlock v: df) {
-			v.addPhiParams(tmp, nameStack);
+		for (int i = 0; i < u.succs.size(); ++i) {
+			u.succs.get(i).addPhiParams(tmp, nameStack);
 		}
 
 		ArrayList<BasicBlock> domSucc = rmmDom.get(u.getIdx());
