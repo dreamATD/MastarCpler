@@ -367,7 +367,7 @@ public class CodeGenFunc {
 		Long offset = offset1 == null ? offset2 : offset1;
 
 		useRbp = true;
-		String tmp = offset > 0 ? '+' + Long.toHexString(offset) : offset == 0 ? "" : "-" + Long.toHexString(-offset);
+		String tmp = offset > 0 ? '+' + Long.toHexString(offset) + 'H' : offset == 0 ? "" : "-" + Long.toHexString(-offset) + 'H';
 		return "qword" + " [" + "rbp" + tmp + ']';
 	}
 

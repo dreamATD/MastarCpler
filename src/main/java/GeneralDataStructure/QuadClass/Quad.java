@@ -69,28 +69,39 @@ public class Quad {
 
 	public ArrayList<Register> phiParams;
 
+	private void selfCopy() {
+		if (r1 != null) r1 = r1.copy();
+		if (r2 != null) r2 = r2.copy();
+		if (rt != null) rt = rt.copy();
+	}
+
 	public Quad(String op, Oprand rt, ArrayList<Register> phiParams) {
 		this.op = op;
 		this.rt = rt;
 		this.phiParams = phiParams;
+		selfCopy();
 	}
 	public Quad(String op, Oprand rt, Oprand r1) {
 		this.op = op;
 		this.rt = rt;
 		this.r1 = r1;
+		selfCopy();
 	}
 	public Quad(String op, Oprand rt, Oprand r1, Oprand r2) {
 		this.op = op;
 		this.rt = rt;
 		this.r1 = r1;
 		this.r2 = r2;
+		selfCopy();
 	}
 	public Quad(String op, Oprand rt) {
 		this.op = op;
 		this.rt = rt;
+		selfCopy();
 	}
 	public Quad(String op) {
 		this.op = op;
+		selfCopy();
 	}
 	public String getOp() {
 		return op;

@@ -206,6 +206,7 @@ public class RegDistributor {
 					else {
 						String nt = c instanceof ParamQuad ? c.getR1Name() : c.getRtName();
 						int u = activeSet.find(nameIdx.get(nt));
+
 						for (String data : liveNow) {
 							if (data.equals(nt)) continue;
 							int v = activeSet.find(nameIdx.get(data));
@@ -213,7 +214,7 @@ public class RegDistributor {
 							/*
 							* Can't use the parameters' register.
 							* */
-							if (c instanceof ParamQuad) {
+							if (c instanceof CallQuad) {
 								HashSet<Integer> tmpDeCol = deCol.get(v);
 								for (int k = 0; k < 7; ++k) tmpDeCol.add(k);
 							}
@@ -225,13 +226,13 @@ public class RegDistributor {
 							edge.get(v).add(u);
 //						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
 						}
-						liveNow.remove(nt);
 					}
 				}
 				addLiveNow(c.getR1(), liveNow);
 				addLiveNow(c.getR2(), liveNow);
 				if (c.getRt() instanceof MemAccess)
 					addLiveNow(c.getRt(), liveNow);
+				else if (c.getRt() instanceof Register) liveNow.remove(c.getRtName());
 			}
 			if (i == 0 && params != null) {
 				for (String su: params) if (nameIdx.containsKey(su)) {
@@ -424,17 +425,6 @@ public class RegDistributor {
 					if (c.getRt() instanceof Register) {
 						col.get(activeSet.find(nameIdx.get(c.getRtName()))).add(6);
 					}
-				} else if (c instanceof A3Quad) {
-					if (c.getRt() instanceof Register) {
-						String rt = c.getRt().get();
-						switch (c.getOp()) {
-							case "les": case "leq":
-							case "gre": case "geq":
-							case "equ": case "neq":
-								col.get(activeSet.find(nameIdx.get(rt))).add(7);
-						}
-					}
-
 				}
 			}
 		}
@@ -472,10 +462,10 @@ public class RegDistributor {
 			if (nt.isEmpty()) r.set(regList[outCol + t]);
 			else r.set(regList[nt.iterator().next()]);
 		} else if (r instanceof MemAccess) {
-			rebuildOprand(((MemAccess) r).getBase(), 0);
-			rebuildOprand(((MemAccess) r).getOffset(), 1);
-			rebuildOprand(((MemAccess) r).getOffsetCnt(), 1);
-			rebuildOprand(((MemAccess) r).getOffsetSize(), 0);
+			rebuildOprand(((MemAccess) r).getBase(), 1);
+			rebuildOprand(((MemAccess) r).getOffset(), 0);
+			rebuildOprand(((MemAccess) r).getOffsetCnt(), 0);
+			rebuildOprand(((MemAccess) r).getOffsetSize(), 1);
 		}
 	}
 
