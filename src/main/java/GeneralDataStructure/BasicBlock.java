@@ -64,6 +64,7 @@ public class BasicBlock {
 			Quad c = codes.get(i);
 			if (! (c instanceof PhiQuad)) break;
 			String rt = ((Register) c.getRt()).get();
+			if (rt.contains("$")) rt = rt.substring(0, rt.lastIndexOf('$'));
 			if (nameList.contains(rt)) c.addPhiParams(nameStack.get(rt).peek());
 		}
 	}
