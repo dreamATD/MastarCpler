@@ -232,7 +232,7 @@ public class RegDistributor {
 							matrix[u][v] = matrix[v][u] = true;
 							edge.get(u).add(v);
 							edge.get(v).add(u);
-						System.err.println("Edge: " + global.get(u) + " " + global.get(v));
+//						System.err.println("Edge: " + global.get(u) + " " + global.get(v));
 						}
 					}
 				}
@@ -251,7 +251,7 @@ public class RegDistributor {
 						matrix[u][v] = matrix[v][u] = true;
 						edge.get(u).add(v);
 						edge.get(v).add(u);
-						System.err.println("Edge: " + global.get(u) + " " + global.get(v));
+//						System.err.println("Edge: " + global.get(u) + " " + global.get(v));
 					}
 				}
 			}
