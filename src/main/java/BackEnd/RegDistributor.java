@@ -132,6 +132,7 @@ public class RegDistributor {
 					String rt = c.getRtName();
 					ArrayList<Register> params = ((PhiQuad) c).getParams();
 					for (Register v: params) {
+						if (v == null) continue;
 						int fu = activeSet.find(nameIdx.get(rt));
 						int fv = activeSet.find(nameIdx.get(v.get()));
 						activeSet.merge(fu, fv);
@@ -225,7 +226,7 @@ public class RegDistributor {
 							matrix[u][v] = matrix[v][u] = true;
 							edge.get(u).add(v);
 							edge.get(v).add(u);
-//						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
+						System.err.println("Edge: " + global.get(u) + " " + global.get(v));
 						}
 					}
 				}
@@ -244,7 +245,7 @@ public class RegDistributor {
 						matrix[u][v] = matrix[v][u] = true;
 						edge.get(u).add(v);
 						edge.get(v).add(u);
-//						System.out.println("Edge: " + global.get(u) + " " + global.get(v));
+						System.err.println("Edge: " + global.get(u) + " " + global.get(v));
 					}
 				}
 			}

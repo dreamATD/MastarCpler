@@ -139,7 +139,7 @@ public class Quad {
 		if (r2 != null) System.err.print(" " + r2.get());
 		if (phiParams != null) {
 			for (int i = 0; i < phiParams.size(); ++i) {
-				System.err.print(" " + phiParams.get(i).get());
+				if (phiParams.get(i) != null) System.err.print(" " + phiParams.get(i).get());
 			}
 		}
 		System.err.println();
@@ -171,7 +171,14 @@ public class Quad {
 	}
 
 	public void addPhiParams(String x) {
-		phiParams.add(new Register(x));
+		if (x == null) phiParams.add(null);
+		else phiParams.add(new Register(x));
+	}
+	public void addPhiParams(String x, int idx) {
+		phiParams.set(idx, new Register(x));
+	}
+	public Register getPhiParams(int idx) {
+		return phiParams.get(idx);
 	}
 	public void changeOp(String op) {
 		this.op = op;

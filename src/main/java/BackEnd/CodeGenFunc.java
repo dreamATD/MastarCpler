@@ -662,6 +662,7 @@ public class CodeGenFunc {
 				}
 			case "sub":
 			case "and":	case "or" :  case "xor":
+				if(!nt.equals(n1)) addResult(new Format("mov", nt, n1));
 				addResult(new Format(c.getOp(), nt, n2));
 				break;
 			case "sal":	case "sar":

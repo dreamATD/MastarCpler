@@ -57,16 +57,29 @@ public class BasicBlock {
 	public void addPhi(String x) {
 		codes.addFirst(new PhiQuad("phi", new Register(x, x), new ArrayList<>()));
 		codes.get(0).setLabel(name);
+		for (int i = 0; i < preps.size(); ++i) {
+			codes.get(0).addPhiParams(null);
+		}
 	}
 
-	public void addPhiParams(HashSet<String> nameList, HashMap<String, Stack<String>> nameStack) {
+	public void addPhiParams(HashSet<String> nameList, HashMap<String, Stack<String>> nameStack, BasicBlock pre) {
+		int u = getPreIdx(pre);
 		for (int i = 0; i < codes.size(); ++i) {
 			Quad c = codes.get(i);
 			if (! (c instanceof PhiQuad)) break;
 			String rt = ((Register) c.getRt()).getMemPos();
 			if (rt != null) System.err.println(c.getRt().get() + ", " +  ((Register) c.getRt()).getMemPos());
-			if (nameList.contains(rt)) c.addPhiParams(nameStack.get(rt).peek());
+			if (nameList.contains(rt)) c.addPhiParams(nameStack.get(rt).peek(), u);
 		}
+	}
+
+	public int getPreIdx(BasicBlock pre) {
+		int u = 0;
+		for (int i = 1; i < preps.size(); ++i) if (preps.get(i).getIdx() == pre.getIdx()) {
+			u = i;
+			break;
+		}
+		return u;
 	}
 
 	public String getName() {

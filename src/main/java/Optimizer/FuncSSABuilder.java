@@ -237,7 +237,7 @@ public class FuncSSABuilder {
 		}
 
 		for (int i = 0; i < u.succs.size(); ++i) {
-			u.succs.get(i).addPhiParams(tmp, nameStack);
+			u.succs.get(i).addPhiParams(tmp, nameStack, u);
 		}
 
 		ArrayList<BasicBlock> domSucc = rmmDom.get(u.getIdx());

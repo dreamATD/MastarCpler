@@ -872,7 +872,13 @@ public class IRBuilder extends AstVisitor {
 				insertQuad(new A3Quad(op, nod.reg, sonReg.copy(), new ImmOprand(0)));
 				return;
 		}
-		insertQuad(new A3Quad(op, sonReg.copy(), sonReg.copy(), new ImmOprand(1)));
+		if (!(sonReg instanceof MemAccess))
+			insertQuad(new A3Quad(op, sonReg.copy(), sonReg.copy(), new ImmOprand(1)));
+		else {
+			tmp = new Register(getTempName());
+			insertQuad(new A3Quad(op, tmp, sonReg.copy(), new ImmOprand(1)));
+			insertQuad(new MovQuad("mov", sonReg.copy(), tmp.copy()));
+		}
 		nod.reg = sonReg.copy();
 	}
 

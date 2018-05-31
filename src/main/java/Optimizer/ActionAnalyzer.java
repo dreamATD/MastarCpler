@@ -58,7 +58,7 @@ public class ActionAnalyzer {
 				checkOprand(c.getR2(), curUeVar, curVarKill);
 				if (c.getRt() instanceof MemAccess)
 					checkOprand(c.getRt(), curUeVar, curVarKill);
-				if (c.getRt() instanceof Register) {
+				if (c.getRt() instanceof Register && !(c instanceof PhiQuad)) {
 					String x = c.getRtName();
 					curVarKill.add(x);
 				}
@@ -80,6 +80,17 @@ public class ActionAnalyzer {
 					int succIdx = succs.get(j).getIdx();
 					SetOperation.selfUnion(l, ueVar.get(succIdx));
 					SetOperation.selfUnion(l, SetOperation.minus(liveOut.get(succIdx), varKill.get(succIdx)));
+					MyList<Quad> code = succs.get(j).getCodes();
+					int idx = succs.get(j).getPreIdx(blocks.get(i));
+					for (int k = 0; k < code.size(); ++k) {
+						Quad c = code.get(k);
+						if (!(c instanceof PhiQuad)) break;
+						String nt = c.getRtName();
+						if (l.contains(nt)) {
+							l.remove(nt);
+							l.add(c.getPhiParams(idx).get());
+						}
+					}
 				}
 				if (l.size() > oldSize) changed = true;
 			}

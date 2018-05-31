@@ -1,38 +1,79 @@
-class C2 {
-    int x;
-    int y;
-    bool b;
-    int z;
-}
+//考察点：section 8 语句，包括if,while,for,break,continue,return等
+//算法：线性筛法求欧拉函数
+//样例输入：10
+//样例输出：
+//1
+//2
+//2
+//4
+//2
+//6
+//4
+//6
+//4
+
+int N;
+int M = 0;
+bool[] check;
 
 int main() {
-    C2 obj = new C2;
-    obj.x = 10;
-    obj.y = 20;
-    obj.b = obj.x > obj.y;
-    if (obj.b) obj.z = 40;
-    else obj.z = 80;
-    return obj.x + obj.y + obj.z;
+    N = getInt();
+	check = new bool[N+5];
+	int i = 0;
+	while ( i <= N ) check[i++] = true;
+	int[] phi = new int[N+5];
+	int[] P = new int[N+5];
+	phi[1] = 1;
+	for (i = 2; ; ++i ) {
+		if ( i > N ) break;
+		if ( check[i] ) {
+			P[++M] = i;
+			phi[i] = i - 1;
+		}
+		int k = i;
+		int i;
+		for (i = 1; i <= M && (k * P[i] <= N); i++) {
+			int tmp = k * P[i];
+			if ( tmp > N ) continue;
+			check[tmp] = false;
+			if ( k % P[i] == 0) {
+				phi[tmp] = phi[k] * P[i];
+				break;
+			}
+			else {
+				phi[k * P[i]] = phi[k] * (P[i] - 1);
+			}
+		}
+		println(toString(phi[k]));
+	}
+    return 0;
 }
-
 
 
 
 /*!! metadata:
 === comment ===
-struct3.mx
+statement_test-huyuncong.mx
+=== input ===
+10
 === assert ===
-exitcode
+output
 === timeout ===
 0.1
-=== input ===
-
+=== output ===
+1
+2
+2
+4
+2
+6
+4
+6
+4
 === phase ===
 codegen pretest
 === is_public ===
 True
-=== exitcode ===
-110
 
 !!*/
 

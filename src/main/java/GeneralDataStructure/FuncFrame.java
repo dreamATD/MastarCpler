@@ -165,7 +165,7 @@ public class FuncFrame {
 		for (int i = 0; i < size; ++i) {
 			Quad code = codes.get(i);
 			String label = code.getLabel();
-//			code.print();
+			code.print();
 			if (label != null) {
 				map.insert(label, new BasicBlock(label));
 			}
@@ -196,14 +196,11 @@ public class FuncFrame {
 						block1 = map.find(code2.getR1Name());
 						block2 = map.find(code2.getR2Name());
 						block.addSuccs(block1, block2);
-						block1.addPreps(block);
-						block2.addPreps(block);
 						last = code2;
 						break;
 					} else if (code2 instanceof JumpQuad) {
 						block1 = map.find(code2.getRtName());
 						block.addSuccs(block1);
-						block1.addPreps(block);
 						last = code2;
 						break;
 					} else if (code2 instanceof RetQuad) {
@@ -231,11 +228,13 @@ public class FuncFrame {
 			bbList.add(u);
 			for (int i = u.succs.size() - 1; i >= 0; --i) {
 				BasicBlock v = u.succs.get(i);
+				v.addPreps(u);
 				String name = v.name;
 				if (!vis.contains(name)) {
 					vis.add(name);
 					st.push(v);
 				}
+
 			}
 		}
 	}
