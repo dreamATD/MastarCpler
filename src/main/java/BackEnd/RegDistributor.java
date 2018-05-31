@@ -467,6 +467,7 @@ public class RegDistributor {
 	private void rebuildOprand(Oprand r, int t) {
 		if (r instanceof Register) {
 			Integer id = nameIdx.get(r.get());
+			if (id == null) return;
 			HashSet<Integer> nt = col.get(activeSet.find(id));
 			if (nt.isEmpty()) r.set(regList[outCol + t]);
 			else r.set(regList[nt.iterator().next()]);

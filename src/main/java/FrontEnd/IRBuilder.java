@@ -497,7 +497,7 @@ public class IRBuilder extends AstVisitor {
 					curCodeList = new ArrayList<>();
 					curFunc = new FuncFrame(initFuncLabel(name));
 					visit(son);
-					updateTempReg(son.reg.copy(), new GeneralMemAccess(((Register)nod.reg).getMemPos()));
+					updateTempReg(son.reg.copy(),nod.reg.copy());
 					insertInit(curFunc);
 					curCodeList = tmp;
 				}
@@ -659,9 +659,27 @@ public class IRBuilder extends AstVisitor {
 	}
 
 	@Override public void visit(RetStatNode nod) throws Exception {
-		visitChild(nod);
-		if (nod.sons.size() > 0) insertQuad(new RetQuad("ret", nod.sons.get(0).reg.copy()));
-		else insertQuad(new RetQuad("ret"));
+		if (nod.sons.size() > 0) {
+			Node son = nod.sons.get(0);
+			if (son.type instanceof BoolTypeRef && son.reg == null) {
+				int label1 = labelCnt++, label2 = labelCnt++, label3 = labelCnt++;
+				generateCondition(son, label1, label2);
+				updateNextStatLabel(label1);
+				insertQuad(new RetQuad("ret", new ImmOprand(1)));
+				insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(label3))));
+				updateNextStatLabel(label2);
+				insertQuad(new RetQuad("ret", new ImmOprand(0)));
+				insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(label3))));
+				updateNextStatLabel(label3);
+				return;
+			}
+			visitChild(nod);
+			insertQuad(new RetQuad("ret", nod.sons.get(0).reg.copy()));
+		}
+		else {
+			visitChild(nod);
+			insertQuad(new RetQuad("ret"));
+		}
 	}
 
 	@Override public void visit(BrkStatNode nod) throws Exception {
@@ -905,7 +923,7 @@ public class IRBuilder extends AstVisitor {
 			insertQuad(new A3Quad("add", tmp.copy(), tmp.copy(), new ImmOprand(size)));
 			generateNewFunc(nod.reg, tmp.copy());
 			insertQuad(new MovQuad("mov", new MemAccess(nod.reg.copy()), len.reg.copy()));
-			if (!(typ.type instanceof SingleTypeRef))
+			if (!(typ.type instanceof SingleTypeRef) && !(typ.sons.get(0) instanceof EmptyExprNode))
 				generateLoop(new ImmOprand(0), len.reg.copy(), nod.reg, size, typ);
 		}
 	}
