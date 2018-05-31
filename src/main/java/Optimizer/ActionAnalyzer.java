@@ -88,7 +88,8 @@ public class ActionAnalyzer {
 						String nt = c.getRtName();
 						if (l.contains(nt)) {
 							l.remove(nt);
-							l.add(c.getPhiParams(idx).get());
+							Register tmp = c.getPhiParams(idx);
+							if (tmp != null) l.add(tmp.get());
 						}
 					}
 				}

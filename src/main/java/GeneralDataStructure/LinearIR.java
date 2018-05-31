@@ -82,42 +82,41 @@ public class LinearIR {
 		String res = "";
 		int len = list.length;
 		for (int i = 0; i < 8; ++i) {
-			tmp = Integer.toHexString(list[i]).toUpperCase();
-			if (tmp.length() == 1) tmp = '0' + tmp;
-			res += (len > i ? tmp : "00");
+			tmp = i < list.length ? Integer.toHexString(list[i]).toUpperCase() : null;
+			if (tmp != null && tmp.length() == 1) tmp = '0' + tmp;
+			res += (i < list.length ? tmp : "00");
 		}
-		res += "H";
+		if (8 < len) res += "H";
 		for (int i = 8; i < len; i += 8) {
+			res += ", ";
 			for (int j = i; j - i < 8; ++j) {
-				tmp = Integer.toHexString(list[i]).toUpperCase();
-				if (tmp.length() == 1) tmp = '0' + tmp;
-				res += len > j ? tmp : "00";
+				tmp = j < list.length ? Integer.toHexString(list[j]).toUpperCase() : null;
+				if (tmp != null && tmp.length() == 1) tmp = '0' + tmp;
+				res += j < list.length ? tmp : "00";
 			}
 			res += "H";
 		}
 		initMem.add(new Pair<>(name, res));
 	}
 	public void addInitMem(String name, byte[] list, int len) {
-		String tmp = Integer.toHexString(list[0]).toUpperCase();
-		if (tmp.length() == 1) tmp = '0' + tmp;
-		String str = tmp;
-		int size = list.length;
-		for (int i = 1; i < 8; ++i) {
-			tmp = Integer.toHexString(list[i]).toUpperCase();
-			if (tmp.length() == 1) tmp = '0' + tmp;
-			str += size > i ? tmp : "00";
+		String tmp;
+		String res = "";
+		for (int i = 0; i < 8; ++i) {
+			tmp = i < list.length ? Integer.toHexString(list[i]).toUpperCase() : null;
+			if (tmp != null && tmp.length() == 1) tmp = '0' + tmp;
+			res += (i < list.length ? tmp : "00");
 		}
-		str += "H";
+		if (8 < len) res += "H";
 		for (int i = 8; i < len; i += 8) {
-			str += ", ";
+			res += ", ";
 			for (int j = i; j - i < 8; ++j) {
-				tmp = Integer.toHexString(list[i]).toUpperCase();
-				if (tmp.length() == 1) tmp = '0' + tmp;
-				str += size > j ? tmp : "00";
+				tmp = j < list.length ? Integer.toHexString(list[j]).toUpperCase() : null;
+				if (tmp != null && tmp.length() == 1) tmp = '0' + tmp;
+				res += j < list.length ? tmp : "00";
 			}
-			str += "H";
+			res += "H";
 		}
-		initMem.add(new Pair<>(name, str));
+		initMem.add(new Pair<>(name, res));
 	}
 	public void addRoData(String name, byte[] list) {
 		int len = list.length;

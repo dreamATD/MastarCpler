@@ -174,20 +174,20 @@ public class BuiltinCode {
 			"\n" +
 			"ALIGN   8\n" +
 			"L_011:  mov     rsi, qword [rel stdout]\n" +
+			"        add     rbx, 1\n" +
 			"        call    _IO_putc\n" +
 			"        movsx   edi, byte [rbx]\n" +
 			"        test    dil, dil\n" +
 			"        jnz     L_011\n" +
 			"L_012:  pop     rbx\n" +
-			"        ret\n" +
+			"        ret" +
 			"\n" +
 			"\n" +
 			"\n" +
 			"\n" +
 			"\n" +
 			"\n" +
-			"\n" +
-			"ALIGN   16\n" +
+			"ALIGN   8\n" +
 			"\n" +
 			"F_getString:\n" +
 			"        push    rbx\n" +

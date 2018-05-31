@@ -322,6 +322,8 @@ public class CodeGenFunc {
 				}
 			} else if (c instanceof CondQuad) {
 				updateCond(c);
+			} else {
+				translate(c);
 			}
 			updateRt(rt);
 			modifyQuadRegLive(c);
@@ -732,7 +734,8 @@ public class CodeGenFunc {
 				break;
 
 			case "cmp":
-				addResult(new Format("cmp", c.getR1Name(), c.getR2Name()));
+				if (c.getR1() instanceof ImmOprand) addResult(new Format("cmp", c.getR2Name(), c.getR1Name()));
+				else addResult(new Format("cmp", c.getR1Name(), c.getR2Name()));
 				break;
 			case "jump": c.setOp("jmp");
 			case "je":
@@ -751,6 +754,8 @@ public class CodeGenFunc {
 					else if (!n1.equals("rax")) addResult(new Format("mov", "rax", n1));
 				}
 				break;
+			default:
+				addResult(new Format("nop"));
 		}
 	}
 
