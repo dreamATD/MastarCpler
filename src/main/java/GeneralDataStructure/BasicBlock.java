@@ -1,7 +1,10 @@
 package GeneralDataStructure;
 
 import GeneralDataStructure.MyListClass.MyList;
+import GeneralDataStructure.OprandClass.FuncName;
+import GeneralDataStructure.OprandClass.ImmOprand;
 import GeneralDataStructure.OprandClass.Register;
+import GeneralDataStructure.QuadClass.CallQuad;
 import GeneralDataStructure.QuadClass.PhiQuad;
 import GeneralDataStructure.QuadClass.Quad;
 
@@ -106,5 +109,9 @@ public class BasicBlock {
 		}
 		System.err.println(")");
 		System.err.println();
+	}
+
+	public void addInitFunc(String name) {
+		codes.addFirst(new CallQuad("call", new Register("_"), new FuncName(name), new ImmOprand(0)));
 	}
 }

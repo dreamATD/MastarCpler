@@ -267,6 +267,12 @@ public class FuncFrame {
 		return ret;
 	}
 
+	public void addInit(ArrayList<FuncFrame> initFuncs) {
+		for (FuncFrame func: initFuncs) {
+			bbList.get(0).addInitFunc(func.getName());
+		}
+	}
+
 	public boolean containsParam(String str) {
 		return params.containsKey(str);
 	}

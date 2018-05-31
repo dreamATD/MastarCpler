@@ -74,6 +74,9 @@ public class CodeGen {
 
 		codes.add(BuiltinCode.text);
 
+		ArrayList<FuncFrame> tmp = initFuncs;
+		funcs.get(0).addInit(tmp);
+
 		for (int i = 0; i < funcs.size(); ++i) {
 			FuncFrame func = funcs.get(i);
 //			func.print();
@@ -99,11 +102,11 @@ public class CodeGen {
 			FuncSSABuilder ssaBuilder = new FuncSSABuilder(func);
 			ssaBuilder.buildSSAFunc();
 //			System.out.println();
-//			func.print();
+			func.print();
 			RegDistributor distributor = new RegDistributor(func, globals);
 			distributor.regDistribute();
 //			System.out.println();
-//			func.print();
+			func.print();
 			CodeGenFunc funcGenerator = new CodeGenFunc(func, globalSize);
 			codes.addAll(funcGenerator.generateCode());
 			codes.add("");
@@ -139,11 +142,11 @@ public class CodeGen {
 		codes.add(BuiltinCode.roDataString);
 
 		codes.add("");
-		codes.add("SECTION .init align=8");
-
-		for (int i = 0; i < initFuncs.size(); ++i) {
-			codes.add(String.format("%-8s%s", "dq", initFuncs.get(i).getName()));
-		}
+//		codes.add("SECTION .init align=8");
+//
+//		for (int i = 0; i < initFuncs.size(); ++i) {
+//			codes.add(String.format("%-8s%s", "dq", initFuncs.get(i).getName()));
+//		}
 
 		return codes;
 	}
