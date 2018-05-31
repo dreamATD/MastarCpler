@@ -358,33 +358,6 @@ public class RegDistributor {
 		boolean[] dyed = new boolean[6];
 
 		/* force dye */
-//		for (int i = 0; i < blocks.size(); ++i) {
-//			MyList<Quad> codes = blocks.get(i).getCodes();
-//			for (int j = 0; j < codes.size(); ++j) {
-//				Quad c = codes.get(j);
-//				Oprand r1 = c.getR1();
-//				Oprand r2 = c.getR2();
-//				Oprand rt = c.getRt();
-//				for (int k = 0; k < first6Params.length; ++k) {
-//					forceDyeOprand(r1, dyed, k);
-//					forceDyeOprand(r2, dyed, k);
-//					if (rt instanceof MemAccess)
-//						forceDyeOprand(rt, dyed, k);
-//				}
-//				if (c instanceof ParamQuad) {
-//					if (paramCnt < 6) {
-//						int tmp = activeSet.find(nameIdx.get(c.getR1Name()));
-//						col.get(tmp).add(paramCnt++);
-//					}
-//				}
-//				if (c instanceof CallQuad) {
-//					paramCnt = 0;
-//					if (c.getRt() instanceof Register) {
-//						col.get(activeSet.find(nameIdx.get(c.getRtName()))).add(6);
-//					}
-//				}
-//			}
-//		}
 		if (first6Params != null) {
 			for (int i = 0; i < first6Params.length; ++i) {
 				if (nameIdx.containsKey(first6Params[i]))
@@ -424,6 +397,10 @@ public class RegDistributor {
 					paramCnt = 0;
 					if (c.getRt() instanceof Register) {
 						col.get(activeSet.find(nameIdx.get(c.getRtName()))).add(6);
+					}
+				} else if (c.getOp().equals("sal") || c.getOp().equals("sar")) {
+					if (c.getRt() instanceof Register) {
+						col.get(activeSet.find(nameIdx.get(c.getRtName()))).add(3);
 					}
 				}
 			}

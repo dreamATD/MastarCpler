@@ -803,6 +803,13 @@ public class IRBuilder extends AstVisitor {
 			} else {
 				if ((op.equals("div") || op.equals("mod")) && !(rr instanceof ImmOprand && Tool.isPow2(((ImmOprand) rr).getVal())))
 					rr = changeOpr2Reg(rr).copy();
+				else if (op.equals("sal") || op.equals("sar")) {
+					if (!isTempReg(rr.get()) && !(rr instanceof ImmOprand)) {
+						Register tmp = new Register(getTempName());
+						insertQuad(new MovQuad("mov", tmp, rr));
+						rr = tmp.copy();
+					}
+				}
 				insertQuad(new A3Quad(op, nod.reg, lr, rr));
 			}
 		} else if (isBoolType) {

@@ -661,10 +661,13 @@ public class CodeGenFunc {
 					break;
 				}
 			case "sub":
-			case "sal":	case "sar":
 			case "and":	case "or" :  case "xor":
-				if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
 				addResult(new Format(c.getOp(), nt, n2));
+				break;
+			case "sal":	case "sar":
+				if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
+				if (c.getR2() instanceof ImmOprand) addResult(new Format(c.getOp(), nt, n2));
+				else addResult(new Format(c.getOp(), nt));
 				break;
 			case "mul":
 				Oprand tmp1, tmp2;
