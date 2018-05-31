@@ -76,7 +76,7 @@ public class CodeGen {
 
 		for (int i = 0; i < funcs.size(); ++i) {
 			FuncFrame func = funcs.get(i);
-			func.print();
+//			func.print();
 			FuncSSABuilder ssaBuilder = new FuncSSABuilder(func);
 			ssaBuilder.buildSSAFunc();
 //			if (func.getName().equals("main")) {
