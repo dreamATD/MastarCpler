@@ -356,7 +356,7 @@ public class IRBuilder extends AstVisitor {
 			generateStrAdd(nod.sons.get(1), reg);
 		} else {
 			visit(nod);
-			generateStringFunc("S_strcpy", new Register("_"), reg.copy(), nod.reg.copy());
+			generateStringFunc("S_strcat", new Register("_"), reg.copy(), nod.reg.copy());
 		}
 	}
 
@@ -956,7 +956,11 @@ public class IRBuilder extends AstVisitor {
 		Node son = nod.sons.get(0);
 		Node mem = nod.sons.get(1);
 		visit(son);
-		if (mem instanceof VarExprNode) return;
+		if (mem instanceof VarExprNode) {
+			if (nod.reg == null)
+				nod.reg = new MemAccess(son.reg.copy(), new ImmOprand(((ClassTypeRef) son.type).getBelongClass().getOffset(mem.id)));
+			return;
+		}
 		if (son.type instanceof ClassTypeRef) {
 			generateObjFunc(mem, ((ClassTypeRef) son.type).getTypeId(), son.reg.copy());
 			nod.reg = mem.reg;

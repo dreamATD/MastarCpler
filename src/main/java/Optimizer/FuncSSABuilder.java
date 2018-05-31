@@ -14,6 +14,7 @@ import java.util.*;
 public class FuncSSABuilder {
 	private FuncFrame curFunc;
 	private HashSet<String> global;
+	private HashSet<String> params;
 
 	private HashMap<String, HashSet<BasicBlock>> varDomain;
 	private ArrayList<HashSet<BasicBlock> > domainEdge;
@@ -29,6 +30,8 @@ public class FuncSSABuilder {
 	public FuncSSABuilder(FuncFrame func) {
 		blockList = func.getBbList();
 		global = new HashSet<>();
+		params = new HashSet<>();
+		params.addAll(func.getParams().keySet());
 		varDomain = new HashMap<>();
 		domainEdge = new ArrayList<>();
 		dom = new ArrayList<>();
@@ -139,6 +142,15 @@ public class FuncSSABuilder {
 					}
 					varDomain.get(x).add(u);
 				}
+				if (u.getIdx() == 0) {
+					for (String x: params) {
+						varKill.add(x);
+						if (!varDomain.containsKey(x)) {
+							varDomain.put(x, new HashSet<>());
+						}
+						varDomain.get(x).add(u);
+					}
+				}
 			}
 		}
 
@@ -191,6 +203,12 @@ public class FuncSSABuilder {
 		HashSet<String> tmp = new HashSet<>();
 		tmp.addAll(pre);
 		MyList<Quad> codes = u.getCodes();
+		if (u.getIdx() == 0) {
+			for (String x: params) {
+				if (!nameStack.containsKey(x)) nameStack.put(x, new Stack<>());
+				nameStack.get(x).add(x);
+			}
+		}
 		for (int i = 0; i < codes.size(); ++i) {
 			Quad c = codes.get(i);
 			if (c instanceof PhiQuad) {

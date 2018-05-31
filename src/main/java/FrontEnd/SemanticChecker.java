@@ -260,8 +260,8 @@ public class SemanticChecker extends AstVisitor {
 		if (objNode instanceof VarExprNode) {
 			if (sonNode.id.equals("this"))
 				nod.reg = new Register("V_" + objNode.id + curClassScope.getName());
-			else
-				nod.reg = new MemAccess(sonNode.reg.copy(), new ImmOprand(((ClassTypeRef) sonNode.type).getBelongClass().getOffset(objNode.id)));
+//			else
+//				nod.reg = new MemAccess(sonNode.reg.copy(), new ImmOprand(((ClassTypeRef) sonNode.type).getBelongClass().getOffset(objNode.id)));
 		}
 
 		for (int i = 0; i < objNode.sons.size(); ++i) {
