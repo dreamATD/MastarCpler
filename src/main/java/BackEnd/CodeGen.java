@@ -82,16 +82,16 @@ public class CodeGen {
 //			func.print();
 			FuncSSABuilder ssaBuilder = new FuncSSABuilder(func);
 			ssaBuilder.buildSSAFunc();
-			if (func.getName().equals("main")) {
-				System.err.println();
-				func.print();
-			}
+//			if (func.getName().equals("main")) {
+//				System.err.println();
+//				func.print();
+//			}
 			RegDistributor distributor = new RegDistributor(func, globals);
 			distributor.regDistribute();
-			if (func.getName().equals("main")) {
-				System.err.println();
-				func.print();
-			}
+//			if (func.getName().equals("main")) {
+//				System.err.println();
+//				func.print();
+//			}
 			CodeGenFunc funcGenerator = new CodeGenFunc(func, globalSize);
 			codes.addAll(funcGenerator.generateCode());
 			codes.add("");
@@ -102,11 +102,11 @@ public class CodeGen {
 			FuncSSABuilder ssaBuilder = new FuncSSABuilder(func);
 			ssaBuilder.buildSSAFunc();
 //			System.out.println();
-			func.print();
+//			func.print();
 			RegDistributor distributor = new RegDistributor(func, globals);
 			distributor.regDistribute();
 //			System.out.println();
-			func.print();
+//			func.print();
 			CodeGenFunc funcGenerator = new CodeGenFunc(func, globalSize);
 			codes.addAll(funcGenerator.generateCode());
 			codes.add("");
