@@ -189,7 +189,6 @@ public class RegDistributor {
 				updateRegLive(c.getRt(), liveNow);
 				updateRegLive(c.getR1(), liveNow);
 				updateRegLive(c.getR2(), liveNow);
-				addLiveNow(c.getR2(), liveNow);
 				int rax = 6, rdx = 2;
 				if (!(c instanceof PhiQuad)) {
 					if (c.getOp().equals("mul") || c.getOp().equals("div") || c.getOp().equals("mod")) {
@@ -236,6 +235,7 @@ public class RegDistributor {
 						}
 					}
 				}
+				addLiveNow(c.getR2(), liveNow);
 				addLiveNow(c.getR1(), liveNow);
 				if (c.getRt() instanceof MemAccess)
 					addLiveNow(c.getRt(), liveNow);
@@ -296,6 +296,19 @@ public class RegDistributor {
 		return changed;
 	}
 
+	private void updateRegVal(Oprand r, int loop) {
+		if (r instanceof Register) {
+			int n = nameIdx.get(r.get());
+			if (activeSet.getVal(n)) value[activeSet.find(n)] = ConstVar.INF;
+			else value[activeSet.find(n)] += loop;
+		} else if (r instanceof MemAccess) {
+			updateRegVal(((MemAccess) r).getBase(), loop);
+			updateRegVal(((MemAccess) r).getOffset(), loop);
+			updateRegVal(((MemAccess) r).getOffsetCnt(), loop);
+			updateRegVal(((MemAccess) r).getOffsetSize(), loop);
+		}
+	}
+
 	private void calcVal() {
 		for (int i = 0; i < blocks.size(); ++i) {
 			BasicBlock block = blocks.get(i);
@@ -311,20 +324,10 @@ public class RegDistributor {
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
 				Oprand r1 = c.getR1(), r2 = c.getR2(), rt = c.getRt();
-				if (r1 instanceof Register) {
-					int n1 = nameIdx.get(r1.get());
-					if (activeSet.getVal(n1)) value[activeSet.find(n1)] = ConstVar.INF;
-					value[activeSet.find(n1)] += loop;
-				}
-				if (r2 instanceof Register) {
-					int n2 = nameIdx.get(r2.get());
-					if (activeSet.getVal(n2)) value[activeSet.find(n2)] = ConstVar.INF;
-					value[activeSet.find(n2)] += loop;
-				}
-				if (rt instanceof Register) {
-					int nt = nameIdx.get(rt.get());
-					if (activeSet.getVal(nt)) value[activeSet.find(nt)] = ConstVar.INF;
-				}
+				updateRegVal(r1, loop);
+				updateRegVal(r2, loop);
+				if (rt instanceof MemAccess)
+					updateRegVal(rt, loop);
 			}
 		}
 	}
@@ -418,11 +421,15 @@ public class RegDistributor {
 		for (HashMap.Entry<String, Integer> entry: nameIdx.entrySet()) {
 			int u = entry.getValue();
 			int fu = activeSet.find(u);
-			if (u == fu && col.get(u).isEmpty() && edge.get(u).size() >= colCnt) {
+			if (u == fu && col.get(u).isEmpty()) {
 				sortList.add(u);
 			}
 		}
-		Collections.sort(sortList, (x, y) -> value[x] >= value[y] ? 1 : 0);
+		sortList.sort((x, y) -> {
+			if (value[x] > value[y]) return 1;
+			else if (value[x] < value[y]) return -1;
+			return 0;
+		});
 
 		for (int i = 0; i < sortList.size(); ++i) {
 			int u = sortList.get(i);

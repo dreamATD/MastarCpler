@@ -657,6 +657,9 @@ public class CodeGenFunc {
 		String n2 = c.getR2() == null ? null : c.getR2Name();
 		String oop = null;
 		switch (c.getOp()) {
+			case "lea":
+				addResult(new Format("lea", nt, n1.substring(5, n1.length())));
+				break;
 			case "add":
 				if (c.getR1() instanceof Register && c.getR2() instanceof Register && c.getRt() instanceof Register) {
 					addResult(new Format("lea", nt, String.format("[%s]", n1 + "+" + n2)));
@@ -727,7 +730,9 @@ public class CodeGenFunc {
 				addResult(new Format("neg", nt));
 				break;
 			case "mov":
-				if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
+				if (!nt.equals(n1)) {
+					addResult(new Format("mov", nt, n1));
+				}
 				break;
 			case "call":
 				addResult(new Format("call", c.getR1Name()));

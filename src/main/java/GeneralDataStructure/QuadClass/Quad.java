@@ -7,7 +7,7 @@ import GeneralDataStructure.OprandClass.Register;
 import java.util.ArrayList;
 
 /*
-* A2Quad:
+* LeaQuad:
 * mov       rt r1
 *
 * A3Quad:

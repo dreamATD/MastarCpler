@@ -247,14 +247,14 @@ public class FuncSSABuilder {
 
 		for (int i = 0; i < codes.size(); ++i) {
 			Quad c = codes.get(i);
-			if (c instanceof PhiQuad || c instanceof A3Quad || c instanceof MovQuad) {
-				if (c.getRt() instanceof Register) {
-					String name = c.getRtName();
-					int t = name.lastIndexOf("$");
-					String nn = name.substring(0, t);
-					nameStack.get(name.substring(0, t)).pop();
-				}
+//			if (c instanceof PhiQuad || c instanceof A3Quad || c instanceof MovQuad || c instanceof LeaQuad) {
+			if (c.getRt() instanceof Register) {
+				String name = c.getRtName();
+				int t = name.lastIndexOf("$");
+				String nn = name.substring(0, t);
+				nameStack.get(name.substring(0, t)).pop();
 			}
+//			}
 		}
 	}
 }
