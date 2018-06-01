@@ -967,7 +967,7 @@ public class IRBuilder extends AstVisitor {
 			insertQuad(new A3Quad("mul", tmp, len.reg.copy(), new ImmOprand(size)));
 			insertQuad(new A3Quad("add", tmp.copy(), tmp.copy(), new ImmOprand(size)));
 			generateNewFunc(nod.reg, tmp.copy());
-			insertQuad(new MovQuad("mov", generateMemAccess(nod.reg.copy()), len.reg.copy()));
+			insertQuad(new MovQuad("mov", generateMemAccess(nod.reg.copy()), changeOpr2Reg(len.reg.copy())));
 			if (!(typ.type instanceof SingleTypeRef) && !(typ.sons.get(0) instanceof EmptyExprNode))
 				generateLoop(new ImmOprand(0), len.reg.copy(), nod.reg, size, typ);
 		}

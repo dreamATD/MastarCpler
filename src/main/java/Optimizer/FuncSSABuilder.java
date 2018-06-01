@@ -47,6 +47,7 @@ public class FuncSSABuilder {
 		addPhi();
 
 		HashSet<String> tmp = new HashSet<>();
+		tmp.addAll(curFunc.getParams().keySet());
 		renameVar(blockList.get(0), tmp);
 	}
 

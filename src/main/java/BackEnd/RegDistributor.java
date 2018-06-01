@@ -93,6 +93,10 @@ public class RegDistributor {
 			MyList<Quad> codes = blocks.get(i).getCodes();
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
+				if (c instanceof PhiQuad) {
+					ArrayList<Register> p = ((PhiQuad) c).getParams();
+					for (Register reg: p) addRegister(reg);
+				}
 				addRegister(c.getRt());
 				addRegister(c.getR1());
 				addRegister(c.getR2());
@@ -189,6 +193,7 @@ public class RegDistributor {
 				updateRegLive(c.getRt(), liveNow);
 				updateRegLive(c.getR1(), liveNow);
 				updateRegLive(c.getR2(), liveNow);
+				addLiveNow(c.getR2(), liveNow);
 				int rax = 6, rdx = 2;
 				if (!(c instanceof PhiQuad)) {
 					if (c.getOp().equals("mul") || c.getOp().equals("div") || c.getOp().equals("mod")) {
@@ -235,7 +240,6 @@ public class RegDistributor {
 						}
 					}
 				}
-				addLiveNow(c.getR2(), liveNow);
 				addLiveNow(c.getR1(), liveNow);
 				if (c.getRt() instanceof MemAccess)
 					addLiveNow(c.getRt(), liveNow);
@@ -370,13 +374,14 @@ public class RegDistributor {
 		/* force dye */
 		if (first6Params != null) {
 			for (int i = 0; i < first6Params.length; ++i) {
-				if (nameIdx.containsKey(first6Params[i]))
-					col.get(activeSet.find(nameIdx.get(first6Params[i]))).add(i);
+				if (nameIdx.containsKey(first6Params[i])) {
+					int u = activeSet.find(nameIdx.get(first6Params[i]));
+					col.get(u).add(i);
+				}
 			}
 		}
 
 		int paramCnt = 0;
-		int fightCnt = 0; // The number of the parameters of the function I call fight with my parameters.
 		for (int i = 0; i < blocks.size(); ++i) {
 			MyList<Quad> codes = blocks.get(i).getCodes();
 			for (int j = 0; j < codes.size(); ++j) {
@@ -391,7 +396,7 @@ public class RegDistributor {
 							int v = activeSet.find(nameIdx.get(myParam));
 							HashSet<Integer> setv = col.get(v);
 							if (matrix[u][v] && setv.iterator().next() == paramCnt) {
-								int nReg = 7 + fightCnt++;
+								int nReg = 7 + paramCnt;
 								setv.remove(paramCnt);
 								setv.add(nReg);
 								movList.put(new Pair<>(regList[nReg], regList[paramCnt]),
@@ -411,6 +416,25 @@ public class RegDistributor {
 				} else if (c.getOp().equals("sal") || c.getOp().equals("sar")) {
 					if (c.getRt() instanceof Register) {
 						col.get(activeSet.find(nameIdx.get(c.getRtName()))).add(3);
+					}
+				}
+			}
+		}
+
+		if (first6Params != null) {
+			for (int i = 0; i < first6Params.length; ++i) {
+				if (nameIdx.containsKey(first6Params[i])) {
+					int u = activeSet.find(nameIdx.get(first6Params[i]));
+					HashSet<Integer> set = col.get(u);
+					if (deCol.get(u).contains(i) && set.contains(i)) {
+						int nReg = 7 + i;
+						set.remove(i);
+						set.add(nReg);
+						movList.put(new Pair<>(regList[nReg], regList[i]),
+								new MovQuad("mov", new Register(regList[nReg], first6Params[i], first6Params[i]),
+										new Register(regList[i], first6Params[i], first6Params[i])
+								)
+						);
 					}
 				}
 			}

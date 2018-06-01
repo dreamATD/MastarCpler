@@ -658,7 +658,7 @@ public class CodeGenFunc {
 		String oop = null;
 		switch (c.getOp()) {
 			case "lea":
-				addResult(new Format("lea", nt, n1.substring(5, n1.length())));
+				addResult(new Format("lea", nt, n1.substring(6, n1.length())));
 				break;
 			case "add":
 				if (c.getR1() instanceof Register && c.getR2() instanceof Register && c.getRt() instanceof Register) {
@@ -707,7 +707,7 @@ public class CodeGenFunc {
 			case "div":
 				if (c.getR2() instanceof ImmOprand && Tool.isPow2(((ImmOprand) c.getR2()).getVal())) {
 					long log = Tool.log2(((ImmOprand) c.getR2()).getVal());
-					addResult(new Format("sar", n1, Long.toString(log)));
+					translate(new A3Quad("sar", c.getRt(), c.getR1(), new ImmOprand(log)));
 					break;
 				}
 				addResult(new Format("cqo"));
@@ -715,7 +715,7 @@ public class CodeGenFunc {
 				break;
 			case "mod":
 				if (c.getR2() instanceof ImmOprand && Tool.isPow2(((ImmOprand) c.getR2()).getVal())) {
-					addResult(new Format("and", n1, Long.toString(((ImmOprand) c.getR2()).getVal() - 1)));
+					translate(new A3Quad("and", c.getRt(), c.getR1(), new ImmOprand(((ImmOprand) c.getR2()).getVal() - 1)));
 					break;
 				}
 				addResult(new Format("cqo"));

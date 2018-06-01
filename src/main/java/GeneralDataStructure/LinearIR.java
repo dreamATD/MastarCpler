@@ -86,7 +86,7 @@ public class LinearIR {
 			if (tmp != null && tmp.length() == 1) tmp = '0' + tmp;
 			res += (i < list.length ? tmp : "00");
 		}
-		if (8 < len) res += "H";
+		if (8 <= len) res += "H";
 		for (int i = 8; i < len; i += 8) {
 			res += ", ";
 			for (int j = i; j - i < 8; ++j) {
