@@ -468,7 +468,21 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 	}
 	@Override public StringLiteralNode visitUnarithmeticStringLiteral(MxStarParser.UnarithmeticStringLiteralContext ctx) {
 		StringLiteralNode res = new StringLiteralNode();
-		res.id = ctx.StringLiteral().getText();
+		String tmp = ctx.StringLiteral().getText();
+		res.id = "";
+		for (int i = 0; i < tmp.length(); ++i) {
+			if (tmp.charAt(i) != '\\') res.id = res.id + tmp.charAt(i);
+			else {
+				switch (tmp.charAt(i + 1)) {
+					case '\\': res.id += '\\'; break;
+					case 'n' : res.id += '\n'; break;
+					case 't' : res.id += '\t'; break;
+					case '"' : res.id += '\"'; break;
+				}
+				++i;
+			}
+		}
+		System.err.print(res.id.length());
 		res.type = new StringTypeRef();
 		res.loc = new Location(ctx.start);
 		return res;

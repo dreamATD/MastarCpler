@@ -42,7 +42,7 @@ public class MxStarParser extends Parser {
 		RULE_logicalOrExpr = 42, RULE_assignmentExpr = 43, RULE_typeId = 44, RULE_variableId = 45, 
 		RULE_simpleTypeId = 46, RULE_logicalLiteral = 47;
 	public static final String[] ruleNames = {
-		"funcs", "classDefinition", "functionDefinition", "statement", "classId",
+		"code", "classDefinition", "functionDefinition", "statement", "classId", 
 		"classBody", "constructionFunction", "functionId", "parameterList", "emptyParameterList", 
 		"parameter", "functionBody", "compoundStatement", "expressionStatement", 
 		"conditionalStatement", "iterativeStatement", "whileStatement", "forStatement", 

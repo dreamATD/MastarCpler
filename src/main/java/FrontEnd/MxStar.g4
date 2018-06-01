@@ -357,7 +357,7 @@ logicalLiteral
 
 StringLiteral
 :
-	'"' (ESC | .)*? '"'
+	'"' ( ESC | .)*? '"'
 ;
 
 True
@@ -488,6 +488,11 @@ NewLine
 	fragment definition
 */
 
+fragment
+ESC
+:
+    '\\' [btnr"\\]
+;
 
 fragment
 DIGIT
@@ -513,8 +518,3 @@ ALPHABET
 	[a-zA-Z]
 ;
 
-fragment
-ESC
-:
-    '\\' [btnr"\\]
-;
