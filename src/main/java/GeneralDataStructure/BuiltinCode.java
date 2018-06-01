@@ -129,7 +129,7 @@ public class BuiltinCode {
 			"\n" +
 			"S_parseInt:\n" +
 			"        sub     rsp, 24\n" +
-			"        mov     esi, L_020\n" +
+			"        mov     esi, L_021\n" +
 			"\n" +
 			"\n" +
 			"        mov     rax, qword [fs:abs 28H]\n" +
@@ -180,7 +180,7 @@ public class BuiltinCode {
 			"        test    dil, dil\n" +
 			"        jnz     L_011\n" +
 			"L_012:  pop     rbx\n" +
-			"        ret" +
+			"        ret\n" +
 			"\n" +
 			"\n" +
 			"\n" +
@@ -193,7 +193,7 @@ public class BuiltinCode {
 			"        push    rbx\n" +
 			"        mov     edi, 256\n" +
 			"        call    malloc\n" +
-			"        mov     edi, L_021\n" +
+			"        mov     edi, L_022\n" +
 			"        mov     rbx, rax\n" +
 			"        mov     rsi, rax\n" +
 			"        xor     eax, eax\n" +
@@ -223,42 +223,27 @@ public class BuiltinCode {
 			"ALIGN   16\n" +
 			"\n" +
 			"F_getInt:\n" +
-			"        push    rbx\n" +
+			"        sub     rsp, 24\n" +
+			"        mov     edi, L_021\n" +
 			"\n" +
 			"\n" +
+			"        mov     rax, qword [fs:abs 28H]\n" +
+			"        mov     qword [rsp+8H], rax\n" +
+			"        xor     eax, eax\n" +
+			"        mov     rsi, rsp\n" +
+			"        call    scanf\n" +
+			"        mov     rdx, qword [rsp+8H]\n" +
 			"\n" +
 			"\n" +
-			"ALIGN   8\n" +
-			"L_013:  mov     rdi, qword [rel stdin]\n" +
-			"        call    _IO_getc\n" +
-			"        lea     edx, [rax-30H]\n" +
-			"        cmp     dl, 9\n" +
-			"        ja      L_013\n" +
-			"        movsx   rdx, al\n" +
-			"        xor     ebx, ebx\n" +
-			"\n" +
-			"\n" +
-			"\n" +
-			"\n" +
-			"ALIGN   8\n" +
-			"L_014:  mov     rdi, qword [rel stdin]\n" +
-			"        lea     rax, [rbx+rbx*4]\n" +
-			"        lea     rbx, [rdx+rax*2-30H]\n" +
-			"        call    _IO_getc\n" +
-			"        movsx   rdx, al\n" +
-			"        sub     eax, 48\n" +
-			"        cmp     al, 9\n" +
-			"        jbe     L_014\n" +
-			"        mov     rax, rbx\n" +
-			"        pop     rbx\n" +
+			"        xor     rdx, qword [fs:abs 28H]\n" +
+			"        mov     rax, qword [rsp]\n" +
+			"        jnz     L_013\n" +
+			"        add     rsp, 24\n" +
 			"        ret\n" +
 			"\n" +
-			"\n" +
-			"\n" +
-			"\n" +
-			"\n" +
-			"\n" +
-			"ALIGN   8\n" +
+			"L_013:  call    __stack_chk_fail\n" +
+			"        nop\n" +
+			"ALIGN   16\n" +
 			"\n" +
 			"F_toString:\n" +
 			"        push    rbx\n" +
@@ -266,30 +251,27 @@ public class BuiltinCode {
 			"        mov     edi, 256\n" +
 			"        call    malloc\n" +
 			"        test    rbx, rbx\n" +
-			"        mov     r8, rax\n" +
-			"        jnz     L_016\n" +
-			"        mov     byte [rax], 48\n" +
-			"L_015:  mov     rax, r8\n" +
-			"        pop     rbx\n" +
-			"        ret\n" +
+			"        mov     r9, rax\n" +
+			"        je      L_019\n" +
+			"        js      L_020\n" +
+			"        xor     edi, edi\n" +
+			"L_014:  movsxd  rsi, edi\n" +
+			"        mov     ecx, edi\n" +
+			"        mov     r11, qword 6666666666666667H\n" +
+			"        add     rsi, r9\n" +
+			"        mov     r8, rsi\n" +
+			"        jmp     L_016\n" +
 			"\n" +
 			"\n" +
 			"\n" +
 			"\n" +
 			"\n" +
 			"ALIGN   8\n" +
-			"L_016:  xor     edi, edi\n" +
-			"        mov     rsi, qword 6666666666666667H\n" +
-			"        jmp     L_018\n" +
-			"\n" +
-			"\n" +
-			"\n" +
-			"\n" +
-			"\n" +
-			"ALIGN   8\n" +
-			"L_017:  mov     rdi, rax\n" +
-			"L_018:  mov     rax, rbx\n" +
-			"        imul    rsi\n" +
+			"L_015:  mov     ecx, r10d\n" +
+			"L_016:  mov     rax, rbx\n" +
+			"        add     r8, 1\n" +
+			"        lea     r10d, [rcx+1H]\n" +
+			"        imul    r11\n" +
 			"        mov     rax, rbx\n" +
 			"        sar     rax, 63\n" +
 			"        sar     rdx, 2\n" +
@@ -297,47 +279,61 @@ public class BuiltinCode {
 			"        lea     rax, [rdx+rdx*4]\n" +
 			"        add     rax, rax\n" +
 			"        sub     rbx, rax\n" +
-			"        lea     rax, [rdi+1H]\n" +
 			"        add     ebx, 48\n" +
+			"        mov     byte [r8-1H], bl\n" +
 			"        test    rdx, rdx\n" +
-			"        mov     byte [r8+rdi], bl\n" +
 			"        mov     rbx, rdx\n" +
-			"        jnz     L_017\n" +
-			"        test    edi, edi\n" +
-			"        jz      L_015\n" +
-			"        movsxd  rax, edi\n" +
-			"        mov     rsi, r8\n" +
-			"        xor     edx, edx\n" +
-			"        add     rax, r8\n" +
+			"        jnz     L_015\n" +
+			"        movsxd  rax, ecx\n" +
+			"        add     rax, r9\n" +
+			"        cmp     edi, ecx\n" +
+			"        jge     L_018\n" +
 			"\n" +
 			"\n" +
 			"\n" +
 			"\n" +
 			"ALIGN   8\n" +
-			"L_019:  movzx   ecx, byte [rsi]\n" +
-			"        movzx   r9d, byte [rax]\n" +
-			"        add     edx, 1\n" +
+			"L_017:  movzx   edx, byte [rsi]\n" +
+			"        movzx   r8d, byte [rax]\n" +
+			"        add     edi, 1\n" +
+			"        sub     ecx, 1\n" +
 			"        add     rsi, 1\n" +
 			"        sub     rax, 1\n" +
-			"        mov     byte [rsi-1H], r9b\n" +
-			"        mov     byte [rax+1H], cl\n" +
-			"        mov     ecx, edi\n" +
-			"        sub     ecx, edx\n" +
-			"        cmp     ecx, edx\n" +
-			"        jg      L_019\n" +
-			"        mov     rax, r8\n" +
+			"        mov     byte [rsi-1H], r8b\n" +
+			"        mov     byte [rax+1H], dl\n" +
+			"        cmp     edi, ecx\n" +
+			"        jl      L_017\n" +
+			"L_018:  mov     rax, r9\n" +
 			"        pop     rbx\n" +
 			"        ret\n" +
 			"\n" +
 			"\n" +
+			"\n" +
+			"\n" +
+			"\n" +
+			"ALIGN   8\n" +
+			"L_019:  mov     byte [rax], 48\n" +
+			"        mov     rax, r9\n" +
+			"        pop     rbx\n" +
+			"        ret\n" +
+			"\n" +
+			"\n" +
+			"\n" +
+			"\n" +
+			"\n" +
+			"ALIGN   16\n" +
+			"L_020:  neg     rbx\n" +
+			"        mov     byte [rax], 45\n" +
+			"        mov     edi, 1\n" +
+			"        jmp     L_014\n" +
+			"\n" +
+			"\n" +
 			"\n";
-	static public String roDataString = "L_020:\n" +
+	static public String roDataString = "\n" +
+			"L_021:\n" +
 			"        db 25H, 6CH, 64H, 00H\n" +
 			"\n" +
-			"L_021:\n" +
-			"        db 25H, 73H, 00H\n" +
-			"\n" +
 			"L_022:\n" +
-			"        db 61H, 62H, 63H, 63H, 66H, 6AH, 67H, 6BH\n" +
-			"        db 73H, 6BH, 73H, 6BH, 00H";
+			"        db 25H, 73H, 00H\n" +
+			"\n";
 }
