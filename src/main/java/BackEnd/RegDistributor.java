@@ -190,8 +190,21 @@ public class RegDistributor {
 				updateRegLive(c.getR1(), liveNow);
 				updateRegLive(c.getR2(), liveNow);
 				addLiveNow(c.getR2(), liveNow);
+				if (c.getRt() instanceof Register) liveNow.remove(c.getRtName());
 				int rax = 6, rdx = 2;
 				if (!(c instanceof PhiQuad)) {
+//					if (c instanceof CallQuad) {
+//						for (String data : liveNow) {
+//							int v = activeSet.find(nameIdx.get(data));
+
+							/*
+							 * Can't use the parameters' register.
+							 * */
+//							HashSet<Integer> tmpDeCol = deCol.get(v);
+//							for (int k = 0; k < ((ImmOprand) c.getR2()).getVal(); ++k)
+//								tmpDeCol.add(k);
+//						}
+//					}
 					if (c.getOp().equals("mul") || c.getOp().equals("div") || c.getOp().equals("mod")) {
 						if (c.getR1() instanceof Register) {
 							int tmp = activeSet.find(nameIdx.get(c.getR1Name()));
@@ -209,16 +222,10 @@ public class RegDistributor {
 						int u = activeSet.find(nameIdx.get(nt));
 
 						for (String data : liveNow) {
-							if (data.equals(nt)) continue;
 							int v = activeSet.find(nameIdx.get(data));
 
-							/*
-							* Can't use the parameters' register.
-							* */
 							HashSet<Integer> tmpDeCol = deCol.get(v);
-							if (c instanceof CallQuad) {
-								for (int k = 0; k < 7; ++k) tmpDeCol.add(k);
-							} else if (c instanceof A3Quad && (
+							if (c instanceof A3Quad && (
 									c.getOp().equals("mul") ||
 									c.getOp().equals("div") ||
 									c.getOp().equals("mod"))) {
@@ -238,7 +245,6 @@ public class RegDistributor {
 				addLiveNow(c.getR1(), liveNow);
 				if (c.getRt() instanceof MemAccess)
 					addLiveNow(c.getRt(), liveNow);
-				else if (c.getRt() instanceof Register) liveNow.remove(c.getRtName());
 			}
 			if (i == 0 && params != null) {
 				for (String su: params) if (nameIdx.containsKey(su)) {

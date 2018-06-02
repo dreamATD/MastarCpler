@@ -488,7 +488,7 @@ public class CodeGenFunc {
 //			}
 		}
 
-		long size = up - down > 6 ? 8 * (up - down - 6) : 0;
+		long size = up - down > 6 ? 8 * (up - down - 6) : (6 - (up - down)) * 8;
 		if ((size & 15) == 8) subRsp(8);
 
 		for (int j = up - down - 1; j >= 6; --j) {
@@ -497,6 +497,9 @@ public class CodeGenFunc {
 				translate(new MovQuad("mov", new Register(regList[outReg]), r));
 				push(regList[outReg], ConstVar.intLen);
 			} else push(r.get(), ConstVar.addrLen);
+		}
+		for (int i = up - down; i < 6; ++i) {
+			push(regList[i], ConstVar.addrLen);
 		}
 		for (int i = 0; i < cnt; ++i) tmpParams.remove(tmpParams.size() - 1);
 
@@ -509,8 +512,14 @@ public class CodeGenFunc {
 //		boolean raxUse = regLive.contains("rax");
 //		if (raxUse) push("rax", varSize.get(regStore.get("rax").iterator().next()));
 		translate(c);
-		if ((size & 15) == 8) addRsp(size + 8);
-		else addRsp(size);
+		for (int i = 5; i >= up - down; --i) {
+			pop(regList[i], ConstVar.addrLen);
+		}
+		if (up - down > 6) {
+			if ((size & 15) == 8) {
+				addRsp(size + 8);
+			} else addRsp(size);
+		} else if ((size & 15) == 8) addRsp(8);
 //		if (raxUse) pop("rax", ConstVar.addrLen);
 //		while (!pushReg.isEmpty()) {
 //			Pair<String, Integer> u = pushReg.pop();
