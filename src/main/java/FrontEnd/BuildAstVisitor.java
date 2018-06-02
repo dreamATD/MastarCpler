@@ -117,6 +117,7 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 			res.sons.add(visit(ctx.expression(0)));
 			res.sons.add(visit(ctx.statement(0)));
 			res.loc = new Location(ctx.start);
+			res.markForIf = false;
 			return res;
 		} else {
 			IfElseStatNode res = new IfElseStatNode();
@@ -124,6 +125,7 @@ public class BuildAstVisitor extends MxStarBaseVisitor <Node> {
 				IfStatNode tmp = new IfStatNode();
 				tmp.sons.add(visit(ctx.expression(i)));
 				tmp.sons.add(visit(ctx.statement(i)));
+				tmp.markForIf = true;
 				res.sons.add(tmp);
 			}
 			res.sons.add(visit(ctx.statement(ctx.statement().size()-1)));

@@ -623,7 +623,7 @@ public class IRBuilder extends AstVisitor {
 		generateCondition(ifCond, label1, label2);
 		updateNextStatLabel(label1);
 		visit(ifStat);
-		if (!ifElseEndLabel.isEmpty())
+		if (nod.markForIf)
 			insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(ifElseEndLabel.peek()))));
 		else insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(label2))));
 		updateNextStatLabel(label2);
@@ -727,6 +727,7 @@ public class IRBuilder extends AstVisitor {
 		boolean isStringType = left.type instanceof StringTypeRef;
 		boolean isIntType = left.type instanceof IntTypeRef;
 		boolean isBoolType = left.type instanceof BoolTypeRef;
+		boolean isPointer = left.type instanceof ArrayTypeRef || left.type instanceof ClassTypeRef;
 
 		/*
 		 * Special for String add
@@ -775,7 +776,7 @@ public class IRBuilder extends AstVisitor {
 
 
 		String op;
-		if (isIntType) {
+		if (isIntType || isPointer) {
 			switch (nod.id) {
 				case "=" : op = "mov"; break;
 				case "+" : op = "add"; break;
@@ -996,10 +997,8 @@ public class IRBuilder extends AstVisitor {
 		Node mem = nod.sons.get(1);
 		visit(son);
 		if (mem instanceof VarExprNode) {
-			if (nod.reg == null) {
-				Register tmp = changeOpr2Reg(son.reg);
-				nod.reg = generateMemAccess(tmp.copy(), new ImmOprand(((ClassTypeRef) son.type).getBelongClass().getOffset(mem.id)));
-			}
+			Register tmp = changeOpr2Reg(son.reg);
+			nod.reg = generateMemAccess(tmp.copy(), new ImmOprand(((ClassTypeRef) son.type).getBelongClass().getOffset(mem.id)));
 			return;
 		}
 		if (son.type instanceof ClassTypeRef) {
@@ -1013,7 +1012,7 @@ public class IRBuilder extends AstVisitor {
 					getParam(son.reg);
 					insertQuad(new CallQuad("call", tmp, new FuncName("S_strlen"), new ImmOprand(1)));
 					break;
-				case "subString":
+				case "substring":
 					Node left = mem.sons.get(0), right = mem.sons.get(1);
 					visit(left);
 					visit(right);

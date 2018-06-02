@@ -204,8 +204,7 @@ public class RegDistributor {
 							deCol.get(tmp).add(rdx);
 						}
 					}
-					if (!(c.getRt() instanceof Register || c instanceof ParamQuad && c.getR1() instanceof Register));
-					else {
+					if (c.getRt() instanceof Register || c instanceof ParamQuad && c.getR1() instanceof Register) {
 						String nt = c instanceof ParamQuad ? c.getR1Name() : c.getRtName();
 						int u = activeSet.find(nameIdx.get(nt));
 

@@ -598,10 +598,9 @@ public class CodeGenFunc {
 //				addResult(new Format("mov", rn, tmp));
 //				update(regStore.get(tmp), rn, regStore.get(rn));
 //			} else {
-			if (rm != null) {
-				String pos = getVarMem(re, rm);
-				addResult(new Format("mov", rn, pos));
-			}
+			assert(rm != null);
+			String pos = getVarMem(re, rm);
+			addResult(new Format("mov", rn, pos));
 //				regStore.get(rn).add(re);
 //			}
 		} else regStore.get(rn).add(re);

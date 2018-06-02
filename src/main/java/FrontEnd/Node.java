@@ -15,6 +15,7 @@ public abstract class Node {
 	Scope<TypeRef> belongTo;
 	String inClass;
 	Oprand reg;
+	boolean markForIf;
 	boolean certain;
 	Node() {
 		sons = new ArrayList<Node>();
@@ -22,6 +23,7 @@ public abstract class Node {
 		inClass = null;
 		reg = null;
 		certain = false;
+		markForIf = true;
 	}
 	void beCertain() {
 		certain = true;

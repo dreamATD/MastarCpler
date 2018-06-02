@@ -258,7 +258,7 @@ public class SemanticChecker extends AstVisitor {
 		ClassDefTypeRef tmp = (ClassDefTypeRef) genScope.findItem(((SpecialTypeRef) sonNode.type).getTypeId());
 
 		if (objNode instanceof VarExprNode) {
-			if (sonNode.id.equals("this"))
+			if (sonNode.id != null && sonNode.id.equals("this"))
 				nod.reg = new Register("V_" + objNode.id + curClassScope.getName());
 //			else
 //				nod.reg = new MemAccess(sonNode.reg.copy(), new ImmOprand(((ClassTypeRef) sonNode.type).getBelongClass().getOffset(objNode.id)));
@@ -268,6 +268,7 @@ public class SemanticChecker extends AstVisitor {
 			visit(objNode.sons.get(i));
 		}
 		nod.type = classCheckObj(tmp, objNode);
+		if (nod.type instanceof ClassTypeRef) ((ClassTypeRef) nod.type).setBelongClass(tmp);
 		objNode.inClass = ((SpecialTypeRef) sonNode.type).getTypeId();
 		objNode.type = nod.type;
 	}

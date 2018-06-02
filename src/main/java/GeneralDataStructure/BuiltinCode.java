@@ -90,42 +90,36 @@ public class BuiltinCode {
 			"ALIGN   8\n" +
 			"\n" +
 			"S_substring:\n" +
+			"push    r14\n" +
 			"        push    r13\n" +
+			"        mov     r14, rdi\n" +
 			"        push    r12\n" +
-			"        mov     r13, rdi\n" +
 			"        push    rbp\n" +
+			"        mov     r12, rdx\n" +
 			"        push    rbx\n" +
 			"        mov     rbp, rdx\n" +
 			"        mov     rbx, rsi\n" +
-			"        mov     r12, rdx\n" +
 			"        mov     edi, 256\n" +
-			"        sub     rsp, 8\n" +
-			"        sub     r12, rsi\n" +
+			"        sub     rbp, rsi\n" +
 			"        call    malloc\n" +
-			"        cmp     rbp, rbx\n" +
+			"        cmp     r12, rbx\n" +
 			"        mov     rcx, rax\n" +
-			"        jle     L_009\n" +
-			"        lea     rsi, [r13+rbx]\n" +
-			"        mov     rdx, r12\n" +
+			"        jl      L_009\n" +
+			"        lea     r13, [rbp+1H]\n" +
+			"        lea     rsi, [r14+rbx]\n" +
 			"        mov     rdi, rax\n" +
+			"        mov     rdx, r13\n" +
 			"        call    memcpy\n" +
 			"        mov     rcx, rax\n" +
-			"L_009:  mov     byte [rcx+r12], 0\n" +
-			"        add     rsp, 8\n" +
+			"L_009:  mov     byte [rcx+rbp+1H], 0\n" +
 			"        mov     rax, rcx\n" +
 			"        pop     rbx\n" +
 			"        pop     rbp\n" +
 			"        pop     r12\n" +
 			"        pop     r13\n" +
+			"        pop     r14\n" +
 			"        ret\n" +
 			"\n" +
-			"\n" +
-			"\n" +
-			"\n" +
-			"\n" +
-			"\n" +
-			"\n" +
-			"ALIGN   16\n" +
 			"\n" +
 			"S_parseInt:\n" +
 			"        sub     rsp, 24\n" +
