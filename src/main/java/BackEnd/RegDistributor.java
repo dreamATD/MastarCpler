@@ -3,6 +3,7 @@ package BackEnd;
 import GeneralDataStructure.BasicBlock;
 import GeneralDataStructure.FuncFrame;
 import GeneralDataStructure.MyListClass.MyList;
+import GeneralDataStructure.OprandClass.ImmOprand;
 import GeneralDataStructure.OprandClass.MemAccess;
 import GeneralDataStructure.OprandClass.Oprand;
 import GeneralDataStructure.OprandClass.Register;
@@ -10,7 +11,6 @@ import GeneralDataStructure.QuadClass.*;
 import Optimizer.ActionAnalyzer;
 import Utilizer.ConstVar;
 import Utilizer.SimpleUnionFind;
-import Utilizer.Tool;
 import javafx.util.Pair;
 
 import java.util.*;
@@ -79,11 +79,7 @@ public class RegDistributor {
 		this.globalVars = globalVars;
 		first6Params = func.getFirst6Params();
 
-		HashMap<String, Long> tmp = func.getParams();
-		if (!tmp.isEmpty()) {
-			params = new String[tmp.size()];
-			tmp.keySet().toArray(params);
-		}
+		params = func.getParamList();
 
 		movList = new HashMap<>();
 		colCnt = 12;
@@ -440,7 +436,6 @@ public class RegDistributor {
 			}
 		}
 
-
 		ArrayList<Integer> sortList = new ArrayList<>();
 		for (HashMap.Entry<String, Integer> entry: nameIdx.entrySet()) {
 			int u = entry.getValue();
@@ -486,6 +481,7 @@ public class RegDistributor {
 
 	private void rebuildCodes() {
 		MyList<Quad> codes;
+
 		for (int i = 0; i < blocks.size(); ++i) {
 			codes = blocks.get(i).getCodes();
 
@@ -493,7 +489,7 @@ public class RegDistributor {
 			int cnt = 0;
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
-				if (c instanceof ParamQuad) {
+				if (c instanceof ParamQuad && c.getR1() instanceof Register && cnt < 6) {
 					int id = activeSet.find(nameIdx.get(c.getR1Name()));
 					HashSet set = col.get(id);
 					if (set.size() > 1) {
@@ -502,6 +498,7 @@ public class RegDistributor {
 					}
 				} else if (c instanceof CallQuad) cnt = 0;
 			}
+
 		}
 
 		for (int i = 0; i < blocks.size(); ++i) {
@@ -514,6 +511,7 @@ public class RegDistributor {
 				rebuildOprand(r1, 0);
 				rebuildOprand(r2, 1);
 			}
+
 
 			if (i == 0) for (Map.Entry<Pair<String, String>, Quad> entry: movList.entrySet()) {
 				Quad c = codes.getFirst();

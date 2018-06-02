@@ -51,7 +51,7 @@ public class ActionAnalyzer {
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
 //				if (c instanceof PhiQuad) {
-//					ArrayList<Register> tmp = ((PhiQuad) c).getParams();
+//					ArrayList<Register> tmp = ((PhiQuad) c).getParamList();
 //					for (Register reg: tmp) checkOprand(reg, curUeVar, curVarKill);
 //				}
 				checkOprand(c.getR1(), curUeVar, curVarKill);

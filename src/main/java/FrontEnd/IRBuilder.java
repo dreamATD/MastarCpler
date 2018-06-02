@@ -95,6 +95,7 @@ public class IRBuilder extends AstVisitor {
 		curFunc.sortLocalVar();
 		curFunc.buildCFG(curCodeList);
 		linearCode.insertInitFunc(curFunc);
+		curCodeList.clear();
 	}
 
 	private Register changeOpr2Reg(Oprand r) {
@@ -420,12 +421,14 @@ public class IRBuilder extends AstVisitor {
 		updateNextStatLabel(label2);
 	}
 	private void getParam(ArrayList<Oprand> r) {
-		Register[] tmp = new Register[r.size()];
+		Oprand[] tmp = new Oprand[r.size()];
 		for (int i = 0; i < r.size(); ++i) {
 			Oprand rr = r.get(i);
 //			if (!(rr instanceof Register && isTempReg(rr.get()))) {
+			if (i < 6) {
 				tmp[i] = new Register(getTempName());
 				insertQuad(new MovQuad("mov", tmp[i].copy(), rr.copy()));
+			} else tmp[i] = r.get(i);
 //			} else tmp[i] = ((Register) rr).copy();
 		}
 		for (int i = 0; i < tmp.length; ++i)
@@ -433,11 +436,13 @@ public class IRBuilder extends AstVisitor {
 	}
 
 	private void getParam(Oprand... r) {
-		Register[] tmp = new Register[r.length];
+		Oprand[] tmp = new Oprand[r.length];
 		for (int i = 0; i < r.length; ++i) {
 //			if (!(r[i] instanceof Register && isTempReg(r[i].get()))) {
+			if (i < 6) {
 				tmp[i] = new Register(getTempName());
 				insertQuad(new MovQuad("mov", tmp[i].copy(), r[i].copy()));
+			} else tmp[i] = r[i];
 //			} else tmp[i] = ((Register) r[i]).copy();
 		}
 		for (int i = 0; i < tmp.length; ++i)
@@ -446,9 +451,18 @@ public class IRBuilder extends AstVisitor {
 
 	@Override public void visit(CodeNode nod) throws Exception {
 		varState = VarDefStatus.GeneralVar;
+		curFunc = new FuncFrame("__init");
+		curFunc.setClassObj(new HashMap<>());
+
 		for (int i = 0; i < nod.sons.size(); ++i) {
 			Node son = nod.sons.get(i);
-			visit(son);
+			if (son instanceof VarDefStatNode) visit(son);
+		}
+		if (!curCodeList.isEmpty()) insertInit(curFunc);
+
+		for (int i = 0; i < nod.sons.size(); ++i) {
+			Node son = nod.sons.get(i);
+			if (!(son instanceof VarDefStatNode)) visit(son);
 		}
 	}
 
@@ -502,35 +516,14 @@ public class IRBuilder extends AstVisitor {
 
 				TypeRef type = nod.type;
 				if (type instanceof StringTypeRef) {
-					if (nod.sons.size() > 0) {
-						son = nod.sons.get(0);
-						String sonString = son.id;
-						String str = sonString.substring(1, sonString.length() - 1);
-						linearCode.addInitMem(name, str.getBytes(), 256);
-					} else {
-						linearCode.addUninitMem(name, 256);
-					}
+					generateNewFunc(nod.reg, new ImmOprand(256));
+					linearCode.addUninitMem(name, 256);
 					break;
-				}
-				if (nod.sons.isEmpty()) {
-					linearCode.addUninitMem(name, nod.type.getSize() / addrLen);
-					break;
-				}
+				} else linearCode.addUninitMem(name, nod.type.getSize() / addrLen);
+				if (nod.sons.isEmpty()) break;
 				son = nod.sons.get(0);
-				if (type instanceof IntTypeRef || type instanceof BoolTypeRef) {
-					visit(son);
-					ImmOprand sonReg = (ImmOprand) son.reg;
-					linearCode.addInitMem(name, ByteBuffer.allocate(ConstVar.intLen).putLong(sonReg.getVal()).array());
-				} else {
-					ArrayList<Quad> tmp = curCodeList;
-					curCodeList = new ArrayList<>();
-					curFunc = new FuncFrame(initFuncLabel(name));
-					linearCode.addUninitMem(name, 1);
-					visit(son);
-					insertQuad(new MovQuad("mov", nod.reg.copy(), son.reg.copy()));
-					insertInit(curFunc);
-					curCodeList = tmp;
-				}
+				visit(son);
+				insertQuad(new MovQuad("mov", nod.reg, changeOpr2Reg(son.reg)));
 				break;
 		}
 	}
@@ -1053,19 +1046,19 @@ public class IRBuilder extends AstVisitor {
 	@Override public void visit(VarExprNode nod) throws Exception {
 		if (nod.id.equals("this")) return;
 
-		/*
-		* to initialize general variables
-		* */
-		if (varState == VarDefStatus.GeneralVar) {
-			if (nod.type instanceof StringTypeRef) {
-				nod.reg = new StringLiteral(generalVarStr.find(nod.reg.get()));
-			} else if (nod.type instanceof IntTypeRef) {
-				nod.reg = new ImmOprand(generalVarInt.find(nod.reg.get()));
-			} else if (nod.type instanceof BoolTypeRef) {
-				nod.reg = new BoolImmOprand(generalVarBool.find(nod.reg.get()));
-			}
-			nod.beCertain();
-		}
+//		/*
+//		* to initialize general variables
+//		* */
+//		if (varState == VarDefStatus.GeneralVar) {
+//			if (nod.type instanceof StringTypeRef) {
+//				nod.reg = new StringLiteral(generalVarStr.find(nod.reg.get()));
+//			} else if (nod.type instanceof IntTypeRef) {
+//				nod.reg = new ImmOprand(generalVarInt.find(nod.reg.get()));
+//			} else if (nod.type instanceof BoolTypeRef) {
+//				nod.reg = new BoolImmOprand(generalVarBool.find(nod.reg.get()));
+//			}
+//			nod.beCertain();
+//		}
 	}
 
 	@Override void visit(IntLiteralNode nod) throws Exception {

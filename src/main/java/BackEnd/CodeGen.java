@@ -82,13 +82,13 @@ public class CodeGen {
 //			func.print();
 			FuncSSABuilder ssaBuilder = new FuncSSABuilder(func);
 			ssaBuilder.buildSSAFunc();
-			if (func.getName().equals("F_printF")) {
-				System.err.println();
-				func.print();
-			}
+//			if (func.getName().equals("a")) {
+//				System.err.println();
+//				func.print();
+//			}
 			RegDistributor distributor = new RegDistributor(func, globals);
 			distributor.regDistribute();
-			if (func.getName().equals("F_printF")) {
+			if (func.getName().equals("F_a")) {
 				System.err.println();
 				func.print();
 			}

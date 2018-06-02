@@ -31,7 +31,9 @@ public class FuncSSABuilder {
 		blockList = func.getBbList();
 		global = new HashSet<>();
 		params = new HashSet<>();
-		params.addAll(func.getParams().keySet());
+
+		String [] tmp = func.getParamList();
+		for (String data: tmp) params.add(data);
 		varDomain = new HashMap<>();
 		domainEdge = new ArrayList<>();
 		dom = new ArrayList<>();
@@ -47,7 +49,7 @@ public class FuncSSABuilder {
 		addPhi();
 
 		HashSet<String> tmp = new HashSet<>();
-		tmp.addAll(curFunc.getParams().keySet());
+		tmp.addAll(params);
 		renameVar(blockList.get(0), tmp);
 	}
 

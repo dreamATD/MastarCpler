@@ -18,6 +18,7 @@ public class FuncFrame {
 	HashMap<String, Long> localVars;
 	HashMap<String, Long> params; // < 0 indicates it's in reg.
 	HashMap<String, Long> classObj; // useful only when it is a class function.
+	ArrayList<String> paramList;
 
 	HashMap<String, Integer> varSize;
 	ArrayList<BasicBlock> ends;
@@ -37,11 +38,17 @@ public class FuncFrame {
 		classObj = new HashMap<>();
 		ends = new ArrayList<>();
 		bbList = new ArrayList<>();
-		paramSize = 8;
+		paramSize = 0;
 		varSize = new HashMap<>();
+		paramList = new ArrayList<>();
 	}
 	public String getName() {
 		return name;
+	}
+	public String[] getParamList() {
+		String[] ret = new String[paramList.size()];
+		paramList.toArray(ret);
+		return ret;
 	}
 	public HashMap<String, Long> getParams() {
 		return params;
@@ -94,10 +101,10 @@ public class FuncFrame {
 	}
 
 	public void addParam(String name, int sz) {
-		if (paramSize % sz != 0) paramSize = sz * ((paramSize + sz - 1) / sz);
-		params.put(name, params.size() < 6 ? -(long)params.size() : paramSize);
-		if (params.size() > 6) paramSize += sz;
+		paramSize += sz;
+		params.put(name, params.size() < 6 ? -(long)params.size() : paramSize - 48);
 		varSize.put(name, sz);
+		paramList.add(name);
 	}
 
 	public void addLocalVar(String name, int sz) {
@@ -245,22 +252,17 @@ public class FuncFrame {
 
 	public String[] getFirst6Params() {
 		if (params.size() == 0) return null;
-		String[] ret = new String[params.size() >= 6 ? 6 : params.size()];
-		for (Map.Entry<String, Long> entry: params.entrySet()) {
-			if (entry.getValue() <= 0) {
-				ret[-entry.getValue().intValue()] = entry.getKey();
-			}
-		}
+		String[] ret = new String[paramList.size() >= 6 ? 6 : params.size()];
+		for (int i = 0; i < ret.length; ++i) ret[i] = paramList.get(i);
 		return ret;
 	}
 
 	public String[] getLastParams() {
 		if (params.size() <= 6) return null;
 		String[] ret = new String[params.size() - 6];
-		int cnt = 0;
 		for (Map.Entry<String, Long> entry: params.entrySet()) {
 			if (entry.getValue() > 0) {
-				ret[cnt++] = entry.getKey();
+				ret[entry.getValue().intValue() - 8 >> 3] = entry.getKey();
 			}
 		}
 		return ret;
