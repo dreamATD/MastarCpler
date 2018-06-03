@@ -943,7 +943,7 @@ public class IRBuilder extends AstVisitor {
 		}
 		Node len = nod.sons.get(0);
 		Node typ = nod.sons.get(1);
-		int size = addrLen;
+		int size = typ.type instanceof StringTypeRef ? 256 : addrLen;
 
 		/*
 		* int[2][3]
@@ -969,7 +969,7 @@ public class IRBuilder extends AstVisitor {
 		}
 		generateNewFunc(nod.reg, tmp);
 		insertQuad(new MovQuad("mov", generateMemAccess(nod.reg), changeOpr2Reg(len.reg)));
-		if (!(typ.type instanceof SingleTypeRef && !(typ.type instanceof StringTypeRef)) && !(typ.sons.get(0) instanceof EmptyExprNode))
+		if (typ.type instanceof StringTypeRef || !(typ.type instanceof SingleTypeRef) && !(typ.sons.get(0) instanceof EmptyExprNode))
 			generateLoop(new ImmOprand(0), len.reg, nod.reg, size, typ);
 	}
 
