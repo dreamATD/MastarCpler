@@ -88,10 +88,10 @@ public class CodeGen {
 //			}
 			RegDistributor distributor = new RegDistributor(func, globals);
 			distributor.regDistribute();
-			if (func.getName().equals("C_vector_tostring")) {
-				System.err.println();
-				func.print();
-			}
+//			if (func.getName().equals("C_vector_tostring")) {
+//				System.err.println();
+//				func.print();
+//			}
 			CodeGenFunc funcGenerator = new CodeGenFunc(func, globalSize);
 			codes.addAll(funcGenerator.generateCode());
 			codes.add("");

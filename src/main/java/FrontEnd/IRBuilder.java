@@ -524,7 +524,6 @@ public class IRBuilder extends AstVisitor {
 				if (type instanceof StringTypeRef) {
 					generateNewFunc(nod.reg, new ImmOprand(256));
 					linearCode.addUninitMem(name, 256);
-					break;
 				} else linearCode.addUninitMem(name, nod.type.getSize() / addrLen);
 				if (nod.sons.isEmpty()) break;
 				son = nod.sons.get(0);
@@ -1098,7 +1097,7 @@ public class IRBuilder extends AstVisitor {
 	}
 
 	@Override void visit(StringLiteralNode nod) throws Exception {
-		String str = nod.id.substring(1, nod.id.length() - 1);
+		String str = nod.id;
 		nod.reg = new StringLiteral(linearCode.insertStrConst(str));
 		nod.beCertain();
 	}
