@@ -214,11 +214,11 @@ public class RegDistributor {
 //						}
 //					}
 					if (c.getOp().equals("mul") || c.getOp().equals("div") || c.getOp().equals("mod")) {
-//						if (c.getR1() instanceof Register) {
-//							int tmp = activeSet.find(nameIdx.get(c.getR1Name()));
-//							deCol.get(tmp).add(rax);
-//							deCol.get(tmp).add(rdx);
-//						}
+						if (c.getR1() instanceof Register) {
+							int tmp = activeSet.find(nameIdx.get(c.getR1Name()));
+							deCol.get(tmp).add(rax);
+							deCol.get(tmp).add(rdx);
+						}
 						if (c.getR2() instanceof Register) {
 							int tmp = activeSet.find(nameIdx.get(c.getR2Name()));
 							deCol.get(tmp).add(rax);
@@ -238,13 +238,13 @@ public class RegDistributor {
 //								System.err.println(u + " " + v);
 //							}
 							HashSet<Integer> tmpDeCol = deCol.get(v);
-//							if (c instanceof A3Quad && (
-//									c.getOp().equals("mul") ||
-//									c.getOp().equals("div") ||
-//									c.getOp().equals("mod"))) {
-//									tmpDeCol.add(rax);
-//									tmpDeCol.add(rdx);
-//							}
+							if (c instanceof A3Quad && (
+									c.getOp().equals("mul") ||
+									c.getOp().equals("div") ||
+									c.getOp().equals("mod"))) {
+									tmpDeCol.add(rax);
+									tmpDeCol.add(rdx);
+							}
 
 							if (u == v || matrix[u][v] || (c instanceof MovQuad && c.getRt() instanceof Register && data.equals(c.getR1Name())))
 								continue;
