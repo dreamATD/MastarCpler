@@ -287,8 +287,8 @@ public class RegDistributor {
 					int fu = activeSet.find(u);
 					int fv = activeSet.find(v);
 					int f;
-					if (!matrix[fu][fv] && fu != fv) continue;
-					if (edge.get(fu).size() + edge.get(fv).size() > 7) {
+					if (matrix[fu][fv] || fu == fv) continue;
+					if (edge.get(fu).size() + edge.get(fv).size() > 7 || (col.get(fu).isEmpty() || col.get(fv).isEmpty())) {
 						continue;
 					}
 					for (int color: col.get(fu)) {
@@ -324,6 +324,7 @@ public class RegDistributor {
 
 					edge.set(f, tmp);
 					changed = true;
+//					System.err.println(fu + " " + fv);
 				}
 			}
 		}
