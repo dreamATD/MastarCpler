@@ -57,11 +57,12 @@ public class Main {
         ArrayList<String> codes = codeGenerator.generateCode();
 
 //        System.out.println();
-        String content = "";
+//        String content = "";
         for (int i = 0; i < codes.size(); ++i) {
-            content += codes.get(i) + '\n';
+//            content += codes.get(i) + '\n';
+            System.out.println(codes.get(i));
         }
-        System.out.print(content);
+//        System.out.print(content);
 //
 //        File file = new File("output/" + fileName + ".asm");
 //        OutputStream out = new FileOutputStream(file);
