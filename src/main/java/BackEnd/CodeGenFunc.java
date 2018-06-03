@@ -373,9 +373,11 @@ public class CodeGenFunc {
 		* in case of modifying the parameters
 		* */
 		if (offset2 != null && offset2 <= 0 && !re.equals(rm)) return regList[-offset2.intValue()];
-		if (!newLocalVars.containsKey(rm)) newLocalVars.put(rm, (long) newLocalVars.size() * 8 + 8);
+		if (!newLocalVars.containsKey(rm)) newLocalVars.put(rm, (long) -newLocalVars.size() * 8 - 8);
 		long tmp = newLocalVars.get(rm);
-		return "qword" + " [" + "rbp" + tmp + ']';
+		String str = tmp > 0 ? "+" + Long.toString(tmp) : tmp == 0 ? "" : Long.toString(tmp);
+		useRbp = true;
+		return "qword" + " [" + "rbp" + str + ']';
 	}
 
 	private void modifySize(String re, int sz) {
