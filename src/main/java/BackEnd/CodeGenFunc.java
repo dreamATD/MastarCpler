@@ -372,7 +372,7 @@ public class CodeGenFunc {
 		/*
 		* in case of modifying the parameters
 		* */
-		if (offset2 != null && offset2 <= 0 && re.equals(rm)) return regList[-offset2.intValue()];
+		if (offset2 != null && offset2 <= 0 && !re.equals(rm)) return regList[-offset2.intValue()];
 		useRbp = true;
 		if (offset2 == null && !newLocalVars.containsKey(rm)) newLocalVars.put(rm, -(long) newLocalVars.size() * 8 - 8);
 		offset1 = newLocalVars.get(rm);
