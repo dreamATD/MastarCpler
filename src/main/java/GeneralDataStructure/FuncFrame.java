@@ -39,6 +39,7 @@ public class FuncFrame {
 		ends = new ArrayList<>();
 		bbList = new ArrayList<>();
 		paramSize = 0;
+		localVarSize = 0;
 		varSize = new HashMap<>();
 		paramList = new ArrayList<>();
 	}
@@ -108,28 +109,29 @@ public class FuncFrame {
 	}
 
 	public void addLocalVar(String name, int sz) {
-		localVars.put(name, (long) sz);
+		localVarSize += sz;
+		localVars.put(name, -localVarSize);
 		varSize.put(name, sz);
 	}
 
-	public void sortLocalVar() {
-		ArrayList<Pair<String, Long>> vars = new ArrayList<>();
-		for (Map.Entry<String, Long> entry: localVars.entrySet()) {
-			vars.add(new Pair<>(entry.getKey(), entry.getValue()));
-		}
-
-		Collections.sort(vars, (x, y) -> x.getValue() < y.getValue() ? 1 : 0);
-		localVars.clear();
-
-		localVarSize = 8;
-		for (int i = 0; i < vars.size(); ++i) {
-			String key = vars.get(i).getKey();
-			long sz = vars.get(i).getValue();
-			if (localVarSize % sz != 0) localVarSize = sz * ((localVarSize + sz - 1) / sz);
-			localVars.put(key, -localVarSize);
-			localVarSize += sz;
-		}
-	}
+//	public void sortLocalVar() {
+//		ArrayList<Pair<String, Long>> vars = new ArrayList<>();
+//		for (Map.Entry<String, Long> entry: localVars.entrySet()) {
+//			vars.add(new Pair<>(entry.getKey(), entry.getValue()));
+//		}
+//
+//		Collections.sort(vars, (x, y) -> x.getValue() < y.getValue() ? 1 : 0);
+//		localVars.clear();
+//
+//		localVarSize = 8;
+//		for (int i = 0; i < vars.size(); ++i) {
+//			String key = vars.get(i).getKey();
+//			long sz = vars.get(i).getValue();
+//			if (localVarSize % sz != 0) localVarSize = sz * ((localVarSize + sz - 1) / sz);
+//			localVars.put(key, -localVarSize);
+//			localVarSize += sz;
+//		}
+//	}
 
 	public long getParamSize() {
 		return paramSize;

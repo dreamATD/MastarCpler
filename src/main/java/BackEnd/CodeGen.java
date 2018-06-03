@@ -79,7 +79,7 @@ public class CodeGen {
 
 			if (func.getName().equals("main")) func.addInit(initFuncs);
 
-			func.print();
+//			func.print();
 			FuncSSABuilder ssaBuilder = new FuncSSABuilder(func);
 			ssaBuilder.buildSSAFunc();
 //			if (func.getName().equals("main")) {

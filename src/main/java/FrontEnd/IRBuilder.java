@@ -82,7 +82,7 @@ public class IRBuilder extends AstVisitor {
 	private void insertFunc(FuncFrame fun) {
 		updateLabel(uset, curCodeList);
 		setMemPosition(curCodeList);
-		curFunc.sortLocalVar();
+//		curFunc.sortLocalVar();
 		curFunc.buildCFG(curCodeList);
 		curCodeList.clear();
 		linearCode.insertTextFunc(fun);
@@ -91,7 +91,7 @@ public class IRBuilder extends AstVisitor {
 	private void insertInit(FuncFrame fun) {
 		updateLabel(uset, curCodeList);
 		setMemPosition(curCodeList);
-		curFunc.sortLocalVar();
+//		curFunc.sortLocalVar();
 		curFunc.buildCFG(curCodeList);
 		linearCode.insertInitFunc(curFunc);
 		curCodeList.clear();
@@ -461,9 +461,9 @@ public class IRBuilder extends AstVisitor {
 			Node son = nod.sons.get(i);
 			if (son instanceof VarDefStatNode) visit(son);
 		}
-		for (int i = 0; i < curCodeList.size(); ++i) {
-			curCodeList.get(i).print();
-		}
+//		for (int i = 0; i < curCodeList.size(); ++i) {
+//			curCodeList.get(i).print();
+//		}
 		if (!curCodeList.isEmpty()) insertInit(curFunc);
 
 		for (int i = 0; i < nod.sons.size(); ++i) {

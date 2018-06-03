@@ -16,6 +16,7 @@ import javafx.util.Pair;
 import java.util.*;
 
 public class RegDistributor {
+	FuncFrame func;
 	private String funcName;
 	private ArrayList<String> globalVars;
 	private ArrayList<BasicBlock> blocks;
@@ -33,6 +34,13 @@ public class RegDistributor {
 	private int nVar;
 
 	private int colCnt, outCol;
+
+	/*
+	* In case the kicking out of temporary registers.
+	* */
+
+	long curBlockOffset;
+	private HashMap<String, String> tmpStore;
 
 	/*
 	* related to the parameters fighting
@@ -71,6 +79,7 @@ public class RegDistributor {
 	}
 
 	public RegDistributor(FuncFrame func, ArrayList<String> globalVars) {
+		this.func = func;
 		funcName = func.getName();
 		blocks = func.getBbList();
 		global = new ArrayList<>();
@@ -219,10 +228,15 @@ public class RegDistributor {
 					if (c.getRt() instanceof Register || c instanceof ParamQuad && c.getR1() instanceof Register) {
 						String nt = c instanceof ParamQuad ? c.getR1Name() : c.getRtName();
 						int u = activeSet.find(nameIdx.get(nt));
-
+//						if (nt.contains("V_502")) {
+//							for (String data: liveNow) System.err.println(data);
+//						}
 						for (String data : liveNow) {
 							int v = activeSet.find(nameIdx.get(data));
 
+//							if (nt.contains("V_502") && data.contains("V_x")) {
+//								System.err.println(u + " " + v);
+//							}
 							HashSet<Integer> tmpDeCol = deCol.get(v);
 							if (c instanceof A3Quad && (
 									c.getOp().equals("mul") ||
@@ -334,7 +348,7 @@ public class RegDistributor {
 	private void updateRegVal(Oprand r, int loop) {
 		if (r instanceof Register) {
 			int n = nameIdx.get(r.get());
-			if (activeSet.getVal(n)) value[activeSet.find(n)] = ConstVar.INF;
+			if (activeSet.getVal(n)) value[activeSet.find(n)] += ConstVar.INF;
 			else value[activeSet.find(n)] += loop;
 		} else if (r instanceof MemAccess) {
 			updateRegVal(((MemAccess) r).getBase(), loop);
@@ -448,8 +462,8 @@ public class RegDistributor {
 						col.get(activeSet.find(nameIdx.get(c.getRtName()))).add(6);
 					}
 				} else if (c.getOp().equals("sal") || c.getOp().equals("sar")) {
-					if (c.getRt() instanceof Register) {
-						col.get(activeSet.find(nameIdx.get(c.getRtName()))).add(3);
+					if (c.getR2() instanceof Register) {
+						col.get(activeSet.find(nameIdx.get(c.getR2Name()))).add(3);
 					}
 				}
 			}
@@ -507,7 +521,13 @@ public class RegDistributor {
 			Integer id = nameIdx.get(r.get());
 			if (id == null) return;
 			HashSet<Integer> nt = col.get(activeSet.find(id));
-			if (nt.isEmpty()) r.set(regList[outCol + t]);
+			if (nt.isEmpty()) {
+				if (((Register) r).getMemPos() == null) {
+					func.addLocalVar(((Register) r).getEntity(), 8);
+					((Register) r).setMemPos(((Register) r).getEntity());
+				}
+				r.set(regList[outCol + t]);
+			}
 			else r.set(regList[nt.iterator().next()]);
 		} else if (r instanceof MemAccess) {
 			rebuildOprand(((MemAccess) r).getBase(), 1);
@@ -522,7 +542,6 @@ public class RegDistributor {
 
 		for (int i = 0; i < blocks.size(); ++i) {
 			codes = blocks.get(i).getCodes();
-
 			/* update parameters' color */
 			int cnt = 0;
 			for (int j = 0; j < codes.size(); ++j) {
@@ -540,6 +559,9 @@ public class RegDistributor {
 		}
 
 		for (int i = 0; i < blocks.size(); ++i) {
+			curBlockOffset = 0;
+			tmpStore = new HashMap<>();
+
 			codes = blocks.get(i).getCodes();
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);

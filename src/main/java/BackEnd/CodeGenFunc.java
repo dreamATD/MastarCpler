@@ -567,7 +567,7 @@ public class CodeGenFunc {
 		if (e != null) {
 //			HashSet<String> set = getEntityExist(e);
 			if (n.equals(regList[outReg]) || n.equals(regList[outReg + 1])) {
-				if (m != null) addResult(new Format("mov", getVarMem(e, m), n));
+				addResult(new Format("mov", getVarMem(e, m), n));
 				HashSet<String> regSet = regStore.get(n);
 				regSet.add(e);
 			}
