@@ -242,6 +242,16 @@ public class RegDistributor {
 						}
 					}
 				}
+				if (c instanceof CallQuad) {
+					int cnt = (int) ((ImmOprand) c.getR2()).getVal();
+					for (int k = j - 1; k >= 0 && cnt > 0; --k) {
+						Quad cc = codes.get(k);
+						if (cc instanceof ParamQuad) {
+							addLiveNow(cc.getR1(), liveNow);
+							--cnt;
+						}
+					}
+				}
 				addLiveNow(c.getR1(), liveNow);
 				if (c.getRt() instanceof MemAccess)
 					addLiveNow(c.getRt(), liveNow);
@@ -393,18 +403,19 @@ public class RegDistributor {
 						col.get(u).add(paramCnt);
 						if (first6Params != null && paramCnt < first6Params.length) {
 							String myParam = first6Params[paramCnt];
-							if (!nameIdx.containsKey(myParam)) continue;
-							int v = activeSet.find(nameIdx.get(myParam));
-							HashSet<Integer> setv = col.get(v);
-							if (matrix[u][v] && setv.iterator().next() == paramCnt) {
-								int nReg = 7 + paramCnt;
-								setv.remove(paramCnt);
-								setv.add(nReg);
-								movList.put(new Pair<>(regList[nReg], regList[paramCnt]),
+							if (nameIdx.containsKey(myParam)) {
+								int v = activeSet.find(nameIdx.get(myParam));
+								HashSet<Integer> setv = col.get(v);
+								if (matrix[u][v] && setv.iterator().next() == paramCnt) {
+									int nReg = 7 + paramCnt;
+									setv.remove(paramCnt);
+									setv.add(nReg);
+									movList.put(new Pair<>(regList[nReg], regList[paramCnt]),
 											new MovQuad("mov", new Register(regList[nReg], myParam, myParam),
-												new Register(regList[paramCnt], myParam, myParam)
+													new Register(regList[paramCnt], myParam, myParam)
 											)
-								);
+									);
+								}
 							}
 						}
 						paramCnt++;

@@ -6,6 +6,7 @@ import GeneralDataStructure.OprandClass.MemAccess;
 import GeneralDataStructure.OprandClass.Register;
 import GeneralDataStructure.ScopeClass.ClassScope;
 import GeneralDataStructure.ScopeClass.GeneralScope;
+import GeneralDataStructure.ScopeClass.LocalScope;
 import GeneralDataStructure.ScopeClass.Scope;
 import GeneralDataStructure.TypeSystem.*;
 import javafx.util.Pair;
@@ -282,15 +283,21 @@ public class SemanticChecker extends AstVisitor {
 			return;
 		}
 		Pair<Scope<TypeRef>, TypeRef> ret = nod.belongTo.matchVarName(nod.id);
+		nod.type = ret.getValue();
 		if (ret == null) throw new NoDefinedVarError(nod.loc);
 		String name;
-		if (ret.getKey() instanceof ClassScope) nod.inClass = classStack.peek();
-		name = "V_" + nod.id + ret.getKey().getName();
-		if (ret.getKey() instanceof GeneralScope) {
-			nod.reg = new GeneralMemAccess(name);
+		if (ret.getKey() instanceof ClassScope) {
+			nod.inClass = classStack.peek();
+			ClassDefTypeRef t = (ClassDefTypeRef) genScope.findItem(classStack.peek());
+			long offset = t.getOffset(nod.id);
+			nod.reg = new MemAccess(new Register("V_this", "V_this"), new ImmOprand(offset));
 		} else {
-			nod.reg = new Register(name, name);
+			name = "V_" + nod.id + ret.getKey().getName();
+			if (ret.getKey() instanceof GeneralScope) {
+				nod.reg = new GeneralMemAccess(name);
+			} else if (ret.getKey() instanceof LocalScope) {
+				nod.reg = new Register(name, name);
+			}
 		}
-		nod.type = ret.getValue();
 	}
 }
