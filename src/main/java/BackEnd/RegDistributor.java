@@ -324,7 +324,7 @@ public class RegDistributor {
 
 					edge.set(f, tmp);
 					changed = true;
-//					System.err.println(fu + " " + fv);
+					System.err.println(fu + " " + fv);
 				}
 			}
 		}

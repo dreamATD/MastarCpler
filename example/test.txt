@@ -1,382 +1,300 @@
-string digt(int x){
-if(x==0)return "0";
-if(x==1)return "1";
-if(x==2)return "2";
-if(x==3)return "3";
-if(x==4)return "4";
-if(x==5)return "5";
-if(x==6)return "6";
-if(x==7)return "7";
-if(x==8)return "8";
-if(x==9)return "9";
+//Compute and Crack SHA-1
+//by zzk
+
+int hex2int(string x)
+{
+	int i;
+	int result = 0;
+	for(i=0;i<x.length();i++)
+	{
+		int digit = x.ord(i);
+		if(digit >= 48 && digit <= 57)
+			result = result * 16 + digit - 48;
+		else if(digit >= 65 && digit <= 70)
+			result = result * 16 + digit - 65 + 10;
+		else if(digit >= 97 && digit <= 102)
+			result = result * 16 + digit - 97 + 10;
+		else
+			return 0;
+	}
+	return result;
 }
-string[] s=new string[256];
-string[] c=new string[256];
-string s2(int ss){
-if(ss<=9)return "s["+digt(ss)+"]=";
-return "s["+digt(ss/10)+digt(ss%10)+"]=";
+
+string asciiTable = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+string int2chr(int x)
+{
+	if(x >= 32 && x <= 126)
+		return asciiTable.substring(x-32, x-32);
+	return "";
 }
-string c2(int cc){
-if(cc<=9)return "c["+digt(cc)+"]=";
-return "c["+digt(cc/10)+digt(cc%10)+"]=";
+string toStringHex(int x)
+{
+	string ret = "";
+	int i;
+	for(i=28;i>=0;i=i-4)
+	{
+		int digit = (x >> i) & 15;
+		if(digit < 10)
+			ret = ret + int2chr(48+digit);
+		else
+			ret = ret + int2chr(65+digit-10);
+	}
+	return ret;
 }
-string co=";";
-string a2q="\"";
-string a2b="\\";
-int main(){int i=0;// Quine is a a program that produces its source code as output.
-c[0]=" ";
-c[1]="!";
-c[2]="#";
-c[3]="$";
-c[4]="%";
-c[5]="&";
-c[6]="'";
-c[7]="(";
-c[8]=")";
-c[9]="*";
-c[10]="+";
-c[11]=",";
-c[12]="-";
-c[13]=".";
-c[14]="/";
-c[15]="0";
-c[16]="1";
-c[17]="2";
-c[18]="3";
-c[19]="4";
-c[20]="5";
-c[21]="6";
-c[22]="7";
-c[23]="8";
-c[24]="9";
-c[25]=":";
-c[26]=";";
-c[27]="<";
-c[28]="=";
-c[29]=">";
-c[30]="?";
-c[31]="@";
-c[32]="A";
-c[33]="B";
-c[34]="C";
-c[35]="D";
-c[36]="E";
-c[37]="F";
-c[38]="G";
-c[39]="H";
-c[40]="I";
-c[41]="J";
-c[42]="K";
-c[43]="L";
-c[44]="M";
-c[45]="N";
-c[46]="O";
-c[47]="P";
-c[48]="Q";
-c[49]="R";
-c[50]="S";
-c[51]="T";
-c[52]="U";
-c[53]="V";
-c[54]="W";
-c[55]="X";
-c[56]="Y";
-c[57]="Z";
-c[58]="[";
-c[59]="]";
-c[60]="^";
-c[61]="_";
-c[62]="`";
-c[63]="a";
-c[64]="b";
-c[65]="c";
-c[66]="d";
-c[67]="e";
-c[68]="f";
-c[69]="g";
-c[70]="h";
-c[71]="i";
-c[72]="j";
-c[73]="k";
-c[74]="l";
-c[75]="m";
-c[76]="n";
-c[77]="o";
-c[78]="p";
-c[79]="q";
-c[80]="r";
-c[81]="s";
-c[82]="t";
-c[83]="u";
-c[84]="v";
-c[85]="w";
-c[86]="x";
-c[87]="y";
-c[88]="z";
-c[89]="{";
-c[90]="|";
-c[91]="}";
-c[92]="~";
-s[0]="int main(){int i=0;// Quine is a a program that produces its source code as output.";
-s[1]="println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[66]+c[71]+c[69]+c[82]+c[7]+c[71]+c[76]+c[82]+c[0]+c[86]+c[8]+c[89]);";
-s[2]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[15]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[15]+a2q+c[26]);";
-s[3]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[16]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[16]+a2q+c[26]);";
-s[4]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[17]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[17]+a2q+c[26]);";
-s[5]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[18]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[18]+a2q+c[26]);";
-s[6]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[19]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[19]+a2q+c[26]);";
-s[7]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[20]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[20]+a2q+c[26]);";
-s[8]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[21]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[21]+a2q+c[26]);";
-s[9]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[22]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[22]+a2q+c[26]);";
-s[10]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[23]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[23]+a2q+c[26]);";
-s[11]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[24]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[24]+a2q+c[26]);";
-s[12]="println(c[91]);";
-s[13]="println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[58]+c[59]+c[0]+c[81]+c[28]+c[76]+c[67]+c[85]+c[0]+c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[58]+c[17]+c[20]+c[21]+c[59]+c[26]);";
-s[14]="println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[58]+c[59]+c[0]+c[65]+c[28]+c[76]+c[67]+c[85]+c[0]+c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[58]+c[17]+c[20]+c[21]+c[59]+c[26]);";
-s[15]="println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[81]+c[17]+c[7]+c[71]+c[76]+c[82]+c[0]+c[81]+c[81]+c[8]+c[89]);";
-s[16]="println(c[71]+c[68]+c[7]+c[81]+c[81]+c[27]+c[28]+c[24]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[81]+c[58]+a2q+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[81]+c[81]+c[8]+c[10]+a2q+c[59]+c[28]+a2q+c[26]);";
-s[17]="println(c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[81]+c[58]+a2q+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[81]+c[81]+c[14]+c[16]+c[15]+c[8]+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[81]+c[81]+c[4]+c[16]+c[15]+c[8]+c[10]+a2q+c[59]+c[28]+a2q+c[26]);";
-s[18]="println(c[91]);";
-s[19]="println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[65]+c[17]+c[7]+c[71]+c[76]+c[82]+c[0]+c[65]+c[65]+c[8]+c[89]);";
-s[20]="println(c[71]+c[68]+c[7]+c[65]+c[65]+c[27]+c[28]+c[24]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[65]+c[58]+a2q+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[65]+c[65]+c[8]+c[10]+a2q+c[59]+c[28]+a2q+c[26]);";
-s[21]="println(c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[65]+c[58]+a2q+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[65]+c[65]+c[14]+c[16]+c[15]+c[8]+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[65]+c[65]+c[4]+c[16]+c[15]+c[8]+c[10]+a2q+c[59]+c[28]+a2q+c[26]);";
-s[22]="println(c[91]);";
-s[23]="println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[65]+c[77]+c[28]+a2q+c[26]+a2q+c[26]);";
-s[24]="println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[63]+c[17]+c[79]+c[28]+a2q+a2b+a2q+a2q+c[26]);";
-s[25]="println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[63]+c[17]+c[64]+c[28]+a2q+a2b+a2b+a2q+c[26]);";
-s[26]="println(s[0]);";
-s[27]="for(i=0;i<93;i++)println(c2(i)+a2q+c[i]+a2q+co);";
-s[28]="for(i=0;i<32;i++)println(s2(i)+a2q+s[i]+a2q+co);";
-s[29]="for(i=1;i<32;i++)println(s[i]);";
-s[30]="return 0;";
-s[31]="}";
-println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[66]+c[71]+c[69]+c[82]+c[7]+c[71]+c[76]+c[82]+c[0]+c[86]+c[8]+c[89]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[15]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[15]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[16]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[16]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[17]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[17]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[18]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[18]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[19]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[19]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[20]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[20]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[21]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[21]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[22]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[22]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[23]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[23]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[24]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[24]+a2q+c[26]);
-println(c[91]);
-println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[58]+c[59]+c[0]+c[81]+c[28]+c[76]+c[67]+c[85]+c[0]+c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[58]+c[17]+c[20]+c[21]+c[59]+c[26]);
-println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[58]+c[59]+c[0]+c[65]+c[28]+c[76]+c[67]+c[85]+c[0]+c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[58]+c[17]+c[20]+c[21]+c[59]+c[26]);
-println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[81]+c[17]+c[7]+c[71]+c[76]+c[82]+c[0]+c[81]+c[81]+c[8]+c[89]);
-println(c[71]+c[68]+c[7]+c[81]+c[81]+c[27]+c[28]+c[24]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[81]+c[58]+a2q+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[81]+c[81]+c[8]+c[10]+a2q+c[59]+c[28]+a2q+c[26]);
-println(c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[81]+c[58]+a2q+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[81]+c[81]+c[14]+c[16]+c[15]+c[8]+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[81]+c[81]+c[4]+c[16]+c[15]+c[8]+c[10]+a2q+c[59]+c[28]+a2q+c[26]);
-println(c[91]);
-println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[65]+c[17]+c[7]+c[71]+c[76]+c[82]+c[0]+c[65]+c[65]+c[8]+c[89]);
-println(c[71]+c[68]+c[7]+c[65]+c[65]+c[27]+c[28]+c[24]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[65]+c[58]+a2q+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[65]+c[65]+c[8]+c[10]+a2q+c[59]+c[28]+a2q+c[26]);
-println(c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[65]+c[58]+a2q+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[65]+c[65]+c[14]+c[16]+c[15]+c[8]+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[65]+c[65]+c[4]+c[16]+c[15]+c[8]+c[10]+a2q+c[59]+c[28]+a2q+c[26]);
-println(c[91]);
-println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[65]+c[77]+c[28]+a2q+c[26]+a2q+c[26]);
-println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[63]+c[17]+c[79]+c[28]+a2q+a2b+a2q+a2q+c[26]);
-println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[63]+c[17]+c[64]+c[28]+a2q+a2b+a2b+a2q+c[26]);
-println(s[0]);
-for(i=0;i<93;i++)println(c2(i)+a2q+c[i]+a2q+co);
-for(i=0;i<32;i++)println(s2(i)+a2q+s[i]+a2q+co);
-for(i=1;i<32;i++)println(s[i]);
-return 0;
+int rotate_left(int x, int shift)
+{
+	if(shift == 1)
+		return ((x & 2147483647) << 1) | ((x >> 31) & 1);
+	if(shift == 31)
+		return ((x & 1) << 31) | ((x >> 1) & 2147483647);
+	return ((x & ((1 << (32-shift)) - 1)) << shift) | ((x >> (32-shift)) & ((1 << shift) - 1));
+}
+int add(int x, int y)	//to avoid possible undefined behaviour when overflow
+{
+	int low = (x & 65535) + (y & 65535);
+	int high = (((x >> 16) & 65535) + ((y >> 16) & 65535) + (low >> 16)) & 65535;
+	return (high << 16) | (low & 65535);
+}
+int lohi(int lo, int hi)
+{
+	return lo | (hi << 16);
+}
+
+int MAXCHUNK = 100;
+int MAXLENGTH = (MAXCHUNK-1) * 64 - 16;
+int[][] chunks = new int[MAXCHUNK][80];
+int[] inputBuffer = new int[MAXLENGTH];
+int[] outputBuffer = new int[5];
+int[] sha1(int[] input, int length)
+{
+	int nChunk = (length + 64 - 56) / 64 + 1;
+	if(nChunk > MAXCHUNK)
+	{
+		println("nChunk > MAXCHUNK!");
+		return null;
+	}
+	int i;
+	int j;
+	for(i=0;i<nChunk;i++)
+		for(j=0;j<80;j++)
+			chunks[i][j] = 0;
+	for(i=0;i<length;i++)
+		chunks[i/64][i%64/4] = chunks[i/64][i%64/4] | (input[i] << ((3-i%4)*8));
+	chunks[i/64][i%64/4] = chunks[i/64][i%64/4] | (128 << ((3-i%4)*8));
+	chunks[nChunk-1][15] = length << 3;
+	chunks[nChunk-1][14] = (length >> 29) & 7;
+
+	int h0 = 1732584193;  //0x67452301
+	int h1 = lohi(43913, 61389);  //0xEFCDAB89
+	int h2 = lohi(56574, 39098); //0x98BADCFE
+	int h3 = 271733878;   //0x10325476
+	int h4 = lohi(57840, 50130); //0xC3D2E1F0
+	for(i=0;i<nChunk;i++)
+	{
+		for(j=16;j<80;j++)
+			chunks[i][j] = rotate_left(chunks[i][j-3] ^ chunks[i][j-8] ^ chunks[i][j-14] ^ chunks[i][j-16], 1);
+
+		int a = h0;
+		int b = h1;
+		int c = h2;
+		int d = h3;
+		int e = h4;
+		for(j=0;j<80;j++)
+		{
+			int f;
+			int k;
+			if(j<20)
+			{
+				f = (b & c) | ((~b) & d);
+				k = 1518500249; //0x5A827999
+			}
+			else if(j<40)
+			{
+				f = b ^ c ^ d;
+				k = 1859775393; //0x6ED9EBA1
+			}
+			else if(j<60)
+			{
+				f = (b & c) | (b & d) | (c & d);
+				k = lohi(48348, 36635); //0x8F1BBCDC
+			}
+			else
+			{
+				f = b ^ c ^ d;
+				k = lohi(49622, 51810); //0xCA62C1D6
+			}
+			int temp = add(add(add(rotate_left(a, 5), e), add(f, k)), chunks[i][j]);
+			e = d;
+			d = c;
+			c = rotate_left(b, 30);
+			b = a;
+			a = temp;
+		}
+		h0 = add(h0, a);
+		h1 = add(h1, b);
+		h2 = add(h2, c);
+		h3 = add(h3, d);
+		h4 = add(h4, e);
+	}
+	outputBuffer[0] = h0;
+	outputBuffer[1] = h1;
+	outputBuffer[2] = h2;
+	outputBuffer[3] = h3;
+	outputBuffer[4] = h4;
+	return outputBuffer;
+}
+
+void computeSHA1(string input)
+{
+	int i;
+	for(i=0; i<input.length(); i++)
+		inputBuffer[i] = input.ord(i);
+	int[] result = sha1(inputBuffer, input.length());
+	for(i=0; i<result.size(); i++)
+		print(toStringHex(result[i]));
+	println("");
+}
+
+int nextLetter(int now)
+{
+	if(now == 122) //'z'
+		return -1;
+	if(now == 90)  //'Z'
+		return 97; //'a'
+	if(now == 57)  //'9'
+		return 65;
+	return now + 1;
+}
+
+bool nextText(int[] now, int length)
+{
+	int i;
+	for(i=length-1; i>=0; i--)
+	{
+		now[i] = nextLetter(now[i]);
+		if(now[i] == -1)
+			now[i] = 48;	//'0'
+		else
+			return true;
+	}
+	return false;
+}
+
+bool array_equal(int[] a, int[] b)
+{
+	if(a.size() != b.size())
+		return false;
+	int i;
+	for(i=0; i<a.size(); i++)
+		if(a[i] != b[i])
+			return false;
+	return true;
+}
+
+void crackSHA1(string input)
+{
+	int[] target = new int[5];
+	if(input.length() != 40)
+	{
+		println("Invalid input");
+		return;
+	}
+	int i;
+	for(i=0;i<5;i++)
+		target[i] = 0;
+	for(i=0;i<40;i=i+4)
+		target[i/8] = target[i/8] | (hex2int(input.substring(i, i+3)) << (1 - (i / 4) % 2) * 16);
+
+	int MAXDIGIT = 4;
+	int digit;
+	for(digit=1; digit <= MAXDIGIT; digit++)
+	{
+		for(i=0;i<digit;i++)
+			inputBuffer[i] = 48;
+		while(true)
+		{
+			int[] out = sha1(inputBuffer, digit);
+			if(array_equal(out, target))
+			{
+				for(i=0;i<digit;i++)
+					print(int2chr(inputBuffer[i]));
+				println("");
+				return;
+			}
+			if(!nextText(inputBuffer, digit))
+				break;
+		}
+	}
+	println("Not Found!");
+}
+
+int main()
+{
+	int op;
+	string input;
+	while(true)
+	{
+		op = getInt();
+		if(op == 0)
+			break;
+		if(op == 1)
+		{
+			input = getString();
+			computeSHA1(input);
+		}
+		else if(op == 2)
+		{
+			input = getString();
+			crackSHA1(input);
+		}
+	}
+	return 0;
 }
 
 /*!! metadata:
 === comment ===
-张凯羿 quine-张凯羿
+sha-515030910628-zhangzhekai.txt Compute and Crack SHA-1
 === is_public ===
 True
 === assert ===
 output
 === timeout ===
-1.0
+7.0
 === input ===
-
+1
+ACM
+1
+acm2015
+1
+compiler2017
+1
+optim-extended
+1
+SJTU
+1
+2017
+2
+ABC64A57029F21F165A96BDB59F0351C7C7D1769
+2
+04E8696E6424C21D717E46008780505D598EB59A
+2
+52fdb9f68c503e11d168fe52035901864c0a4861
+2
+cd3f0c85b158c08a2b113464991810cf2cdfc387
+0
 === phase ===
-codegen extended
+optim pretest
 === output ===
-string digt(int x){
-if(x==0)return "0";
-if(x==1)return "1";
-if(x==2)return "2";
-if(x==3)return "3";
-if(x==4)return "4";
-if(x==5)return "5";
-if(x==6)return "6";
-if(x==7)return "7";
-if(x==8)return "8";
-if(x==9)return "9";
-}
-string[] s=new string[256];
-string[] c=new string[256];
-string s2(int ss){
-if(ss<=9)return "s["+digt(ss)+"]=";
-return "s["+digt(ss/10)+digt(ss%10)+"]=";
-}
-string c2(int cc){
-if(cc<=9)return "c["+digt(cc)+"]=";
-return "c["+digt(cc/10)+digt(cc%10)+"]=";
-}
-string co=";";
-string a2q="\"";
-string a2b="\\";
-int main(){int i=0;// Quine is a a program that produces its source code as output.
-c[0]=" ";
-c[1]="!";
-c[2]="#";
-c[3]="$";
-c[4]="%";
-c[5]="&";
-c[6]="'";
-c[7]="(";
-c[8]=")";
-c[9]="*";
-c[10]="+";
-c[11]=",";
-c[12]="-";
-c[13]=".";
-c[14]="/";
-c[15]="0";
-c[16]="1";
-c[17]="2";
-c[18]="3";
-c[19]="4";
-c[20]="5";
-c[21]="6";
-c[22]="7";
-c[23]="8";
-c[24]="9";
-c[25]=":";
-c[26]=";";
-c[27]="<";
-c[28]="=";
-c[29]=">";
-c[30]="?";
-c[31]="@";
-c[32]="A";
-c[33]="B";
-c[34]="C";
-c[35]="D";
-c[36]="E";
-c[37]="F";
-c[38]="G";
-c[39]="H";
-c[40]="I";
-c[41]="J";
-c[42]="K";
-c[43]="L";
-c[44]="M";
-c[45]="N";
-c[46]="O";
-c[47]="P";
-c[48]="Q";
-c[49]="R";
-c[50]="S";
-c[51]="T";
-c[52]="U";
-c[53]="V";
-c[54]="W";
-c[55]="X";
-c[56]="Y";
-c[57]="Z";
-c[58]="[";
-c[59]="]";
-c[60]="^";
-c[61]="_";
-c[62]="`";
-c[63]="a";
-c[64]="b";
-c[65]="c";
-c[66]="d";
-c[67]="e";
-c[68]="f";
-c[69]="g";
-c[70]="h";
-c[71]="i";
-c[72]="j";
-c[73]="k";
-c[74]="l";
-c[75]="m";
-c[76]="n";
-c[77]="o";
-c[78]="p";
-c[79]="q";
-c[80]="r";
-c[81]="s";
-c[82]="t";
-c[83]="u";
-c[84]="v";
-c[85]="w";
-c[86]="x";
-c[87]="y";
-c[88]="z";
-c[89]="{";
-c[90]="|";
-c[91]="}";
-c[92]="~";
-s[0]="int main(){int i=0;// Quine is a a program that produces its source code as output.";
-s[1]="println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[66]+c[71]+c[69]+c[82]+c[7]+c[71]+c[76]+c[82]+c[0]+c[86]+c[8]+c[89]);";
-s[2]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[15]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[15]+a2q+c[26]);";
-s[3]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[16]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[16]+a2q+c[26]);";
-s[4]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[17]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[17]+a2q+c[26]);";
-s[5]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[18]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[18]+a2q+c[26]);";
-s[6]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[19]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[19]+a2q+c[26]);";
-s[7]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[20]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[20]+a2q+c[26]);";
-s[8]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[21]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[21]+a2q+c[26]);";
-s[9]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[22]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[22]+a2q+c[26]);";
-s[10]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[23]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[23]+a2q+c[26]);";
-s[11]="println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[24]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[24]+a2q+c[26]);";
-s[12]="println(c[91]);";
-s[13]="println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[58]+c[59]+c[0]+c[81]+c[28]+c[76]+c[67]+c[85]+c[0]+c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[58]+c[17]+c[20]+c[21]+c[59]+c[26]);";
-s[14]="println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[58]+c[59]+c[0]+c[65]+c[28]+c[76]+c[67]+c[85]+c[0]+c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[58]+c[17]+c[20]+c[21]+c[59]+c[26]);";
-s[15]="println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[81]+c[17]+c[7]+c[71]+c[76]+c[82]+c[0]+c[81]+c[81]+c[8]+c[89]);";
-s[16]="println(c[71]+c[68]+c[7]+c[81]+c[81]+c[27]+c[28]+c[24]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[81]+c[58]+a2q+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[81]+c[81]+c[8]+c[10]+a2q+c[59]+c[28]+a2q+c[26]);";
-s[17]="println(c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[81]+c[58]+a2q+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[81]+c[81]+c[14]+c[16]+c[15]+c[8]+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[81]+c[81]+c[4]+c[16]+c[15]+c[8]+c[10]+a2q+c[59]+c[28]+a2q+c[26]);";
-s[18]="println(c[91]);";
-s[19]="println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[65]+c[17]+c[7]+c[71]+c[76]+c[82]+c[0]+c[65]+c[65]+c[8]+c[89]);";
-s[20]="println(c[71]+c[68]+c[7]+c[65]+c[65]+c[27]+c[28]+c[24]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[65]+c[58]+a2q+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[65]+c[65]+c[8]+c[10]+a2q+c[59]+c[28]+a2q+c[26]);";
-s[21]="println(c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[65]+c[58]+a2q+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[65]+c[65]+c[14]+c[16]+c[15]+c[8]+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[65]+c[65]+c[4]+c[16]+c[15]+c[8]+c[10]+a2q+c[59]+c[28]+a2q+c[26]);";
-s[22]="println(c[91]);";
-s[23]="println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[65]+c[77]+c[28]+a2q+c[26]+a2q+c[26]);";
-s[24]="println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[63]+c[17]+c[79]+c[28]+a2q+a2b+a2q+a2q+c[26]);";
-s[25]="println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[63]+c[17]+c[64]+c[28]+a2q+a2b+a2b+a2q+c[26]);";
-s[26]="println(s[0]);";
-s[27]="for(i=0;i<93;i++)println(c2(i)+a2q+c[i]+a2q+co);";
-s[28]="for(i=0;i<32;i++)println(s2(i)+a2q+s[i]+a2q+co);";
-s[29]="for(i=1;i<32;i++)println(s[i]);";
-s[30]="return 0;";
-s[31]="}";
-println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[66]+c[71]+c[69]+c[82]+c[7]+c[71]+c[76]+c[82]+c[0]+c[86]+c[8]+c[89]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[15]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[15]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[16]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[16]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[17]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[17]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[18]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[18]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[19]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[19]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[20]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[20]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[21]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[21]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[22]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[22]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[23]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[23]+a2q+c[26]);
-println(c[71]+c[68]+c[7]+c[86]+c[28]+c[28]+c[24]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[24]+a2q+c[26]);
-println(c[91]);
-println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[58]+c[59]+c[0]+c[81]+c[28]+c[76]+c[67]+c[85]+c[0]+c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[58]+c[17]+c[20]+c[21]+c[59]+c[26]);
-println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[58]+c[59]+c[0]+c[65]+c[28]+c[76]+c[67]+c[85]+c[0]+c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[58]+c[17]+c[20]+c[21]+c[59]+c[26]);
-println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[81]+c[17]+c[7]+c[71]+c[76]+c[82]+c[0]+c[81]+c[81]+c[8]+c[89]);
-println(c[71]+c[68]+c[7]+c[81]+c[81]+c[27]+c[28]+c[24]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[81]+c[58]+a2q+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[81]+c[81]+c[8]+c[10]+a2q+c[59]+c[28]+a2q+c[26]);
-println(c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[81]+c[58]+a2q+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[81]+c[81]+c[14]+c[16]+c[15]+c[8]+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[81]+c[81]+c[4]+c[16]+c[15]+c[8]+c[10]+a2q+c[59]+c[28]+a2q+c[26]);
-println(c[91]);
-println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[65]+c[17]+c[7]+c[71]+c[76]+c[82]+c[0]+c[65]+c[65]+c[8]+c[89]);
-println(c[71]+c[68]+c[7]+c[65]+c[65]+c[27]+c[28]+c[24]+c[8]+c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[65]+c[58]+a2q+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[65]+c[65]+c[8]+c[10]+a2q+c[59]+c[28]+a2q+c[26]);
-println(c[80]+c[67]+c[82]+c[83]+c[80]+c[76]+c[0]+a2q+c[65]+c[58]+a2q+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[65]+c[65]+c[14]+c[16]+c[15]+c[8]+c[10]+c[66]+c[71]+c[69]+c[82]+c[7]+c[65]+c[65]+c[4]+c[16]+c[15]+c[8]+c[10]+a2q+c[59]+c[28]+a2q+c[26]);
-println(c[91]);
-println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[65]+c[77]+c[28]+a2q+c[26]+a2q+c[26]);
-println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[63]+c[17]+c[79]+c[28]+a2q+a2b+a2q+a2q+c[26]);
-println(c[81]+c[82]+c[80]+c[71]+c[76]+c[69]+c[0]+c[63]+c[17]+c[64]+c[28]+a2q+a2b+a2b+a2q+c[26]);
-println(s[0]);
-for(i=0;i<93;i++)println(c2(i)+a2q+c[i]+a2q+co);
-for(i=0;i<32;i++)println(s2(i)+a2q+s[i]+a2q+co);
-for(i=1;i<32;i++)println(s[i]);
-return 0;
-}
+ABC64A57029F21F165A96BDB59F0351C7C7D1769
+5B38674EB4BD02CEC1D41C8DE3CC14A9872A2656
+082178164865B8E6425C5955DEB97DDC21DEC6DC
+E77812CE4574964BC144E3DB97953235B5A149DA
+BD1B591F0B3E8FCC2035F9FB2043FAB18E0DBDDA
+04E8696E6424C21D717E46008780505D598EB59A
+ACM
+2017
+233
+666
 === exitcode ===
 0
 

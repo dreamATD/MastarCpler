@@ -45,7 +45,6 @@ public class IRBuilder extends AstVisitor {
 	/*
 	* related to the class
 	* */
-	private ClassDefTypeRef curClass; // for construction function
 	private HashMap<String, Long> classObj;
 	private HashSet<String> classObjStr;
 	private long classObjSize;
@@ -403,14 +402,13 @@ public class IRBuilder extends AstVisitor {
 	}
 
 	private String getLoopRegisterName() {
-		return "V_Loop._" + Integer.toString(selfGenLoopCnt++);
+		return "V_0Loop._" + Integer.toString(selfGenLoopCnt++);
 	}
 
 	private void generateLoop(Oprand low, Oprand hig, Oprand ret, int size, Node son) throws Exception {
 		String ni = getLoopRegisterName();
 		String no = getLoopRegisterName();
 		Register i = new Register(ni, ni);
-		Register offset = new Register(no, no);
 		insertQuad(new MovQuad("mov", i, low));
 		insertQuad(new CondQuad("cmp", i.copy(), hig));
 		int label1 = labelCnt++, label2 = labelCnt++;
@@ -418,8 +416,7 @@ public class IRBuilder extends AstVisitor {
 		updateNextStatLabel(label1);
 
 		visit(son);
-		insertQuad(new A3Quad("add", offset.copy(), offset, new ImmOprand(size)));
-		insertQuad(new MovQuad("mov", generateMemAccess(ret.copy(), offset.copy()), son.reg.copy()));
+		insertQuad(new MovQuad("mov", generateMemAccess(ret.copy(), i, new ImmOprand(8), new ImmOprand(8)), son.reg.copy()));
 
 		insertQuad(new A3Quad("add", i.copy(), i.copy(), new ImmOprand(1)));
 		insertQuad(new CondQuad("cmp", i.copy(), hig.copy()));
@@ -463,6 +460,9 @@ public class IRBuilder extends AstVisitor {
 		for (int i = 0; i < nod.sons.size(); ++i) {
 			Node son = nod.sons.get(i);
 			if (son instanceof VarDefStatNode) visit(son);
+		}
+		for (int i = 0; i < curCodeList.size(); ++i) {
+			curCodeList.get(i).print();
 		}
 		if (!curCodeList.isEmpty()) insertInit(curFunc);
 
@@ -528,6 +528,7 @@ public class IRBuilder extends AstVisitor {
 				if (nod.sons.isEmpty()) break;
 				son = nod.sons.get(0);
 				visit(son);
+				if (son.type instanceof IntTypeRef) generalVarInt.insert(nod.reg.get(), ((ImmOprand) son.reg).getVal());
 				insertQuad(new MovQuad("mov", nod.reg, changeOpr2Reg(son.reg)));
 				break;
 		}
@@ -955,27 +956,20 @@ public class IRBuilder extends AstVisitor {
 		}
 		visit(len);
 		nod.reg = new Register(getTempName());
+
+		Oprand tmp;
 		if (len.isCertain()) {
 			int val = ((Long) ((ImmOprand) len.reg).getVal()).intValue();
-			generateNewFunc(nod.reg, new ImmOprand((val + 1) * size));
-			insertQuad(new MovQuad("mov", generateMemAccess(nod.reg.copy()), new ImmOprand(val)));
-
-			int offset = 0;
-			for (int i = 0; i < val; ++i) {
-				visit(typ);
-				offset += size;
-				if (typ.reg != null)
-					insertQuad(new MovQuad("mov", generateMemAccess(nod.reg.copy(), new ImmOprand(offset)), typ.reg.copy()));
-			}
+			tmp = new ImmOprand((val + 1) * size);
 		} else {
-			Register tmp = new Register(getTempName());
+			tmp = new Register(getTempName());
 			insertQuad(new A3Quad("mul", tmp, len.reg.copy(), new ImmOprand(size)));
 			insertQuad(new A3Quad("add", tmp.copy(), tmp.copy(), new ImmOprand(size)));
-			generateNewFunc(nod.reg, tmp.copy());
-			insertQuad(new MovQuad("mov", generateMemAccess(nod.reg.copy()), changeOpr2Reg(len.reg.copy())));
-			if (!(typ.type instanceof SingleTypeRef && !(typ.type instanceof StringTypeRef)) && !(typ.sons.get(0) instanceof EmptyExprNode))
-				generateLoop(new ImmOprand(0), len.reg.copy(), nod.reg, size, typ);
 		}
+		generateNewFunc(nod.reg, tmp);
+		insertQuad(new MovQuad("mov", generateMemAccess(nod.reg), changeOpr2Reg(len.reg)));
+		if (!(typ.type instanceof SingleTypeRef && !(typ.type instanceof StringTypeRef)) && !(typ.sons.get(0) instanceof EmptyExprNode))
+			generateLoop(new ImmOprand(0), len.reg, nod.reg, size, typ);
 	}
 
 	@Override public void visit(FuncExprNode nod) throws Exception {
@@ -1066,19 +1060,15 @@ public class IRBuilder extends AstVisitor {
 	@Override public void visit(VarExprNode nod) throws Exception {
 		if (nod.id.equals("this")) return;
 
-//		/*
-//		* to initialize general variables
-//		* */
-//		if (varState == VarDefStatus.GeneralVar) {
-//			if (nod.type instanceof StringTypeRef) {
-//				nod.reg = new StringLiteral(generalVarStr.find(nod.reg.get()));
-//			} else if (nod.type instanceof IntTypeRef) {
-//				nod.reg = new ImmOprand(generalVarInt.find(nod.reg.get()));
-//			} else if (nod.type instanceof BoolTypeRef) {
-//				nod.reg = new BoolImmOprand(generalVarBool.find(nod.reg.get()));
-//			}
-//			nod.beCertain();
-//		}
+		/*
+		* to initialize general variables
+		* */
+		if (varState == VarDefStatus.GeneralVar) {
+			if (nod.type instanceof IntTypeRef) {
+				nod.reg = new ImmOprand(generalVarInt.find(nod.reg.get()));
+			}
+			nod.beCertain();
+		}
 	}
 
 	@Override void visit(IntLiteralNode nod) throws Exception {

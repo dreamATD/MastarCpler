@@ -46,7 +46,7 @@ public class Main {
             throw e;
         }
 
-        // print the scopes
+//         print the scopes
 //        scopeBuilder.genScope.dfs("");
 //        System.out.println();
         IRBuilder irBuilder = new IRBuilder();
@@ -56,19 +56,19 @@ public class Main {
         CodeGen codeGenerator = new CodeGen(irCode);
         ArrayList<String> codes = codeGenerator.generateCode();
 
-//        System.out.println();
-//        String content = "";
+        System.out.println();
+        String content = "";
         for (int i = 0; i < codes.size(); ++i) {
-//            content += codes.get(i) + '\n';
+            content += codes.get(i) + '\n';
             System.out.println(codes.get(i));
         }
 //        System.out.print(content);
 //
-//        File file = new File("output/" + fileName + ".asm");
-//        OutputStream out = new FileOutputStream(file);
-//        if (!file.exists()) file.createNewFile();
-//        out.write(content.getBytes());
-//        out.flush();
-//        out.close();
+        File file = new File("output/" + fileName + ".asm");
+        OutputStream out = new FileOutputStream(file);
+        if (!file.exists()) file.createNewFile();
+        out.write(content.getBytes());
+        out.flush();
+        out.close();
     }
 }

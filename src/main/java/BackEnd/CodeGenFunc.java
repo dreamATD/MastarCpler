@@ -692,7 +692,7 @@ public class CodeGenFunc {
 			case "sal":	case "sar":
 				if (!nt.equals(n1)) addResult(new Format("mov", nt, n1));
 				if (c.getR2() instanceof ImmOprand) addResult(new Format(c.getOp(), nt, n2));
-				else addResult(new Format(c.getOp(), nt));
+				else addResult(new Format(c.getOp(), nt, "cl"));
 				break;
 			case "mul":
 				Oprand tmp1, tmp2;
