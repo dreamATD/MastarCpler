@@ -528,7 +528,8 @@ public class IRBuilder extends AstVisitor {
 				if (nod.sons.isEmpty()) break;
 				son = nod.sons.get(0);
 				visit(son);
-				if (son.type instanceof IntTypeRef) generalVarInt.insert(nod.reg.get(), ((ImmOprand) son.reg).getVal());
+				if (son.type instanceof IntTypeRef && (son instanceof VarExprNode || son instanceof IntLiteralNode))
+					generalVarInt.insert(nod.reg.get(), ((ImmOprand) son.reg).getVal());
 				insertQuad(new MovQuad("mov", nod.reg, changeOpr2Reg(son.reg)));
 				break;
 		}
@@ -1065,9 +1066,12 @@ public class IRBuilder extends AstVisitor {
 		* */
 		if (varState == VarDefStatus.GeneralVar) {
 			if (nod.type instanceof IntTypeRef) {
-				nod.reg = new ImmOprand(generalVarInt.find(nod.reg.get()));
+				Long tmp = generalVarInt.find(nod.reg.get());
+				if (tmp != null) {
+					nod.beCertain();
+					nod.reg = new ImmOprand(tmp);
+				}
 			}
-			nod.beCertain();
 		}
 	}
 

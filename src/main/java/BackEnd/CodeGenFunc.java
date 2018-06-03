@@ -19,6 +19,7 @@ public class CodeGenFunc {
 	private HashMap<String, Long> values;
 	private HashMap<String, Long> params;
 	private HashMap<String, Long> localVars;
+	private HashMap<String, Long> newLocalVars;
 	private HashMap<String, Integer> varSize;
 	private HashMap<String, HashSet<String> > entityExist;
 	private HashMap<String, HashSet<String>> regStore;
@@ -80,7 +81,6 @@ public class CodeGenFunc {
 
 		resCode = new ArrayList<>();
 		useRbp = false;
-		localParamSize = func.getLocalVarSize();
 		funcName = func.getName();
 		params = func.getParams();
 		localVars = func.getLocalVars();
@@ -93,7 +93,7 @@ public class CodeGenFunc {
 		calleeSaveReg = new HashSet<>();
 		paramsInStack = new HashMap<>();
 		for (int i = 0; i < regList.length; ++i) regStore.put(regList[i], new HashSet<>());
-
+		newLocalVars = new HashMap<>();
 	}
 
 	private HashSet<String> getEntityExist(String e) {
@@ -190,6 +190,7 @@ public class CodeGenFunc {
 		rspVal = 8 + (useRbp ? 1 : 0) * 8;
 		if (!funcName.equals("main")) rspVal += calleeSaveReg.size() * 8;
 		long delta;
+		localParamSize = newLocalVars.size() * 8;
 		if ((rspVal & 15) == 8) {
 			delta = (localParamSize & 15) == 8 ? localParamSize : localParamSize + 8;
 		} else {
@@ -372,10 +373,8 @@ public class CodeGenFunc {
 		* in case of modifying the parameters
 		* */
 		if (offset2 != null && offset2 <= 0 && !re.equals(rm)) return regList[-offset2.intValue()];
-		Long offset = offset1 == null ? offset2 : offset1;
-
-		useRbp = true;
-		String tmp = offset > 0 ? '+' + Long.toString(offset + (calleeSaveReg.size() + 1) * 8) : offset == 0 ? "" : "-" + Long.toString(-offset);
+		if (!newLocalVars.containsKey(rm)) newLocalVars.put(rm, (long) newLocalVars.size() * 8 + 8);
+		long tmp = newLocalVars.get(rm);
 		return "qword" + " [" + "rbp" + tmp + ']';
 	}
 
