@@ -601,13 +601,13 @@ public class IRBuilder extends AstVisitor {
 			Node son = nod.sons.get(i);
 			if (!(son instanceof NullStatNode)) {
 				visit(son);
-				for (Map.Entry<String, Long> entry: classObj.entrySet()) {
-					if (classObjStr.contains(entry.getKey())) continue;
-					insertQuad(new MovQuad("mov",
-							generateMemAccess(new Register("V_this", "V_this"), new ImmOprand(entry.getValue())),
-							new Register(entry.getKey(), entry.getKey()))
-					);
-				}
+//				for (Map.Entry<String, Long> entry: classObj.entrySet()) {
+//					if (classObjStr.contains(entry.getKey())) continue;
+//					insertQuad(new MovQuad("mov",
+//							generateMemAccess(new Register("V_this", "V_this"), new ImmOprand(entry.getValue())),
+//							new Register(entry.getKey(), entry.getKey()))
+//					);
+//				}
 			} else {
 				insertQuad(new Quad("nop"));
 			}
