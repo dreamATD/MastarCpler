@@ -117,7 +117,6 @@ public class RegDistributor {
 		buildActiveDomain();
 		buildLiveOut();
 		buildGraph();
-//		while (mergeActive());
 		calcVal();
 		dyeGraph();
 		rebuildCodes();
@@ -278,6 +277,8 @@ public class RegDistributor {
 		MyList<Quad> codes;
 		for (int i = 0; i < blocks.size(); ++i) {
 			codes = blocks.get(i).getCodes();
+
+			label:
 			for (int j = 0; j < codes.size(); ++j) {
 				Quad c = codes.get(j);
 				if (c instanceof MovQuad && c.getR1() instanceof Register && c.getRt() instanceof Register) {
@@ -286,25 +287,43 @@ public class RegDistributor {
 					int fu = activeSet.find(u);
 					int fv = activeSet.find(v);
 					int f;
-					if (!matrix[fu][fv] && fu != fv) {
-						HashSet<Integer> tmp1 = edge.get(fu), tmp2 = edge.get(fv);
-						activeSet.merge(fu, fv);
-						f = activeSet.find(fu);
-
-						/* Rebuild graph. */
-						HashSet<Integer> edgeList = edge.get(f);
-						for (int t: tmp1) {
-							int tt = activeSet.find(t);
-							edgeList.add(tt);
-							matrix[tt][f] = matrix[f][tt] = true;
-						}
-						for (int t: tmp2) {
-							int tt = activeSet.find(t);
-							edgeList.add(tt);
-							matrix[tt][f] = matrix[f][tt] = true;
-						}
-						changed = true;
+					if (!matrix[fu][fv] && fu != fv) continue;
+					if (edge.get(fu).size() + edge.get(fv).size() > 7) {
+						continue;
 					}
+					for (int color: col.get(fu)) {
+						if (deCol.get(fv).contains(color)) continue label;
+					}
+					for (int color: col.get(fv)) {
+						if (deCol.get(fu).contains(color)) continue label;
+					}
+
+					HashSet<Integer> tmp = new HashSet<>();
+					tmp.addAll(edge.get(fu));
+					tmp.addAll(edge.get(fv));
+
+					activeSet.merge(fu, fv);
+					f = activeSet.find(fu);
+
+					/* Rebuild graph. */
+					for (int p: tmp) {
+						HashSet<Integer> set = edge.get(p);
+						HashSet<Integer> tmp2 = new HashSet<>();
+						tmp2.addAll(set);
+						for (int q: set) {
+							tmp2.add(activeSet.find(q));
+						}
+						set.clear();
+						edge.set(p, tmp2);
+						for (int q: tmp2) {
+							matrix[p][q] = matrix[q][p] = true;
+						}
+
+						matrix[f][p] = matrix[p][f] = true;
+					}
+
+					edge.set(f, tmp);
+					changed = true;
 				}
 			}
 		}
@@ -391,6 +410,8 @@ public class RegDistributor {
 				}
 			}
 		}
+
+		while (mergeActive());
 
 		int paramCnt = 0;
 		for (int i = 0; i < blocks.size(); ++i) {
