@@ -372,12 +372,14 @@ public class CodeGenFunc {
 		/*
 		* in case of modifying the parameters
 		* */
-		if (offset2 != null && offset2 <= 0 && !re.equals(rm)) return regList[-offset2.intValue()];
-		if (!newLocalVars.containsKey(rm)) newLocalVars.put(rm, (long) -newLocalVars.size() * 8 - 8);
-		long tmp = newLocalVars.get(rm);
-		String str = tmp > 0 ? "+" + Long.toString(tmp) : tmp == 0 ? "" : Long.toString(tmp);
+		if (offset2 != null && offset2 <= 0 && re.equals(rm)) return regList[-offset2.intValue()];
 		useRbp = true;
-		return "qword" + " [" + "rbp" + str + ']';
+		if (offset2 == null && !newLocalVars.containsKey(rm)) newLocalVars.put(rm, -(long) newLocalVars.size() * 8 - 8);
+		offset1 = newLocalVars.get(rm);
+		Long offset = offset1 == null ? offset2 : offset1;
+		useRbp = true;
+		String tmp = offset > 0 ? '+' + Long.toString(offset + (calleeSaveReg.size() + 1) * 8) : offset == 0 ? "" : "-" + Long.toString(-offset);
+		return "qword" + " [" + "rbp" + tmp + ']';
 	}
 
 	private void modifySize(String re, int sz) {
