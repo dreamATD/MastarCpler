@@ -27,7 +27,7 @@ public class RegDistributor {
 	private String[] params;
 	private String[] first6Params;
 	private boolean [][] matrix;
-	private int[] value;
+	private long[] value;
 	private ArrayList<HashSet<Integer>> col;
 	private ArrayList<HashSet<Integer>> deCol;
 	private int nVar;
@@ -104,7 +104,7 @@ public class RegDistributor {
 		activeSet = new SimpleUnionFind(nVar, isTemp);
 
 		matrix = new boolean[nVar][nVar];
-		value = new int[nVar];
+		value = new long[nVar];
 		col = new ArrayList<>();
 		deCol = new ArrayList<>();
 		for (int i = 0; i < nVar; ++i) {
@@ -483,8 +483,8 @@ public class RegDistributor {
 			}
 		}
 		sortList.sort((x, y) -> {
-			if (value[x] > value[y]) return 1;
-			else if (value[x] < value[y]) return -1;
+			if (value[x] < value[y]) return 1;
+			else if (value[x] > value[y]) return -1;
 			return 0;
 		});
 
