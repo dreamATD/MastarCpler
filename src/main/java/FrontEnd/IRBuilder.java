@@ -748,6 +748,20 @@ public class IRBuilder extends AstVisitor {
 			return;
 		}
 
+		if (nod.type instanceof BoolTypeRef) {
+			Register tmp = new Register(getTempName());
+			int label1 = labelCnt++, label2 = labelCnt++, label3 = labelCnt++;
+			generateCondition(nod, label1, label2);
+			updateNextStatLabel(label1);
+			insertQuad(new MovQuad("mov", tmp, new ImmOprand(1)));
+			insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(label3))));
+			updateNextStatLabel(label2);
+			insertQuad(new MovQuad("mov", tmp, new ImmOprand(0)));
+			insertQuad(new JumpQuad("jump", new LabelName(Integer.toString(label3))));
+			updateNextStatLabel(label3);
+			nod.reg = tmp;
+			return;
+		}
 
 		if (nod.id.equals("=") && right.type instanceof BoolTypeRef && right.reg == null) {
 			int label1 = labelCnt++, label2 = labelCnt++, label3 = labelCnt++;

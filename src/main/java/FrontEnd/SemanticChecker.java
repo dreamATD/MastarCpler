@@ -283,8 +283,8 @@ public class SemanticChecker extends AstVisitor {
 			return;
 		}
 		Pair<Scope<TypeRef>, TypeRef> ret = nod.belongTo.matchVarName(nod.id);
-		nod.type = ret.getValue();
 		if (ret == null) throw new NoDefinedVarError(nod.loc);
+		nod.type = ret.getValue();
 		String name;
 		if (ret.getKey() instanceof ClassScope) {
 			nod.inClass = classStack.peek();
