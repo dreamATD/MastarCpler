@@ -172,7 +172,7 @@ public class FuncFrame {
 		for (int i = 0; i < size; ++i) {
 			Quad code = codes.get(i);
 			String label = code.getLabel();
-			code.print();
+//			code.print();
 			if (label != null) {
 				map.insert(label, new BasicBlock(label));
 			}
