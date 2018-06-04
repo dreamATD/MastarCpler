@@ -419,14 +419,14 @@ public class CodeGenFunc {
 					!(c.getR1() instanceof ImmOprand) && !(c.getR2() instanceof ImmOprand)) {
 				boolean raxUse = !regStore.get("rax").isEmpty();
 				boolean rdxUse = !regStore.get("rdx").isEmpty();
-				if (raxUse && !nt.equals("rax")) translate(new MovQuad("mov", new Register(regList[outReg]), new Register("rax")));
-				if (rdxUse && !nt.equals("rdx")) translate(new MovQuad("mov", new Register(regList[outReg + 1]), new Register("rdx")));
+//				if (raxUse && !nt.equals("rax")) translate(new MovQuad("mov", new Register(regList[outReg]), new Register("rax")));
+//				if (rdxUse && !nt.equals("rdx")) translate(new MovQuad("mov", new Register(regList[outReg + 1]), new Register("rdx")));
 				translate(new MovQuad("mov", new Register("rax"), r1));
 				translate(c);
 				if (op.equals("mod")) translate(new MovQuad("mov", rt, new Register("rdx")));
 				else translate(new MovQuad("mov", rt, new Register("rax")));
-				if (rdxUse && !nt.equals("rdx")) translate(new MovQuad("mov", new Register("rdx"), new Register(regList[outReg + 1])));
-				if (raxUse && !nt.equals("rax")) translate(new MovQuad("mov", new Register("rax"), new Register(regList[outReg])));
+//				if (rdxUse && !nt.equals("rdx")) translate(new MovQuad("mov", new Register("rdx"), new Register(regList[outReg + 1])));
+//				if (raxUse && !nt.equals("rax")) translate(new MovQuad("mov", new Register("rax"), new Register(regList[outReg])));
 			} else translate(c);
 		}
 //		modifySize((rt).getEntity(), ConstVar.addrLen);
