@@ -5,6 +5,8 @@ import GeneralDataStructure.OprandClass.Oprand;
 import GeneralDataStructure.OprandClass.Register;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 
 /*
 * LeaQuad:
@@ -63,11 +65,12 @@ import java.util.ArrayList;
 * */
 
 public class Quad {
-	public String op;
-	public Oprand r1, r2, rt;
-	public String label;
+	private String op;
+	private Oprand r1, r2, rt;
+	private String label;
+	private boolean useful;
 
-	public ArrayList<Register> phiParams;
+	public HashMap<Integer, Register> phiParams;
 
 	private void selfCopy() {
 		if (r1 != null) r1 = r1.copy();
@@ -75,16 +78,18 @@ public class Quad {
 		if (rt != null) rt = rt.copy();
 	}
 
-	public Quad(String op, Oprand rt, ArrayList<Register> phiParams) {
+	public Quad(String op, Oprand rt, HashMap<Integer, Register> phiParams) {
 		this.op = op;
 		this.rt = rt;
 		this.phiParams = phiParams;
+		useful = false;
 		selfCopy();
 	}
 	public Quad(String op, Oprand rt, Oprand r1) {
 		this.op = op;
 		this.rt = rt;
 		this.r1 = r1;
+		useful = false;
 		selfCopy();
 	}
 	public Quad(String op, Oprand rt, Oprand r1, Oprand r2) {
@@ -92,15 +97,18 @@ public class Quad {
 		this.rt = rt;
 		this.r1 = r1;
 		this.r2 = r2;
+		useful = false;
 		selfCopy();
 	}
 	public Quad(String op, Oprand rt) {
 		this.op = op;
 		this.rt = rt;
+		useful = false;
 		selfCopy();
 	}
 	public Quad(String op) {
 		this.op = op;
+		useful = false;
 		selfCopy();
 	}
 	public String getOp() {
@@ -131,6 +139,7 @@ public class Quad {
 		label = l;
 	}
 	public void print() {
+		System.err.printf("%-10s", useful);
 		if (label != null) System.err.printf("%-20s", label + ": ");
 		else System.err.printf("%-20s", " ");
 		System.err.print(op);
@@ -169,16 +178,26 @@ public class Quad {
 	public void setRt(String rt) {
 		this.rt.set(rt);
 	}
-
-	public void addPhiParams(String x) {
-		if (x == null) phiParams.add(null);
-		else phiParams.add(new Register(x));
+	public void setUseful(boolean b) {
+		useful = b;
 	}
+	public boolean getUseful() {
+		return useful;
+	}
+
 	public void addPhiParams(String x, int idx) {
-		phiParams.set(idx, new Register(x));
+		if (phiParams.containsKey(idx)) phiParams.replace(idx, new Register(x));
+		else phiParams.put(idx, new Register(x));
 	}
 	public Register getPhiParams(int idx) {
 		return phiParams.get(idx);
+	}
+	public void setPhiParams(int oldI, int newI) {
+		Register r = phiParams.get(oldI);
+		if (r != null) {
+			phiParams.remove(oldI);
+			phiParams.put(newI, r);
+		}
 	}
 	public void changeOp(String op) {
 		this.op = op;

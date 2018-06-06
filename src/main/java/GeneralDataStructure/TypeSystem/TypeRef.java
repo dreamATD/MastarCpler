@@ -30,6 +30,9 @@ public abstract class TypeRef {
 	public int getSize() {
 		return size;
 	}
+	public static boolean isAddrType(TypeRef ref) {
+		return ref instanceof SpecialTypeRef || ref instanceof ArrayTypeRef;
+	}
 }
 
 

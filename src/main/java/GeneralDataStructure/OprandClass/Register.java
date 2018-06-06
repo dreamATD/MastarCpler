@@ -39,15 +39,15 @@ public class Register extends Oprand {
 	}
 
 	public static boolean isTempReg(String name) {
-		if (name.charAt(0) != 'V') return false;
+		if (name.charAt(0) != 'V' && name.charAt(0) != 'A') return false;
 		char c = name.charAt(2);
 		return '0' <= c && c <= '9';
 	}
+	public static boolean isAddrBase(String name) {
+		return name.charAt(0) == 'A';
+	}
 	public void setWillUse(boolean use) {
 		willUse = use;
-	}
-	public boolean getWillUse() {
-		return willUse;
 	}
 
 	public void setEntity(String str) {

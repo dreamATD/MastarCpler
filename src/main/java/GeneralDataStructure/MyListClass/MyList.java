@@ -16,10 +16,8 @@ public class MyList<T> {
 		ListNode<T> nod = new ListNode<>(data, null, null);
 		ListNode.link(nod, head.next);
 		ListNode.link(head, nod);
-		if (size == 0) {
-			curIter = head.next;
-			curIdx = 0;
-		}
+		curIter = head.next;
+		curIdx = 0;
 		++size;
 	}
 	public void add(T data) {
@@ -45,19 +43,23 @@ public class MyList<T> {
 		}
 	}
 	public T get(int idx) {
-		int delta1 = idx;
-		int delta2 = size - 1 - idx;
-		int delta4 = Math.abs(idx - curIdx);
-		if (delta4 < delta1 && delta4 < delta2) {
-		} else if (delta1 <= delta2) {
-			curIter = head.next;
-			curIdx = 0;
-		} else {
-			curIter = tail.last;
-			curIdx = size - 1;
-		}
+//		int delta1 = idx;
+//		int delta2 = size - 1 - idx;
+//		int delta4 = Math.abs(idx - curIdx);
+//		if (delta4 < delta1 && delta4 < delta2) {
+//		} else if (delta1 <= delta2) {
+//			curIter = head.next;
+//			curIdx = 0;
+//		} else {
+//			curIter = tail.last;
+//			curIdx = size - 1;
+//		}
 		moveIterTo(idx);
 		return curIter.data;
+	}
+	public void set(int idx, T data) {
+		moveIterTo(idx);
+		curIter.data = data;
 	}
 	public T getLast() {
 		if (size == 0) return null;

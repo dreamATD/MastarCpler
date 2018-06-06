@@ -3,7 +3,7 @@ package BackEnd;
 import GeneralDataStructure.BuiltinCode;
 import GeneralDataStructure.FuncFrame;
 import GeneralDataStructure.LinearIR;
-import Optimizer.FuncSSABuilder;
+import Optimizer.*;
 import javafx.util.Pair;
 
 import java.util.ArrayList;
@@ -19,6 +19,18 @@ public class CodeGen {
 	private ArrayList<Pair<String, String>> initMem;
 	private ArrayList<Pair<String, Integer>> uninitMem;
 	private ArrayList<Pair<String, String>> roData;
+
+	/*
+	* debug
+	* */
+	private String printFuncName = "main";
+	private boolean printS = false;
+	private boolean printD = false;
+	private boolean printL = false;
+	private boolean printC = false;
+	private boolean printR = false;
+	private boolean printT = false;
+
 	public CodeGen(LinearIR ir) {
 		globals = ir.getGlobals();
 		globals.add("S_substring");
@@ -79,19 +91,63 @@ public class CodeGen {
 
 			if (func.getName().equals("main")) func.addInit(initFuncs);
 
-//			func.print();
+			/*
+			* Build dominating domain
+			* */
+			DomainEdgeBuilder domainEdgeBuilder = new DomainEdgeBuilder(func);
+			domainEdgeBuilder.work();
+			domainEdgeBuilder.rwork();
+
 			FuncSSABuilder ssaBuilder = new FuncSSABuilder(func);
 			ssaBuilder.buildSSAFunc();
-//			if (func.getName().equals("main")) {
+			if (func.getName().equals(printFuncName) && printS) {
+				System.err.println();
+				func.print();
+			}
+
+			System.err.println("^ SSA ----------------------------");
+
+			DeadCodeResolver codeResolver = new DeadCodeResolver(func);
+			codeResolver.updateUseful();
+
+			if (func.getName().equals(printFuncName) && printD) {
+				System.err.println();
+				func.print();
+			}
+
+			System.err.println("^ Deadcode Resolver ----------------------------");
+
+			LabelResolver labelResolver = new LabelResolver(func);
+			labelResolver.labelResolve();
+
+			if (func.getName().equals(printFuncName) && printL) {
+				System.err.println();
+				func.print();
+			}
+
+			System.err.println("^ Label Resolver ----------------------------");
+
+//			CodeRebuilder codeRebuilder = new CodeRebuilder(func);
+//			codeRebuilder.rebuildFunc();
+//
+//			if (func.getName().equals(printFuncName) && printC) {
 //				System.err.println();
 //				func.print();
 //			}
+//
+//			System.err.println("^ Code Rebuilder ----------------------------");
+
 			RegDistributor distributor = new RegDistributor(func, globals);
 			distributor.regDistribute();
-//			if (func.getName().equals("C_vector_tostring")) {
-//				System.err.println();
-//				func.print();
-//			}
+			if (func.getName().equals(printFuncName) && printR) {
+				System.err.println();
+				func.print();
+			}
+			if (func.getName().equals(printFuncName) && printT) {
+				System.err.println();
+				distributor.printRegTable();
+			}
+			System.err.println("^ Register coloring ----------------------------");
 			CodeGenFunc funcGenerator = new CodeGenFunc(func, globalSize);
 			codes.addAll(funcGenerator.generateCode());
 			codes.add("");
@@ -99,6 +155,15 @@ public class CodeGen {
 
 		for (int i = 0; i < initFuncs.size(); ++i) {
 			FuncFrame func = initFuncs.get(i);
+
+			/*
+			 * Build dominating domain
+			 * */
+//			func.print();
+			DomainEdgeBuilder domainEdgeBuilder = new DomainEdgeBuilder(func);
+			domainEdgeBuilder.work();
+			domainEdgeBuilder.rwork();
+
 			FuncSSABuilder ssaBuilder = new FuncSSABuilder(func);
 			ssaBuilder.buildSSAFunc();
 //			System.out.println();

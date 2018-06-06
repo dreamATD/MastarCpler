@@ -97,7 +97,7 @@ public class SemanticChecker extends AstVisitor {
 		Scope<TypeRef> curScope = nod.belongTo;
 		if (curScope instanceof ClassScope) nod.inClass = classStack.peek();
 		if (!curScope.addItem(nod.id, nod.type)) throw new ReDefinedError(nod.loc);
-		String name = "V_" + nod.id + nod.belongTo.getName();
+		String name = (TypeRef.isAddrType(nod.type) ? "A_" : "V_") + nod.id + nod.belongTo.getName();
 		if (curScope instanceof GeneralScope) {
 			nod.reg = new GeneralMemAccess(name);
 		} else nod.reg = new Register(name, name);
@@ -112,7 +112,7 @@ public class SemanticChecker extends AstVisitor {
 				if (son.type instanceof ClassTypeRef && genScope.findItem(((ClassTypeRef) son.type).getTypeId()) == null) throw new NoDefinedTypeError(son.loc);
 				for (int j = 0; j < son.sons.size(); ++j) {
 					Node grandson = son.sons.get(j);
-					String name = "V_" + grandson.id + grandson.belongTo.getName();
+					String name = (TypeRef.isAddrType(grandson.type) ? "A_" : "V_") + grandson.id + grandson.belongTo.getName();
 					grandson.reg = new Register(name, name);
 				}
 			}
@@ -260,7 +260,7 @@ public class SemanticChecker extends AstVisitor {
 
 		if (objNode instanceof VarExprNode) {
 			if (sonNode.id != null && sonNode.id.equals("this"))
-				nod.reg = new Register("V_" + objNode.id + curClassScope.getName());
+				nod.reg = new Register((TypeRef.isAddrType(objNode.type) ? "A_" : "V_") + objNode.id + curClassScope.getName());
 //			else
 //				nod.reg = new MemAccess(sonNode.reg.copy(), new ImmOprand(((ClassTypeRef) sonNode.type).getBelongClass().getOffset(objNode.id)));
 		}
@@ -279,7 +279,7 @@ public class SemanticChecker extends AstVisitor {
 			String c = classStack.get(classStack.size() - 1);
 			nod.type = new ClassTypeRef(c);
 			((ClassTypeRef) nod.type).setBelongClass((ClassDefTypeRef) genScope.findItem(c));
-			nod.reg = new Register("V_this", "V_this");
+			nod.reg = new Register("A_this", "A_this");
 			return;
 		}
 		Pair<Scope<TypeRef>, TypeRef> ret = nod.belongTo.matchVarName(nod.id);
@@ -290,9 +290,9 @@ public class SemanticChecker extends AstVisitor {
 			nod.inClass = classStack.peek();
 			ClassDefTypeRef t = (ClassDefTypeRef) genScope.findItem(classStack.peek());
 			long offset = t.getOffset(nod.id);
-			nod.reg = new MemAccess(new Register("V_this", "V_this"), new ImmOprand(offset));
+			nod.reg = new MemAccess(new Register("A_this", "A_this"), new ImmOprand(offset));
 		} else {
-			name = "V_" + nod.id + ret.getKey().getName();
+			name = (TypeRef.isAddrType(nod.type) ? "A_" : "V_") + nod.id + ret.getKey().getName();
 			if (ret.getKey() instanceof GeneralScope) {
 				nod.reg = new GeneralMemAccess(name);
 			} else if (ret.getKey() instanceof LocalScope) {

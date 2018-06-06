@@ -11,12 +11,23 @@ import GeneralDataStructure.QuadClass.Quad;
 import java.util.*;
 
 public class BasicBlock {
-	public MyList<Quad> codes;
-	public ArrayList<BasicBlock> preps, succs;
-	public String name;
-	public int idx;
+	private MyList<Quad> codes;
+	private ArrayList<BasicBlock> preps, succs;
+	private String name;
+	private int idx;
 
-	BasicBlock(String label) {
+	/*
+	* dominate proverty
+	* */
+	private HashSet<BasicBlock> domainEdge;
+	private ArrayList<BasicBlock> rmmDom;
+	/*
+	* reverse dominate proverty
+	* */
+	private HashSet<BasicBlock> rDomainEdge;
+	private BasicBlock rImmDom;
+
+	public BasicBlock(String label) {
 		name = label;
 		preps = new ArrayList<>();
 		succs = new ArrayList<>();
@@ -48,18 +59,15 @@ public class BasicBlock {
 	public boolean containsPhi(String x) {
 		for (int i = 0; i < codes.size(); ++i) {
 			Quad quad = codes.get(i);
-			if (!quad.op.equals("phi")) break;
+			if (!quad.getOp().equals("phi")) break;
 			if (quad.getRtName().equals(x)) return true;
 		}
 		return false;
 	}
 
 	public void addPhi(String x) {
-		codes.addFirst(new PhiQuad("phi", new Register(x, x), new ArrayList<>()));
+		codes.addFirst(new PhiQuad("phi", new Register(x, x), new HashMap<>()));
 		codes.get(0).setLabel(name);
-		for (int i = 0; i < preps.size(); ++i) {
-			codes.get(0).addPhiParams(null);
-		}
 	}
 
 	public void addPhiParams(HashSet<String> nameList, HashMap<String, Stack<String>> nameStack, BasicBlock pre) {
@@ -68,7 +76,6 @@ public class BasicBlock {
 			Quad c = codes.get(i);
 			if (! (c instanceof PhiQuad)) break;
 			String rt = ((Register) c.getRt()).getMemPos();
-//			if (rt != null) System.err.println(c.getRt().get() + ", " +  ((Register) c.getRt()).getMemPos());
 			if (nameList.contains(rt)) c.addPhiParams(nameStack.get(rt).peek(), u);
 		}
 	}
@@ -84,6 +91,10 @@ public class BasicBlock {
 
 	public String getName() {
 		return name;
+	}
+
+	public void setName(String n) {
+		name = n;
 	}
 
 	public void add(Quad data) {
@@ -127,5 +138,33 @@ public class BasicBlock {
 
 	public void addInitFunc(String name) {
 		codes.addFirst(new CallQuad("call", new Register("_"), new FuncName(name), new ImmOprand(0)));
+	}
+
+	public void setDomainEdge(HashSet<BasicBlock> df) {
+		domainEdge = df;
+	}
+	public HashSet<BasicBlock> getDomainEdge() {
+		return domainEdge;
+	}
+	public void setRmmDom(ArrayList<BasicBlock> rm) {
+		rmmDom = rm;
+	}
+	public ArrayList<BasicBlock> getRmmDom() {
+		return rmmDom;
+	}
+	public void setRDomainEdge(HashSet<BasicBlock> set) {
+		rDomainEdge = set;
+	}
+	public HashSet<BasicBlock> getRDomainEdge() {
+		return rDomainEdge;
+	}
+	public void setRImmDom(BasicBlock b) {
+		rImmDom = b;
+	}
+	public BasicBlock getRImmDom() {
+		return rImmDom;
+	}
+	public void setCodes(MyList<Quad> c) {
+		codes = c;
 	}
 }

@@ -26,8 +26,8 @@ public class CodeGenFunc {
 	private HashSet<String> regLive;
 
 	/*
-	* related to blocks
-	* */
+	 * related to blocks
+	 * */
 	private BasicBlock firstBlock;
 	private ArrayList<BasicBlock> blockList;
 	private boolean [] visited;
@@ -46,24 +46,24 @@ public class CodeGenFunc {
 	private ArrayList<Oprand> tmpParams;
 
 	/*
-	* related to label resolving
-	* */
+	 * related to label resolving
+	 * */
 	private UnionFind<String> labelMerge;
 	private String nextLabel;
 
 	/*
-	* related to register saving
-	* */
+	 * related to register saving
+	 * */
 	private HashSet<String> calleeSaveReg;
 
 	/*
-	* related to kick out
-	* */
+	 * related to kick out
+	 * */
 	private int outReg = 12;
 
 	/*
-	* related to moving parameters in stack into register
-	* */
+	 * related to moving parameters in stack into register
+	 * */
 	private HashMap<String, String> paramsInStack;
 
 	public CodeGenFunc(FuncFrame func, HashMap<String, Integer> globalSize) {
@@ -75,7 +75,7 @@ public class CodeGenFunc {
 		result = new MyList<>();
 
 		blockList = func.getBbList();
-		firstBlock = func.getFirst();
+		firstBlock = func.getFirst0();
 		visited = new boolean [func.getBbList().size()];
 		for (int i = 0; i < visited.length; ++i) visited[i] = false;
 
@@ -175,8 +175,8 @@ public class CodeGenFunc {
 		generateBlocks(firstBlock);
 
 		/*
-		* Mov the parameters in stack into registers.
-		* */
+		 * Mov the parameters in stack into registers.
+		 * */
 		for (Map.Entry<String, String> entry: paramsInStack.entrySet()) {
 			if (!entry.getValue().equals(regList[outReg]) && !entry.getValue().equals(regList[outReg + 1])) {
 				addFirstResult(new Format("mov", entry.getValue(), getVarMem(entry.getKey(), entry.getKey())));
@@ -184,8 +184,8 @@ public class CodeGenFunc {
 		}
 
 		/*
-		* Add the enter codes.
-		* */
+		 * Add the enter codes.
+		 * */
 
 		rspVal = 8 + (useRbp ? 1 : 0) * 8;
 		if (!funcName.equals("main")) rspVal += calleeSaveReg.size() * 8;
@@ -199,8 +199,8 @@ public class CodeGenFunc {
 		subRspFirst(delta);
 
 		/*
-		* Add the leave codes.
-		* */
+		 * Add the leave codes.
+		 * */
 		nextLabel = "end_" + funcName;
 
 		addRsp(delta);
@@ -230,8 +230,8 @@ public class CodeGenFunc {
 		addResult(new Format("ret"));
 
 		/*
-		* Add the function name label.
-		* */
+		 * Add the function name label.
+		 * */
 		addFirstResult(new Format());
 		result.getFirst().setLabel(funcName);
 
@@ -308,7 +308,7 @@ public class CodeGenFunc {
 					updateRet(c, "end_" + funcName);
 				else updateRet(c, null);
 			} else if (c instanceof JumpQuad) {
-				BasicBlock succ = block.succs.get(0);
+				BasicBlock succ = block.getSuccs().get(0);
 				if (!visited[succ.getIdx()]) {
 					updateJump(c, succ.getName());
 					generateBlocks(succ);
@@ -333,7 +333,7 @@ public class CodeGenFunc {
 				translate(c);
 			}
 			updateRt(rt);
-			modifyQuadRegLive(c);
+//			modifyQuadRegLive(c);
 		}
 
 		if (succBlocks.isEmpty() && visitedCnt < blockList.size()) {
@@ -370,8 +370,8 @@ public class CodeGenFunc {
 		if (offset1 == null && offset2 == null)
 			return String.format("qword" + " [rel %s]", rm);
 		/*
-		* in case of modifying the parameters
-		* */
+		 * in case of modifying the parameters
+		 * */
 		if (offset2 != null && offset2 <= 0 && !re.equals(rm)) return regList[-offset2.intValue()];
 		useRbp = true;
 		if (offset2 == null && !newLocalVars.containsKey(rm)) newLocalVars.put(rm, -(long) newLocalVars.size() * 8 - 8);
@@ -388,18 +388,18 @@ public class CodeGenFunc {
 
 	}
 
-	void modifyRegLive(Register reg) {
-		String rn = reg.get();
-		String re = reg.getEntity();
-		if (reg.getWillUse() && !regLive.contains(re)) regLive.add(rn);
-		if (!reg.getWillUse() && regLive.contains(re)) regLive.remove(rn);
-	}
-
-	void modifyQuadRegLive(Quad c) {
-		if (c.getRt() instanceof Register) modifyRegLive((Register) c.getRt());
-		if (c.getR1() instanceof Register) modifyRegLive((Register) c.getR1());
-		if (c.getR2() instanceof Register) modifyRegLive((Register) c.getR2());
-	}
+//	void modifyRegLive(Register reg) {
+//		String rn = reg.get();
+//		String re = reg.getEntity();
+//		if (reg.getWillUse() && !regLive.contains(re)) regLive.add(rn);
+//		if (!reg.getWillUse() && regLive.contains(re)) regLive.remove(rn);
+//	}
+//
+//	void modifyQuadRegLive(Quad c) {
+//		if (c.getRt() instanceof Register) modifyRegLive((Register) c.getRt());
+//		if (c.getR1() instanceof Register) modifyRegLive((Register) c.getR1());
+//		if (c.getR2() instanceof Register) modifyRegLive((Register) c.getR2());
+//	}
 
 	private void updateA3Quad(Quad c) {
 		Oprand rt = c.getRt();
@@ -433,7 +433,7 @@ public class CodeGenFunc {
 	}
 
 	private void updateMov(Quad c) {
-		if (c.rt.get().equals(c.r1.get())) return;
+		if (c.getRt().get().equals(c.getR1().get())) return;
 
 		if (c.getRt() instanceof MemAccess || !(c.getR1() instanceof Register)) {
 			translate(c);
@@ -473,10 +473,10 @@ public class CodeGenFunc {
 		for (int j = 0; j < min(6, up - down); ++j) {
 			String tr = tmpParams.get(down + j).get();
 //			if (j < 6) {
-				String reg = regList[j];
+			String reg = regList[j];
 //				HashSet<String> set = regStore.get(reg);
 //				Long val = values.get(tr);
-				if (tr != reg) {
+			if (tr != reg) {
 //					if (regLive.contains(reg)) {
 //						push(reg, ConstVar.intLen);
 //						pushReg.add(new Pair<>(reg, ConstVar.intLen));
@@ -485,9 +485,9 @@ public class CodeGenFunc {
 //						if (val == 0) addResult(new Format("xor", reg, reg));
 //						addResult(new Format("mov", reg, Long.toString(val)));
 //					} else {
-						updateMov(new MovQuad("mov", new Register(reg), new Register(tr)));
+				updateMov(new MovQuad("mov", new Register(reg), new Register(tr)));
 //					}
-				}
+			}
 //			}
 		}
 
@@ -548,7 +548,7 @@ public class CodeGenFunc {
 
 	private void updateCondJump(Quad c, String nextLabel) {
 		if (nextLabel != null && nextLabel.equals(c.getR1Name())) {
-			switch (c.op) {
+			switch (c.getOp()) {
 				case "je": c.changeOp("jne"); break;
 				case "jne": c.changeOp("je"); break;
 				case "jl": c.changeOp("jge"); break;
@@ -640,7 +640,7 @@ public class CodeGenFunc {
 //				}
 //			}
 //		} else {
-			regStore.get(rn).clear();
+		regStore.get(rn).clear();
 //		}
 	}
 

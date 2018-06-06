@@ -4,32 +4,30 @@ import GeneralDataStructure.QuadClass.CJumpQuad;
 import GeneralDataStructure.QuadClass.JumpQuad;
 import GeneralDataStructure.QuadClass.Quad;
 import GeneralDataStructure.QuadClass.RetQuad;
-import GeneralDataStructure.ScopeClass.LocalScope;
-import GeneralDataStructure.ScopeClass.SpecialScope;
-import javafx.util.Pair;
 
 import java.util.*;
 
 public class FuncFrame {
-	String name;
+	private String name;
 	/*
 	* To matching variables with their offset.
 	* */
-	HashMap<String, Long> localVars;
-	HashMap<String, Long> params; // < 0 indicates it's in reg.
-	HashMap<String, Long> classObj; // useful only when it is a class function.
-	ArrayList<String> paramList;
+	private HashMap<String, Long> localVars;
+	private HashMap<String, Long> params; // < 0 indicates it's in reg.
+	private HashMap<String, Long> classObj; // useful only when it is a class function.
+	private ArrayList<String> paramList;
 
-	HashMap<String, Integer> varSize;
-	ArrayList<BasicBlock> ends;
-	BasicBlock first;
-	ArrayList<BasicBlock> bbList;
+	private HashMap<String, Integer> varSize;
+	private ArrayList<BasicBlock> ends;
+	private ArrayList<BasicBlock> first;
+	private ArrayList<BasicBlock> bbList;
+	private ArrayList<BasicBlock> reBbList;
 
-	ArrayList<HashSet<String>> liveOut;
+	private ArrayList<HashSet<String>> liveOut;
 
-	long paramSize, localVarSize;
+	private long paramSize, localVarSize;
 
-	int retSize;
+	private int retSize;
 
 	public FuncFrame(String funcName) {
 		name = funcName;
@@ -42,6 +40,9 @@ public class FuncFrame {
 		localVarSize = 0;
 		varSize = new HashMap<>();
 		paramList = new ArrayList<>();
+		first = new ArrayList<>();
+		first.add(null);
+		reBbList = new ArrayList<>();
 	}
 	public String getName() {
 		return name;
@@ -57,12 +58,19 @@ public class FuncFrame {
 	public HashMap<String, Long> getLocalVars() {
 		return localVars;
 	}
-	public BasicBlock getFirst() {
+	public BasicBlock getFirst0() {
+		return first.get(0);
+	}
+
+	public ArrayList<BasicBlock> getFirst() {
 		return first;
 	}
 
 	public ArrayList<BasicBlock> getBbList() {
 		return bbList;
+	}
+	public ArrayList<BasicBlock> getReBbList() {
+		return reBbList;
 	}
 	public void setRetSize(int sz) {
 		retSize = sz;
@@ -81,15 +89,15 @@ public class FuncFrame {
 			System.err.print(entry.getKey() + " ");
 		}
 		System.err.println("):");
-		if (first  != null) {
+		if (first.get(0) != null) {
 			LinkedList<BasicBlock> q = new LinkedList<>();
 			Set<String> inQueue = new HashSet<>();
-			q.push(first);
+			q.push(first.get(0));
 			while (q.size() > 0) {
 				BasicBlock u = q.pop();
 				u.print();
-				for (int i = 0; i < u.succs.size(); ++i) {
-					BasicBlock v = u.succs.get(i);
+				for (int i = 0; i < u.getSuccs().size(); ++i) {
+					BasicBlock v = u.getSuccs().get(i);
 					String name = v.getName();
 					if (!inQueue.contains(name)) {
 						inQueue.add(name);
@@ -112,33 +120,6 @@ public class FuncFrame {
 		localVarSize += sz;
 		localVars.put(name, -localVarSize);
 		varSize.put(name, sz);
-	}
-
-//	public void sortLocalVar() {
-//		ArrayList<Pair<String, Long>> vars = new ArrayList<>();
-//		for (Map.Entry<String, Long> entry: localVars.entrySet()) {
-//			vars.add(new Pair<>(entry.getKey(), entry.getValue()));
-//		}
-//
-//		Collections.sort(vars, (x, y) -> x.getValue() < y.getValue() ? 1 : 0);
-//		localVars.clear();
-//
-//		localVarSize = 8;
-//		for (int i = 0; i < vars.size(); ++i) {
-//			String key = vars.get(i).getKey();
-//			long sz = vars.get(i).getValue();
-//			if (localVarSize % sz != 0) localVarSize = sz * ((localVarSize + sz - 1) / sz);
-//			localVars.put(key, -localVarSize);
-//			localVarSize += sz;
-//		}
-//	}
-
-	public long getParamSize() {
-		return paramSize;
-	}
-
-	public long getLocalVarSize() {
-		return localVarSize;
 	}
 
 	public HashMap<String, Integer> getVarSize() {
@@ -166,7 +147,7 @@ public class FuncFrame {
 			first = null;
 			return;
 		} else {
-			codes.get(0).label = name;
+			codes.get(0).setLabel(name);
 		}
 
 		int size = codes.size();
@@ -187,7 +168,7 @@ public class FuncFrame {
 			String label = code.getLabel();
 			if (label != null) {
 				BasicBlock block = map.find(label);
-				if (i == 0) first = block;
+				if (i == 0) first.set(0, block);
 				if (last != null && !(last instanceof JumpQuad) && !(last instanceof CJumpQuad) && !(last instanceof RetQuad))
 					lastBB.addSuccs(block);
 
@@ -218,11 +199,14 @@ public class FuncFrame {
 					}
 				}
 
-				if (block.succs.isEmpty()) ends.add(block);
+				if (block.getSuccs().isEmpty()) ends.add(block);
 				lastBB = block;
 			}
 		}
+
+
 		buildBbList();
+		buildReBbList();
 	}
 
 	/* In DFS order. */
@@ -230,15 +214,39 @@ public class FuncFrame {
 		Stack<BasicBlock> st = new Stack<>();
 		Set<String> vis = new HashSet<>();
 
-		st.push(first);
+		bbList.clear();
+
+		st.push(first.get(0));
 		while (st.size() > 0) {
 			BasicBlock u = st.pop();
 			u.setIdx(bbList.size());
 			bbList.add(u);
-			for (int i = u.succs.size() - 1; i >= 0; --i) {
-				BasicBlock v = u.succs.get(i);
+			for (int i = u.getSuccs().size() - 1; i >= 0; --i) {
+				BasicBlock v = u.getSuccs().get(i);
 				v.addPreps(u);
-				String name = v.name;
+				String name = v.getName();
+				if (!vis.contains(name)) {
+					vis.add(name);
+					st.push(v);
+				}
+
+			}
+		}
+	}
+
+	public void buildReBbList() {
+		Stack<BasicBlock> st = new Stack<>();
+		Set<String> vis = new HashSet<>();
+
+		for (BasicBlock end: ends) {
+			st.push(end);
+		}
+		while (st.size() > 0) {
+			BasicBlock u = st.pop();
+			reBbList.add(u);
+			for (int i = u.getPreps().size() - 1; i >= 0; --i) {
+				BasicBlock v = u.getPreps().get(i);
+				String name = v.getName();
 				if (!vis.contains(name)) {
 					vis.add(name);
 					st.push(v);
@@ -282,5 +290,21 @@ public class FuncFrame {
 
 	public boolean containsLocalVar(String str) {
 		return localVars.containsKey(str);
+	}
+
+	public ArrayList<BasicBlock> getEnds() {
+		return ends;
+	}
+
+	public void setFirst(BasicBlock b) {
+		first.set(0, b);
+	}
+
+	public void setBbList(ArrayList<BasicBlock> list) {
+		bbList = list;
+	}
+
+	public void setEnds(ArrayList<BasicBlock> bEnds) {
+		ends = bEnds;
 	}
 }

@@ -586,4 +586,13 @@ public class RegDistributor {
 
 	}
 
+	public void printRegTable() {
+		for (Map.Entry<String, Integer> entry: nameIdx.entrySet()) {
+			if (!col.get(entry.getValue()).isEmpty())
+				System.err.printf("%-20s%-10s\n", entry.getKey(), regList[col.get(entry.getValue()).iterator().next()]);
+			else
+				System.err.printf("%-20s%-10s\n", entry.getKey(), "tmp");
+		}
+	}
+
 }

@@ -17,10 +17,6 @@ public class FuncSSABuilder {
 	private HashSet<String> params;
 
 	private HashMap<String, HashSet<BasicBlock>> varDomain;
-	private ArrayList<HashSet<BasicBlock> > domainEdge;
-	private ArrayList<LinkedList<BasicBlock> > dom;
-	private ArrayList<BasicBlock> immDom;
-	private ArrayList<ArrayList<BasicBlock>> rmmDom;
 	private HashMap<String, Stack<String> > nameStack;
 
 	private ArrayList<BasicBlock> blockList;
@@ -35,82 +31,16 @@ public class FuncSSABuilder {
 		String [] tmp = func.getParamList();
 		for (String data: tmp) params.add(data);
 		varDomain = new HashMap<>();
-		domainEdge = new ArrayList<>();
-		dom = new ArrayList<>();
-		immDom = new ArrayList<>();
-		rmmDom = new ArrayList<>();
 		nameStack = new HashMap<>();
 		curFunc = func;
 	}
 
 	public void buildSSAFunc() {
-		BuildImmDom();
-		BuildDomainEdge();
 		addPhi();
 
 		HashSet<String> tmp = new HashSet<>();
 		tmp.addAll(params);
 		renameVar(blockList.get(0), tmp);
-	}
-
-	private void BuildImmDom() {
-		int n = blockList.size() - 1;
-		dom.add(new LinkedList<>());
-		dom.get(0).add(blockList.get(0));
-		for (int i = 1; i < blockList.size(); ++i) {
-			dom.add(new LinkedList<>());
-			for (int j = 0; j < blockList.size(); ++j) {
-				dom.get(i).add(blockList.get(j));
-			}
-		}
-		boolean changed = true;
-		LinkedList<BasicBlock> temp;
-		if (n > 0) {
-			while (changed) {
-				changed = false;
-				for (int i = 1; i <= n; ++i) {
-					BasicBlock u = blockList.get(i);
-					temp = new LinkedList<>();
-					temp.addAll(dom.get(u.preps.get(0).getIdx()));
-					for (int j = 1; j < u.preps.size(); ++j) {
-						BasicBlock v = u.preps.get(j);
-						temp = SetOperation.intersect(temp, dom.get(v.getIdx()));
-					}
-					temp.add(u);
-					if (!temp.equals(dom.get(i))) {
-						dom.set(i, temp);
-						changed = true;
-					}
-				}
-			}
-		}
-		immDom.add(blockList.get(0));
-		rmmDom.add(new ArrayList<>());
-		for (int i = 1; i < blockList.size(); ++i) {
-			immDom.add(dom.get(i).get(dom.get(i).size() - 2));
-			rmmDom.add(new ArrayList<>());
-		}
-		for (int i = 1; i < blockList.size(); ++i) {
-			rmmDom.get(immDom.get(i).getIdx()).add(blockList.get(i));
-		}
-	}
-
-	private void BuildDomainEdge() {
-		for (int i = 0; i < blockList.size(); ++i) {
-			domainEdge.add(new HashSet<>());
-		}
-		for(int i = 0; i < blockList.size(); ++i) {
-			BasicBlock u = blockList.get(i);
-			if (u.getPreps().size() <= 1) continue;
-			ArrayList<BasicBlock> preps = u.getPreps();
-			for (BasicBlock v: preps) {
-				BasicBlock cur = v;
-				while (cur != immDom.get(i)) {
-					domainEdge.get(cur.getIdx()).add(u);
-					cur = immDom.get(cur.getIdx());
-				}
-			}
-		}
 	}
 
 	private void addPhiCheckOprand(Oprand r, HashSet<String> varKill) {
@@ -165,7 +95,7 @@ public class FuncSSABuilder {
 			for (BasicBlock block: workList) st.push(block);
 			while (!st.isEmpty()) {
 				BasicBlock block = st.pop();
-				for (BasicBlock sucBlock: domainEdge.get(block.getIdx())) {
+				for (BasicBlock sucBlock: block.getDomainEdge()) {
 					if (!sucBlock.containsPhi(data)) {
 						sucBlock.addPhi(data);
 						if (!workList.contains(sucBlock)) {
@@ -239,11 +169,11 @@ public class FuncSSABuilder {
 			}
 		}
 
-		for (int i = 0; i < u.succs.size(); ++i) {
-			u.succs.get(i).addPhiParams(tmp, nameStack, u);
+		for (int i = 0; i < u.getSuccs().size(); ++i) {
+			u.getSuccs().get(i).addPhiParams(tmp, nameStack, u);
 		}
 
-		ArrayList<BasicBlock> domSucc = rmmDom.get(u.getIdx());
+		ArrayList<BasicBlock> domSucc = u.getRmmDom();
 		for (int i = 0; i < domSucc.size(); ++i) {
 			renameVar(domSucc.get(i), tmp);
 		}
