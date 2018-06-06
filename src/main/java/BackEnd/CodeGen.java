@@ -117,15 +117,15 @@ public class CodeGen {
 
 			System.err.println("^ Deadcode Resolver ----------------------------");
 
-			LabelResolver labelResolver = new LabelResolver(func);
-			labelResolver.labelResolve();
-
-			if (func.getName().equals(printFuncName) && printL) {
-				System.err.println();
-				func.print();
-			}
-
-			System.err.println("^ Label Resolver ----------------------------");
+//			LabelResolver labelResolver = new LabelResolver(func);
+//			labelResolver.labelResolve();
+//
+//			if (func.getName().equals(printFuncName) && printL) {
+//				System.err.println();
+//				func.print();
+//			}
+//
+//			System.err.println("^ Label Resolver ----------------------------");
 
 //			CodeRebuilder codeRebuilder = new CodeRebuilder(func);
 //			codeRebuilder.rebuildFunc();

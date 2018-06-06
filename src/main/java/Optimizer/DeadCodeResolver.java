@@ -163,7 +163,8 @@ public class DeadCodeResolver {
 				if (!c.getUseful()) {
 					if (c.getOp().equals("nop")) newCodes.add(c);
 					if ((c instanceof JumpQuad || c instanceof CJumpQuad) && block.getRImmDom().getIdx() < blocks.size()) {
-						newCodes.add(new JumpQuad("jump", new LabelName(block.getRImmDom().getName())));
+//						newCodes.add(new JumpQuad("jump", new LabelName(block.getRImmDom().getName())));
+						newCodes.add(c);
 					}
 				} else {
 					newCodes.add(c);
