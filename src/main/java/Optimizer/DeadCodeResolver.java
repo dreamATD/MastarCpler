@@ -156,17 +156,26 @@ public class DeadCodeResolver {
 	}
 
 	private void sweep() {
+		String label = curFunc.getName();
 		for (BasicBlock block: blocks) {
 			MyList<Quad> newCodes = new MyList<>(), codes = block.getCodes();
 			for (int i = 0; i < codes.size(); ++i) {
 				Quad c = codes.get(i);
 				if (!c.getUseful()) {
-					if (c.getOp().equals("nop")) newCodes.add(c);
+					if (c.getOp().equals("nop")) {
+						c.setLabel(label);
+						label = null;
+						newCodes.add(c);
+					}
 					if ((c instanceof JumpQuad || c instanceof CJumpQuad) && block.getRImmDom().getIdx() < blocks.size()) {
 //						newCodes.add(new JumpQuad("jump", new LabelName(block.getRImmDom().getName())));
+						c.setLabel(label);
+						label = null;
 						newCodes.add(c);
 					}
 				} else {
+					c.setLabel(label);
+					label = null;
 					newCodes.add(c);
 				}
 			}

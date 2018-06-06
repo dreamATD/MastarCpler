@@ -23,12 +23,10 @@ public class CodeGen {
 	/*
 	* debug
 	* */
-	private String printFuncName = "main";
+	private String printFuncName = "F_get";
 	private boolean printS = false;
-	private boolean printD = false;
-	private boolean printL = false;
-	private boolean printC = false;
-	private boolean printR = false;
+	private boolean printD = true;
+	private boolean printR = true;
 	private boolean printT = false;
 
 	public CodeGen(LinearIR ir) {
@@ -147,7 +145,7 @@ public class CodeGen {
 				System.err.println();
 				distributor.printRegTable();
 			}
-			System.err.println("^ Register coloring ----------------------------");
+//			System.err.println("^ Register coloring ----------------------------");
 			CodeGenFunc funcGenerator = new CodeGenFunc(func, globalSize);
 			codes.addAll(funcGenerator.generateCode());
 			codes.add("");
