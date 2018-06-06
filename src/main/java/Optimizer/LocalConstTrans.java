@@ -50,7 +50,7 @@ public class LocalConstTrans {
 				} else if (c.getRt() instanceof Register) {
 					leaValue.put(c.getR1Name(), (Register) c.getRt());
 				}
-			} else if (c instanceof A3Quad) {
+			} else if (c instanceof A3Quad && c.getR1() instanceof Register && c.getR2() instanceof Register) {
 				boolean flag = isExchangeable(c.getOp());
 				Pair<String, Pair<String, String>> key1 = new Pair<>(c.getOp(), new Pair<>(c.getR1Name(), c.getR2Name()));
 				Pair<String, Pair<String, String>> key2 = new Pair<>(c.getOp(), new Pair<>(c.getR2Name(), c.getR1Name()));
