@@ -23,10 +23,11 @@ public class CodeGen {
 	/*
 	* debug
 	* */
-	private String printFuncName = "F_get";
+	private String printFuncName = "main";
 	private boolean printS = false;
-	private boolean printD = true;
-	private boolean printR = true;
+	private boolean printC = true;
+	private boolean printD = false;
+	private boolean printR = false;
 	private boolean printT = false;
 
 	public CodeGen(LinearIR ir) {
@@ -104,6 +105,15 @@ public class CodeGen {
 			}
 
 			System.err.println("^ SSA ----------------------------");
+
+			LocalConstTrans constTrans = new LocalConstTrans(func);
+			constTrans.transConst();
+			if (func.getName().equals(printFuncName) && printC) {
+				System.err.println();
+				func.print();
+			}
+
+			System.err.println("^ const transfer ----------------------------");
 
 			DeadCodeResolver codeResolver = new DeadCodeResolver(func);
 			codeResolver.updateUseful();

@@ -23,12 +23,6 @@ import java.util.HashSet;
 * and       rt r1 r2
 * or        rt r1 r2
 * xor       rt r1 r2
-* equ       rt r1 r2
-* neq       rt r1 r2
-* les       rt r1 r2
-* leq       rt r1 r2
-* gre       rt r1 r2
-* geq       rt r1 r2
 * not       rt r1     ( xor r1 (1<<31)-1 )
 * neg       rt r1     ( sub 0  neg       )
 *
