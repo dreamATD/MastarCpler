@@ -50,7 +50,9 @@ public class LocalConstTrans {
 				} else if (c.getRt() instanceof Register) {
 					leaValue.put(c.getR1Name(), (Register) c.getRt());
 				}
-			} else if (c instanceof A3Quad && c.getR1() instanceof Register && c.getR2() instanceof Register) {
+			} else if (c instanceof A3Quad &&
+					(c.getR1() instanceof Register || c.getR1() instanceof GeneralMemAccess) &&
+					(c.getR2() instanceof Register || c.getR2() instanceof GeneralMemAccess)) {
 				boolean flag = isExchangeable(c.getOp());
 				Pair<String, Pair<String, String>> key1 = new Pair<>(c.getOp(), new Pair<>(c.getR1Name(), c.getR2Name()));
 				Pair<String, Pair<String, String>> key2 = new Pair<>(c.getOp(), new Pair<>(c.getR2Name(), c.getR1Name()));
@@ -59,6 +61,18 @@ public class LocalConstTrans {
 					else codes.set(i, new MovQuad("mov", c.getRt(), a3Value.get(key2)));
 				} else if (c.getRt() instanceof Register) {
 					a3Value.put(key1, (Register) c.getRt());
+				}
+			}
+			if (c.getRt() instanceof GeneralMemAccess) {
+				ArrayList<Pair<String, Pair<String, String>>> tmp = new ArrayList<>();
+				for (Pair<String, Pair<String, String>> key: a3Value.keySet()) {
+					if (key.getValue().getKey().equals(c.getRtName()) ||
+							key.getValue().getValue().equals(c.getRtName())) {
+						tmp.add(key);
+					}
+				}
+				for (Pair<String, Pair<String, String>> key: tmp) {
+					a3Value.remove(key);
 				}
 			}
 		}
