@@ -61,17 +61,6 @@ public class LocalConstTrans {
 					a3Value.put(key1, (Register) c.getRt());
 				}
 			}
-			if (c.getRt() instanceof GeneralMemAccess) {
-				ArrayList<Pair<String, Pair<String, String>>> tmp = new ArrayList<>();
-				for (Map.Entry<Pair<String, Pair<String, String>>, Register> entry: a3Value.entrySet()) {
-					if (entry.getKey().getValue().getKey().equals(c.getRtName()) ||
-							entry.getKey().getValue().getValue().equals(c.getRtName()))
-						tmp.add(entry.getKey());
-				}
-				for (Pair<String, Pair<String, String>> val: tmp) {
-					a3Value.remove(val);
-				}
-			}
 		}
 	}
 }
